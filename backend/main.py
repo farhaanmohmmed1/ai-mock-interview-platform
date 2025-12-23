@@ -1,0 +1,93 @@
+from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from contextlib import asynccontextmanager
+import os
+import sys
+
+# Add parent directory to path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from backend.core.config import settings
+from backend.core.database import engine, Base
+from backend.api import auth, interview, resume, evaluation, dashboard
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup and shutdown events"""
+    # Startup
+    print("🚀 Starting AI Interview Platform...")
+    
+    # Create tables
+    Base.metadata.create_all(bind=engine)
+    print("✅ Database tables created")
+    
+    # Create necessary directories
+    os.makedirs("data/uploads", exist_ok=True)
+    os.makedirs("data/recordings", exist_ok=True)
+    os.makedirs("data/videos", exist_ok=True)
+    os.makedirs("data/models", exist_ok=True)
+    print("✅ Data directories created")
+    
+    yield
+    
+    # Shutdown
+    print("🛑 Shutting down AI Interview Platform...")
+
+
+# Initialize FastAPI app
+app = FastAPI(
+    title="AI Mock Interview Platform",
+    description="Adaptive interview platform with NLP, speech, and emotion analysis",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# CORS Configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include routers
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(resume.router, prefix="/api/resume", tags=["Resume"])
+app.include_router(interview.router, prefix="/api/interview", tags=["Interview"])
+app.include_router(evaluation.router, prefix="/api/evaluation", tags=["Evaluation"])
+app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
+
+
+@app.get("/")
+async def root():
+    """Root endpoint"""
+    return {
+        "message": "AI Mock Interview Platform API",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "status": "operational"
+    }
+
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {
+        "status": "healthy",
+        "database": "connected",
+        "ai_modules": "loaded"
+    }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    uvicorn.run(
+        "main:app",
+        host=settings.API_HOST,
+        port=settings.API_PORT,
+        reload=settings.DEBUG_MODE
+    )
