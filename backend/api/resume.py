@@ -10,10 +10,22 @@ from backend.core.database import get_db
 from backend.core.config import settings
 from backend.models import User, Resume
 from backend.api.auth import get_current_user
-from ai_modules.nlp.resume_parser import ResumeParser
+
+# Conditional imports for AI modules (may not be available on Vercel)
+try:
+    from ai_modules.nlp.resume_parser import ResumeParser
+    AI_MODULES_AVAILABLE = True
+except ImportError:
+    AI_MODULES_AVAILABLE = False
+    ResumeParser = None
 
 router = APIRouter()
-resume_parser = ResumeParser()
+
+# Initialize AI modules only if available
+if AI_MODULES_AVAILABLE:
+    resume_parser = ResumeParser()
+else:
+    resume_parser = None
 
 
 class ResumeResponse(BaseModel):
@@ -74,6 +86,13 @@ async def upload_resume(
         shutil.copyfileobj(file.file, buffer)
     
     # Parse resume
+    if not AI_MODULES_AVAILABLE or resume_parser is None:
+        os.remove(file_path)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI modules not available. Resume parsing requires full deployment."
+        )
+    
     try:
         parsed_data = resume_parser.parse_resume(file_path)
     except Exception as e:
@@ -209,6 +228,12 @@ async def extract_skills_from_text(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Text must be at least 50 characters long"
+        )
+    
+    if not AI_MODULES_AVAILABLE or resume_parser is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI modules not available. Skill extraction requires full deployment."
         )
     
     try:

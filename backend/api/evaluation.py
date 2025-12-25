@@ -11,14 +11,30 @@ import tempfile
 from backend.core.database import get_db
 from backend.models import User, Interview, Question, Response
 from backend.api.auth import get_current_user
-from ai_modules.nlp.answer_evaluator import AnswerEvaluator
-from ai_modules.speech.speech_analyzer import SpeechAnalyzer
-from ai_modules.emotion.emotion_analyzer import EmotionAnalyzer
+
+# Conditional imports for AI modules (may not be available on Vercel)
+try:
+    from ai_modules.nlp.answer_evaluator import AnswerEvaluator
+    from ai_modules.speech.speech_analyzer import SpeechAnalyzer
+    from ai_modules.emotion.emotion_analyzer import EmotionAnalyzer
+    AI_MODULES_AVAILABLE = True
+except ImportError:
+    AI_MODULES_AVAILABLE = False
+    AnswerEvaluator = None
+    SpeechAnalyzer = None
+    EmotionAnalyzer = None
 
 router = APIRouter()
-answer_evaluator = AnswerEvaluator()
-speech_analyzer = SpeechAnalyzer()
-emotion_analyzer = EmotionAnalyzer()
+
+# Initialize AI modules only if available
+if AI_MODULES_AVAILABLE:
+    answer_evaluator = AnswerEvaluator()
+    speech_analyzer = SpeechAnalyzer()
+    emotion_analyzer = EmotionAnalyzer()
+else:
+    answer_evaluator = None
+    speech_analyzer = None
+    emotion_analyzer = None
 
 
 class ResponseCreate(BaseModel):
@@ -113,6 +129,12 @@ async def transcribe_audio(
             )
         
         # Transcribe using speech analyzer
+        if not AI_MODULES_AVAILABLE or speech_analyzer is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="AI modules not available. Speech analysis requires full deployment."
+            )
+        
         result = speech_analyzer.analyze_audio(wav_path)
         
         return {
@@ -161,6 +183,13 @@ async def submit_text_response(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Interview is not in progress"
+        )
+    
+    # Check AI module availability
+    if not AI_MODULES_AVAILABLE or answer_evaluator is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI modules not available. Answer evaluation requires full deployment."
         )
     
     # Evaluate answer
@@ -266,6 +295,13 @@ async def submit_audio_response(
             os.rename(temp_audio_path, audio_path)
     else:
         os.rename(temp_audio_path, audio_path)
+    
+    # Check AI module availability
+    if not AI_MODULES_AVAILABLE or speech_analyzer is None or answer_evaluator is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI modules not available. Speech/answer analysis requires full deployment."
+        )
     
     # Analyze speech
     try:

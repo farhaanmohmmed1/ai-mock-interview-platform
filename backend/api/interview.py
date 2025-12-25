@@ -7,12 +7,26 @@ from datetime import datetime
 from backend.core.database import get_db
 from backend.models import User, Interview, Question, Response, Resume
 from backend.api.auth import get_current_user
-from ai_modules.nlp.question_generator import QuestionGenerator
-from ai_modules.adaptive.adaptive_system import AdaptiveSystem
+
+# Conditional imports for AI modules (may not be available on Vercel)
+try:
+    from ai_modules.nlp.question_generator import QuestionGenerator
+    from ai_modules.adaptive.adaptive_system import AdaptiveSystem
+    AI_MODULES_AVAILABLE = True
+except ImportError:
+    AI_MODULES_AVAILABLE = False
+    QuestionGenerator = None
+    AdaptiveSystem = None
 
 router = APIRouter()
-question_generator = QuestionGenerator()
-adaptive_system = AdaptiveSystem()
+
+# Initialize AI modules only if available
+if AI_MODULES_AVAILABLE:
+    question_generator = QuestionGenerator()
+    adaptive_system = AdaptiveSystem()
+else:
+    question_generator = None
+    adaptive_system = None
 
 
 class InterviewCreate(BaseModel):
@@ -109,12 +123,23 @@ async def create_interview(
                 detail="Resume not found"
             )
     
+    # Check AI module availability
+    if not AI_MODULES_AVAILABLE or question_generator is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI modules not available. Interview creation requires full deployment."
+        )
+    
     # Use provided difficulty level or get adaptive one
-    difficulty = interview_data.difficulty_level or adaptive_system.get_recommended_difficulty(
-        user_id=current_user.id,
-        interview_type=interview_data.interview_type,
-        db=db
-    )
+    difficulty = interview_data.difficulty_level
+    if not difficulty and adaptive_system:
+        difficulty = adaptive_system.get_recommended_difficulty(
+            user_id=current_user.id,
+            interview_type=interview_data.interview_type,
+            db=db
+        )
+    if not difficulty:
+        difficulty = "medium"
     
     # Get interview mode
     interview_mode = interview_data.interview_mode or "standard"
@@ -235,11 +260,18 @@ async def complete_interview(
         )
     
     # Calculate final scores and generate report
-    from ai_modules.adaptive.report_generator import ReportGenerator
-    report_gen = ReportGenerator()
+    report_gen = None
+    try:
+        from ai_modules.adaptive.report_generator import ReportGenerator
+        report_gen = ReportGenerator()
+    except ImportError:
+        pass
     
     try:
-        report = report_gen.generate_final_report(interview_id, db)
+        if report_gen:
+            report = report_gen.generate_final_report(interview_id, db)
+        else:
+            raise Exception("Report generator not available")
     except Exception as e:
         # Generate default report if error
         report = {
@@ -276,10 +308,11 @@ async def complete_interview(
     db.refresh(interview)
     
     # Update adaptive profile
-    try:
-        adaptive_system.update_user_profile(current_user.id, interview, db)
-    except Exception:
-        pass  # Ignore adaptive system errors
+    if AI_MODULES_AVAILABLE and adaptive_system:
+        try:
+            adaptive_system.update_user_profile(current_user.id, interview, db)
+        except Exception:
+            pass  # Ignore adaptive system errors
     
     return interview
 

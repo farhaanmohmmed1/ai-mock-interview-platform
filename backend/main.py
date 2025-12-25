@@ -12,6 +12,13 @@ from backend.core.config import settings
 from backend.core.database import engine, Base
 from backend.api import auth, interview, resume, evaluation, dashboard
 
+# Check if AI modules are available
+try:
+    import ai_modules
+    AI_MODULES_AVAILABLE = True
+except ImportError:
+    AI_MODULES_AVAILABLE = False
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -78,7 +85,7 @@ async def health_check():
     return {
         "status": "healthy",
         "database": "connected",
-        "ai_modules": "loaded"
+        "ai_modules": "loaded" if AI_MODULES_AVAILABLE else "unavailable (lightweight mode)"
     }
 
 
