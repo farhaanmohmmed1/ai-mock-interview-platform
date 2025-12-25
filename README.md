@@ -129,11 +129,6 @@ npm start
 - Track progress over time
 - Access weak area analysis
 
-## API Documentation
-
-Once the server is running, visit:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
 
 ## Key Technologies
 
@@ -228,15 +223,6 @@ docker-compose up -d
 4. Push to the branch
 5. Create a Pull Request
 
-## License
-
-MIT License - see LICENSE file for details
-
-## Support
-
-For issues and questions:
-- GitHub Issues: [Project Issues]
-- Email: support@interviewplatform.com
 
 ## Roadmap
 
