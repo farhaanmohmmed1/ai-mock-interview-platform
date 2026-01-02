@@ -14,5 +14,10 @@
       "src": "/(.*)",
       "dest": "api/index.py"
     }
-  ]
+  ],
+  "functions": {
+    "api/index.py": {
+      "excludeFiles": "{ai_modules/**,data/**,frontend/**,tests/**,docs/**,venv/**,.git/**,*.md}"
+    }
+  }
 }

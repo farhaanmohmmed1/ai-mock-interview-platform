@@ -6,6 +6,9 @@ This file exports the FastAPI app for Vercel deployment.
 import sys
 import os
 
+# Set environment variable to indicate Vercel deployment (lightweight mode)
+os.environ["VERCEL_DEPLOYMENT"] = "true"
+
 # Add the project root to the Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

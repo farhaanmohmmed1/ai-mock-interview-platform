@@ -1,0 +1,54 @@
+# Exclude AI modules (not used in Vercel deployment)
+ai_modules/
+
+# Exclude data directories
+data/
+backend/data/
+
+# Exclude virtual environments
+venv/
+.venv/
+env/
+
+# Exclude git
+.git/
+.gitignore
+
+# Exclude development/test files
+tests/
+docs/
+*.md
+requirements-dev.txt
+requirements-full.txt
+
+# Exclude frontend (deploy separately or use CDN)
+frontend/
+
+# Exclude Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Exclude environment files
+.env
+.env.example
+.env.local
+
+# Exclude databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Exclude IDE
+.vscode/
+.idea/
+
+# Exclude OS files
+.DS_Store
+Thumbs.db
+
+# Exclude setup scripts
+setup.sh
+setupforwindows.bat
