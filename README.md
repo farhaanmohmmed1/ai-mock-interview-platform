@@ -1,5 +1,7 @@
 # AI-Powered Adaptive Mock Interview Platform
 
+🚀 **Live Demo**: [https://ai-mock-interview-platform-t8ph-okbn90n64.vercel.app/](https://ai-mock-interview-platform-t8ph-okbn90n64.vercel.app/)
+
 A comprehensive mock interview platform that conducts adaptive interviews across three rounds (General, Technical, and HR) using advanced AI technologies including NLP, speech processing, and emotion analysis.
 
 ## Features
