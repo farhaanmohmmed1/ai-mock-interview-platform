@@ -1,24 +1,4 @@
-# Core Framework (Vercel-compatible ultra-lightweight version)
+# Minimal requirements for Vercel
 fastapi==0.104.1
-uvicorn==0.24.0
 pydantic==2.5.0
-pydantic-settings==2.1.0
 email-validator==2.3.0
-python-multipart==0.0.6
-
-# Database
-sqlalchemy==2.0.23
-psycopg2-binary==2.9.9
-
-# Authentication & Security
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-dotenv==1.0.0
-
-# API & HTTP
-httpx==0.25.1
-requests==2.31.0
-
-# Utilities
-python-dateutil==2.8.2
-pytz==2023.3

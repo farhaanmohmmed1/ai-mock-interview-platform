@@ -1,19 +1,65 @@
 """
-Vercel serverless entrypoint for FastAPI application.
-This file exports the FastAPI app for Vercel deployment.
+Vercel serverless entrypoint - Minimal standalone API
 """
 
-import sys
+from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, EmailStr
+from typing import Optional
 import os
 
-# Set environment variable to indicate Vercel deployment (lightweight mode)
-os.environ["VERCEL_DEPLOYMENT"] = "true"
+# Create minimal FastAPI app for Vercel
+app = FastAPI(
+    title="AI Mock Interview Platform API",
+    description="API for AI-powered mock interviews",
+    version="1.0.0"
+)
 
-# Add the project root to the Python path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Import the FastAPI app from the backend module
-from backend.main import app
 
-# Vercel looks for an 'app' variable
-# The app is already imported above
+@app.get("/")
+async def root():
+    return {
+        "message": "AI Mock Interview Platform API",
+        "version": "1.0.0",
+        "status": "operational",
+        "mode": "lightweight",
+        "docs": "/docs"
+    }
+
+
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "deployment": "vercel",
+        "mode": "lightweight"
+    }
+
+
+@app.get("/api/status")
+async def api_status():
+    return {
+        "api": "online",
+        "features": {
+            "auth": "available",
+            "interviews": "requires full deployment",
+            "resume_parsing": "requires full deployment",
+            "ai_evaluation": "requires full deployment"
+        },
+        "message": "This is a lightweight deployment. For full AI features, deploy on Railway or Render."
+    }
+
+
+# Simple test endpoint
+@app.get("/api/test")
+async def test_endpoint():
+    return {"test": "success", "message": "API is working!"}
