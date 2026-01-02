@@ -41,6 +41,7 @@ import {
   SkipNext,
 } from '@mui/icons-material';
 import { useAuth } from '../App';
+import API_URL from '../config';
 
 const Interview = () => {
   const { type } = useParams();
@@ -291,7 +292,7 @@ const Interview = () => {
       formData.append('audio', blob, 'recording.webm');
       formData.append('question_id', currentQuestion.id);
 
-      const response = await fetch('http://localhost:8000/api/evaluation/transcribe', {
+      const response = await fetch('${API_URL}/api/evaluation/transcribe', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -366,7 +367,7 @@ const Interview = () => {
           formData.append('audio', audioBlob, 'recording.webm');
           formData.append('question_id', currentQuestion.id);
 
-          const transcribeResponse = await fetch('http://localhost:8000/api/evaluation/transcribe', {
+          const transcribeResponse = await fetch('${API_URL}/api/evaluation/transcribe', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -391,7 +392,7 @@ const Interview = () => {
       }
 
       // Now submit the answer
-      const response = await fetch('http://localhost:8000/api/evaluation/submit-text', {
+      const response = await fetch('${API_URL}/api/evaluation/submit-text', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -446,7 +447,7 @@ const Interview = () => {
       const token = localStorage.getItem('token');
       console.log('Completing interview:', interviewId);
       
-      const response = await fetch(`http://localhost:8000/api/interview/${interviewId}/complete`, {
+      const response = await fetch(`${API_URL}/api/interview/${interviewId}/complete`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -480,7 +481,7 @@ const Interview = () => {
   const exitInterview = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`http://localhost:8000/api/interview/${interviewId}`, {
+      await fetch(`${API_URL}/api/interview/${interviewId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

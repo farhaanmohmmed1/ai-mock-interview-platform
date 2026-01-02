@@ -52,6 +52,7 @@ import {
   Visibility,
 } from '@mui/icons-material';
 import { useAuth } from '../App';
+import API_URL from '../config';
 
 const InterviewSetup = () => {
   const { type } = useParams();
@@ -99,7 +100,7 @@ const InterviewSetup = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8000/api/resume/list', {
+      const response = await fetch('${API_URL}/api/resume/list', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -150,7 +151,7 @@ const InterviewSetup = () => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('http://localhost:8000/api/resume/upload', {
+      const response = await fetch('${API_URL}/api/resume/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -177,7 +178,7 @@ const InterviewSetup = () => {
   const handleDeleteResume = async (resumeId) => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`http://localhost:8000/api/resume/${resumeId}`, {
+      await fetch(`${API_URL}/api/resume/${resumeId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -198,7 +199,7 @@ const InterviewSetup = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8000/api/interview/create', {
+      const response = await fetch('${API_URL}/api/interview/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

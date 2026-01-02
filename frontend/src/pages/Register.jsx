@@ -15,6 +15,7 @@ import {
   ListItemText,
 } from '@mui/material';
 import { Check, Close } from '@mui/icons-material';
+import API_URL from '../config';
 
 // Password validation rules
 const passwordRules = [
@@ -77,7 +78,7 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/auth/register', {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

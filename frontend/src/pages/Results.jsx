@@ -33,6 +33,7 @@ import {
   RecordVoiceOver,
   Psychology,
 } from '@mui/icons-material';
+import API_URL from '../config';
 
 const ScoreCircle = ({ score, label, color }) => (
   <Box sx={{ textAlign: 'center' }}>
@@ -92,7 +93,7 @@ const Results = () => {
         return;
       }
       
-      const response = await fetch(`http://localhost:8000/api/interview/${id}`, {
+      const response = await fetch(`${API_URL}/api/interview/${id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

@@ -26,6 +26,7 @@ import {
   Gavel,
 } from '@mui/icons-material';
 import { useAuth } from '../App';
+import API_URL from '../config';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8000/api/dashboard/stats', {
+      const response = await fetch('${API_URL}/api/dashboard/stats', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -77,7 +78,7 @@ const Dashboard = () => {
   const fetchRecentInterviews = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8000/api/interview/', {
+      const response = await fetch('${API_URL}/api/interview/', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
