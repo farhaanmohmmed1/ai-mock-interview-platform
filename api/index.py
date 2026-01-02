@@ -183,6 +183,149 @@ async def list_interviews():
     return []
 
 
+# Interview creation model
+class InterviewCreate(BaseModel):
+    interview_type: str
+    resume_id: Optional[int] = None
+    difficulty_level: Optional[str] = "medium"
+    interview_mode: Optional[str] = "standard"
+
+
+# Demo questions for different interview types
+DEMO_QUESTIONS = {
+    "upsc": [
+        {"id": 1, "question_text": "What are the key challenges facing India's agricultural sector, and how can technology help address them?", "question_type": "analytical", "category": "economy", "difficulty": "medium", "order_number": 1},
+        {"id": 2, "question_text": "Discuss the importance of ethics in public administration. Give examples.", "question_type": "opinion", "category": "ethics", "difficulty": "medium", "order_number": 2},
+        {"id": 3, "question_text": "What is your understanding of the concept of 'cooperative federalism'?", "question_type": "conceptual", "category": "polity", "difficulty": "medium", "order_number": 3},
+        {"id": 4, "question_text": "How can India balance economic development with environmental sustainability?",  "question_type": "analytical", "category": "environment", "difficulty": "medium", "order_number": 4},
+        {"id": 5, "question_text": "What role does civil society play in strengthening democracy?", "question_type": "opinion", "category": "governance", "difficulty": "medium", "order_number": 5},
+    ],
+    "general": [
+        {"id": 1, "question_text": "Tell me about yourself and your background.", "question_type": "introduction", "category": "personal", "difficulty": "easy", "order_number": 1},
+        {"id": 2, "question_text": "What are your greatest strengths and weaknesses?", "question_type": "behavioral", "category": "self-assessment", "difficulty": "medium", "order_number": 2},
+        {"id": 3, "question_text": "Where do you see yourself in 5 years?", "question_type": "career", "category": "goals", "difficulty": "medium", "order_number": 3},
+        {"id": 4, "question_text": "Why should we hire you?", "question_type": "motivation", "category": "fit", "difficulty": "medium", "order_number": 4},
+        {"id": 5, "question_text": "Do you have any questions for us?", "question_type": "closing", "category": "engagement", "difficulty": "easy", "order_number": 5},
+    ],
+    "technical": [
+        {"id": 1, "question_text": "Explain the difference between a stack and a queue.", "question_type": "conceptual", "category": "data-structures", "difficulty": "easy", "order_number": 1},
+        {"id": 2, "question_text": "What is the time complexity of binary search?", "question_type": "technical", "category": "algorithms", "difficulty": "medium", "order_number": 2},
+        {"id": 3, "question_text": "Explain the concept of object-oriented programming.", "question_type": "conceptual", "category": "programming", "difficulty": "medium", "order_number": 3},
+        {"id": 4, "question_text": "How would you design a URL shortening service?", "question_type": "system-design", "category": "design", "difficulty": "hard", "order_number": 4},
+        {"id": 5, "question_text": "What is the difference between SQL and NoSQL databases?", "question_type": "conceptual", "category": "databases", "difficulty": "medium", "order_number": 5},
+    ],
+    "hr": [
+        {"id": 1, "question_text": "Tell me about a time you faced a conflict at work.", "question_type": "behavioral", "category": "conflict", "difficulty": "medium", "order_number": 1},
+        {"id": 2, "question_text": "How do you handle stress and pressure?", "question_type": "behavioral", "category": "stress", "difficulty": "medium", "order_number": 2},
+        {"id": 3, "question_text": "Describe a situation where you showed leadership.", "question_type": "behavioral", "category": "leadership", "difficulty": "medium", "order_number": 3},
+        {"id": 4, "question_text": "What motivates you in your work?", "question_type": "motivation", "category": "values", "difficulty": "easy", "order_number": 4},
+        {"id": 5, "question_text": "How do you prioritize your tasks?", "question_type": "behavioral", "category": "organization", "difficulty": "medium", "order_number": 5},
+    ]
+}
+
+# In-memory interview storage
+interviews_db = {}
+interview_counter = 0
+
+
+@app.post("/api/interview/create")
+async def create_interview(interview: InterviewCreate):
+    """Create a new interview (demo mode)"""
+    global interview_counter
+    interview_counter += 1
+    
+    interview_type = interview.interview_type.lower()
+    questions = DEMO_QUESTIONS.get(interview_type, DEMO_QUESTIONS["general"])
+    
+    interview_data = {
+        "id": interview_counter,
+        "interview_type": interview_type,
+        "status": "in_progress",
+        "difficulty_level": interview.difficulty_level,
+        "total_questions": len(questions),
+        "answered_questions": 0,
+        "questions": questions,
+        "current_question_index": 0
+    }
+    
+    interviews_db[interview_counter] = interview_data
+    
+    return {
+        "id": interview_counter,
+        "interview_type": interview_type,
+        "status": "in_progress",
+        "difficulty_level": interview.difficulty_level,
+        "total_questions": len(questions),
+        "answered_questions": 0,
+        "questions": questions
+    }
+
+
+@app.get("/api/interview/{interview_id}")
+async def get_interview(interview_id: int):
+    """Get interview details"""
+    interview = interviews_db.get(interview_id)
+    if not interview:
+        raise HTTPException(status_code=404, detail="Interview not found")
+    return interview
+
+
+@app.post("/api/interview/{interview_id}/complete")
+async def complete_interview(interview_id: int):
+    """Complete an interview (demo mode)"""
+    interview = interviews_db.get(interview_id)
+    if not interview:
+        raise HTTPException(status_code=404, detail="Interview not found")
+    
+    interview["status"] = "completed"
+    
+    # Return demo results
+    return {
+        "id": interview_id,
+        "status": "completed",
+        "overall_score": 75,
+        "content_score": 78,
+        "clarity_score": 72,
+        "fluency_score": 80,
+        "confidence_score": 70,
+        "feedback": "Great job! You demonstrated good knowledge and communication skills.",
+        "weak_areas": ["Time management", "Specific examples"],
+        "strong_areas": ["Clear communication", "Confident delivery"],
+        "recommendations": [
+            {"text": "Practice with more specific examples from your experience"},
+            {"text": "Work on managing your response time"}
+        ]
+    }
+
+
+@app.delete("/api/interview/{interview_id}")
+async def delete_interview(interview_id: int):
+    """Delete/cancel an interview"""
+    if interview_id in interviews_db:
+        del interviews_db[interview_id]
+    return {"message": "Interview cancelled"}
+
+
+class TextResponse(BaseModel):
+    question_id: int
+    text_response: str
+    thinking_time_seconds: Optional[float] = 0
+
+
+@app.post("/api/evaluation/submit-text")
+async def submit_text_response(response: TextResponse):
+    """Submit text response (demo mode - returns mock evaluation)"""
+    return {
+        "response_id": response.question_id,
+        "message": "Response recorded",
+        "scores": {
+            "content_score": 75,
+            "relevance_score": 80,
+            "clarity_score": 78
+        }
+    }
+
+
 @app.get("/api/test")
 async def test_endpoint():
     return {"test": "success", "message": "API is working!"}
