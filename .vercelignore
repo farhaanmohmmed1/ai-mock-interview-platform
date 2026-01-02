@@ -21,8 +21,8 @@ docs/
 requirements-dev.txt
 requirements-full.txt
 
-# Exclude frontend (deploy separately or use CDN)
-frontend/
+# Exclude backend (using standalone API)
+backend/
 
 # Exclude Python cache
 __pycache__/
@@ -52,3 +52,6 @@ Thumbs.db
 # Exclude setup scripts
 setup.sh
 setupforwindows.bat
+
+# Exclude node_modules (will be installed during build)
+frontend/node_modules/
