@@ -361,7 +361,7 @@ const Results = () => {
                         <CheckCircle color="info" />
                       </ListItemIcon>
                       <ListItemText
-                        primary={rec.title || rec}
+                        primary={rec.text || rec.title || rec}
                         secondary={rec.description}
                       />
                     </ListItem>
@@ -385,6 +385,58 @@ const Results = () => {
               </List>
             </Paper>
           </Grid>
+
+          {/* Questions Summary */}
+          {results?.questions_summary && results.questions_summary.length > 0 && (
+            <Grid item xs={12}>
+              <Paper sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  <RecordVoiceOver sx={{ mr: 1, verticalAlign: 'middle', color: 'primary.main' }} />
+                  Question-by-Question Analysis
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+                {results.questions_summary.map((q, index) => (
+                  <Card key={index} sx={{ mb: 2, bgcolor: 'grey.50' }}>
+                    <CardContent>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                        <Typography variant="subtitle1" fontWeight="bold" sx={{ flex: 1 }}>
+                          Q{index + 1}: {q.question}
+                        </Typography>
+                        <Chip 
+                          label={`${q.score}%`} 
+                          color={q.score >= 80 ? 'success' : q.score >= 60 ? 'warning' : 'error'}
+                          size="small"
+                        />
+                      </Box>
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          <strong>Feedback:</strong> {q.feedback}
+                        </Typography>
+                        {q.user_answer && (
+                          <Typography variant="body2" sx={{ mb: 1, p: 1, bgcolor: 'white', borderRadius: 1 }}>
+                            <strong>Your Answer:</strong> {q.user_answer}
+                          </Typography>
+                        )}
+                        {q.ideal_answer && (
+                          <Typography variant="body2" sx={{ p: 1, bgcolor: 'success.light', borderRadius: 1, color: 'success.dark' }}>
+                            <strong>Ideal Answer Points:</strong> {q.ideal_answer}
+                          </Typography>
+                        )}
+                      </Box>
+                      <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        {q.voice_clarity && (
+                          <Chip size="small" label={`Voice Clarity: ${q.voice_clarity}%`} variant="outlined" />
+                        )}
+                        {q.concept_clarity && (
+                          <Chip size="small" label={`Concept Clarity: ${q.concept_clarity}%`} variant="outlined" />
+                        )}
+                      </Box>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Paper>
+            </Grid>
+          )}
         </Grid>
 
         {/* Action Buttons */}

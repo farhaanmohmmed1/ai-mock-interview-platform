@@ -132,6 +132,8 @@ DEMO_RESULTS = {
         "confidence_score": 80,
         "emotion_score": 76,
         "duration_minutes": 18.5,
+        "total_questions": 5,
+        "answered_questions": 5,
         "feedback": "Excellent technical knowledge demonstrated. Your explanations of data structures were clear and accurate. Consider providing more real-world examples to strengthen your answers.",
         "weak_areas": ["System design depth", "Time complexity analysis"],
         "strong_areas": ["Core programming concepts", "Problem-solving approach", "Code explanation"],
@@ -141,11 +143,51 @@ DEMO_RESULTS = {
             {"text": "Great job on explaining your thought process - keep it up!"}
         ],
         "questions_summary": [
-            {"question": "Explain the difference between a stack and a queue.", "score": 90, "feedback": "Excellent explanation with good examples"},
-            {"question": "What is the time complexity of binary search?", "score": 75, "feedback": "Correct answer but could explain the derivation better"},
-            {"question": "Explain the concept of object-oriented programming.", "score": 88, "feedback": "Comprehensive coverage of OOP principles"},
-            {"question": "How would you design a URL shortening service?", "score": 72, "feedback": "Good start but missing scalability considerations"},
-            {"question": "What is the difference between SQL and NoSQL databases?", "score": 85, "feedback": "Clear comparison with practical use cases"}
+            {
+                "question": "Explain the difference between a stack and a queue.",
+                "score": 90,
+                "feedback": "Excellent explanation with good examples",
+                "user_answer": "A stack follows LIFO (Last In First Out) principle where the last element added is the first one to be removed, like a stack of plates. A queue follows FIFO (First In First Out) where the first element added is the first to be removed, like a line at a ticket counter.",
+                "ideal_answer": "Stack: LIFO structure with push/pop operations, O(1) time. Used in function calls, undo operations. Queue: FIFO structure with enqueue/dequeue, O(1) time. Used in BFS, task scheduling, buffering.",
+                "voice_clarity": 88,
+                "concept_clarity": 92
+            },
+            {
+                "question": "What is the time complexity of binary search?",
+                "score": 75,
+                "feedback": "Correct answer but could explain the derivation better",
+                "user_answer": "Binary search has O(log n) time complexity because we divide the array in half each time.",
+                "ideal_answer": "O(log n) because each comparison eliminates half the remaining elements. For n elements, we need log₂(n) comparisons. Space complexity is O(1) for iterative, O(log n) for recursive due to call stack.",
+                "voice_clarity": 82,
+                "concept_clarity": 70
+            },
+            {
+                "question": "Explain the concept of object-oriented programming.",
+                "score": 88,
+                "feedback": "Comprehensive coverage of OOP principles",
+                "user_answer": "OOP is a programming paradigm based on objects containing data and methods. The four pillars are encapsulation, inheritance, polymorphism, and abstraction. It helps in code reusability and organization.",
+                "ideal_answer": "OOP organizes code into objects. Four pillars: 1) Encapsulation - bundling data with methods, 2) Inheritance - creating new classes from existing ones, 3) Polymorphism - same interface different implementations, 4) Abstraction - hiding complex implementation details.",
+                "voice_clarity": 85,
+                "concept_clarity": 90
+            },
+            {
+                "question": "How would you design a URL shortening service?",
+                "score": 72,
+                "feedback": "Good start but missing scalability considerations",
+                "user_answer": "I would create a database to store original URLs with short codes. Generate unique codes using base62 encoding. When someone accesses the short URL, look up and redirect to the original.",
+                "ideal_answer": "Key components: 1) Hash/encode long URLs to short codes (base62), 2) Database for mapping (NoSQL for scale), 3) Cache layer (Redis) for popular URLs, 4) Load balancer, 5) Analytics tracking. Consider: collision handling, expiration, rate limiting, 301 vs 302 redirects.",
+                "voice_clarity": 78,
+                "concept_clarity": 68
+            },
+            {
+                "question": "What is the difference between SQL and NoSQL databases?",
+                "score": 85,
+                "feedback": "Clear comparison with practical use cases",
+                "user_answer": "SQL databases are relational with fixed schemas and use structured query language. They're good for complex queries and transactions. NoSQL databases are non-relational, flexible schema, and better for large-scale distributed data.",
+                "ideal_answer": "SQL: Relational, ACID compliant, fixed schema, vertical scaling, good for complex joins. Examples: PostgreSQL, MySQL. NoSQL: Non-relational, BASE, flexible schema, horizontal scaling, types include document (MongoDB), key-value (Redis), column (Cassandra), graph (Neo4j).",
+                "voice_clarity": 86,
+                "concept_clarity": 84
+            }
         ]
     },
     102: {
@@ -159,6 +201,8 @@ DEMO_RESULTS = {
         "confidence_score": 72,
         "emotion_score": 78,
         "duration_minutes": 15.2,
+        "total_questions": 5,
+        "answered_questions": 5,
         "feedback": "Good communication skills and confident delivery. Your self-introduction was well-structured. Work on providing more specific examples from your experience.",
         "weak_areas": ["Specific examples", "Quantifiable achievements"],
         "strong_areas": ["Communication clarity", "Professional demeanor", "Positive attitude"],
@@ -168,11 +212,51 @@ DEMO_RESULTS = {
             {"text": "Research the company more to tailor your answers"}
         ],
         "questions_summary": [
-            {"question": "Tell me about yourself.", "score": 78, "feedback": "Good structure but could be more concise"},
-            {"question": "What are your greatest strengths and weaknesses?", "score": 70, "feedback": "Be more specific with examples"},
-            {"question": "Where do you see yourself in 5 years?", "score": 75, "feedback": "Show more alignment with company goals"},
-            {"question": "Why should we hire you?", "score": 72, "feedback": "Highlight unique value proposition"},
-            {"question": "Do you have any questions for us?", "score": 80, "feedback": "Good thoughtful questions asked"}
+            {
+                "question": "Tell me about yourself.",
+                "score": 78,
+                "feedback": "Good structure but could be more concise",
+                "user_answer": "I'm a software developer with 3 years of experience. I graduated from XYZ University and have worked on various web development projects. I enjoy problem-solving and learning new technologies.",
+                "ideal_answer": "Present-Past-Future format: Current role and key achievement, relevant background and skills, why you're excited about this opportunity. Keep it under 2 minutes with specific accomplishments.",
+                "voice_clarity": 82,
+                "concept_clarity": 75
+            },
+            {
+                "question": "What are your greatest strengths and weaknesses?",
+                "score": 70,
+                "feedback": "Be more specific with examples",
+                "user_answer": "My strength is problem-solving and I work well under pressure. My weakness is sometimes I focus too much on details.",
+                "ideal_answer": "Strengths: Give specific example with impact (e.g., 'My analytical skills helped reduce bugs by 30%'). Weakness: Show self-awareness and improvement steps (e.g., 'I used to struggle with delegation, now I use task management tools and regular check-ins').",
+                "voice_clarity": 78,
+                "concept_clarity": 65
+            },
+            {
+                "question": "Where do you see yourself in 5 years?",
+                "score": 75,
+                "feedback": "Show more alignment with company goals",
+                "user_answer": "In 5 years, I see myself in a senior technical role, leading projects and mentoring junior developers. I want to continue growing my skills.",
+                "ideal_answer": "Show ambition aligned with company growth. Mention skills you want to develop, leadership aspirations, and how you'd contribute to the organization's goals. Research company's career paths.",
+                "voice_clarity": 80,
+                "concept_clarity": 72
+            },
+            {
+                "question": "Why should we hire you?",
+                "score": 72,
+                "feedback": "Highlight unique value proposition",
+                "user_answer": "I have the skills and experience you're looking for. I'm a hard worker and quick learner. I'm passionate about technology.",
+                "ideal_answer": "Connect your unique skills to their specific needs. Use format: 'Based on the job description, you need X. I have proven experience in X, demonstrated by [specific achievement]. I'd bring [unique value].'",
+                "voice_clarity": 75,
+                "concept_clarity": 68
+            },
+            {
+                "question": "Do you have any questions for us?",
+                "score": 80,
+                "feedback": "Good thoughtful questions asked",
+                "user_answer": "What does a typical day look like? What are the growth opportunities? How would you describe the team culture?",
+                "ideal_answer": "Ask insightful questions about: team structure, success metrics, challenges the team faces, company culture, growth opportunities. Avoid salary/benefits questions in first round.",
+                "voice_clarity": 84,
+                "concept_clarity": 78
+            }
         ]
     },
     103: {
@@ -186,6 +270,8 @@ DEMO_RESULTS = {
         "confidence_score": 89,
         "emotion_score": 92,
         "duration_minutes": 20.1,
+        "total_questions": 5,
+        "answered_questions": 5,
         "feedback": "Outstanding performance! Your behavioral answers were well-structured using the STAR method. Excellent emotional intelligence and self-awareness demonstrated.",
         "weak_areas": ["Could elaborate more on lessons learned"],
         "strong_areas": ["STAR method usage", "Self-awareness", "Conflict resolution", "Leadership examples"],
@@ -195,9 +281,124 @@ DEMO_RESULTS = {
             {"text": "Excellent job showing growth mindset"}
         ],
         "questions_summary": [
-            {"question": "Tell me about a time you faced a conflict at work.", "score": 92, "feedback": "Excellent example with clear resolution"},
-            {"question": "How do you handle stress and pressure?", "score": 85, "feedback": "Good strategies mentioned"},
-            {"question": "Describe a situation where you showed leadership.", "score": 90, "feedback": "Strong leadership example"},
+            {
+                "question": "Tell me about a time you faced a conflict at work.",
+                "score": 92,
+                "feedback": "Excellent example with clear resolution",
+                "user_answer": "In my previous role, a colleague and I disagreed on the project approach. I initiated a one-on-one discussion, listened to their concerns, and we found a compromise that incorporated both ideas. The project was delivered successfully.",
+                "ideal_answer": "Use STAR method: Situation (brief context), Task (your responsibility), Action (specific steps you took), Result (positive outcome with metrics if possible). Show emotional intelligence and collaboration.",
+                "voice_clarity": 90,
+                "concept_clarity": 94
+            },
+            {
+                "question": "How do you handle stress and pressure?",
+                "score": 85,
+                "feedback": "Good strategies mentioned",
+                "user_answer": "I prioritize tasks, break large projects into smaller milestones, and maintain open communication with stakeholders. I also practice regular exercise and mindfulness to stay balanced.",
+                "ideal_answer": "Mention specific techniques: prioritization methods (Eisenhower matrix), breaking tasks down, time management, communication strategies. Include both professional and personal stress management approaches.",
+                "voice_clarity": 88,
+                "concept_clarity": 82
+            },
+            {
+                "question": "Describe a situation where you showed leadership.",
+                "score": 90,
+                "feedback": "Strong leadership example",
+                "user_answer": "When our team lead was on leave, I stepped up to coordinate a critical release. I organized daily standups, delegated tasks based on team strengths, and ensured we delivered on time. The team appreciated the clear communication.",
+                "ideal_answer": "Show initiative, delegation, communication, and results. Leadership isn't just about titles - show how you influenced others, made decisions, and achieved team goals.",
+                "voice_clarity": 92,
+                "concept_clarity": 88
+            },
+            {
+                "question": "What motivates you in your work?",
+                "score": 88,
+                "feedback": "Authentic and aligned with role",
+                "user_answer": "I'm motivated by solving complex problems and seeing the impact of my work. I enjoy learning new technologies and collaborating with talented people. Making users' lives easier through good software gives me satisfaction.",
+                "ideal_answer": "Be authentic but align with the role. Mention intrinsic motivators (learning, impact, growth) over extrinsic (money, titles). Show passion for the field and company's mission.",
+                "voice_clarity": 86,
+                "concept_clarity": 90
+            },
+            {
+                "question": "How do you prioritize your tasks?",
+                "score": 85,
+                "feedback": "Practical and organized approach",
+                "user_answer": "I use a combination of urgency and importance to prioritize. I start each day reviewing my task list, identify the top 3 priorities, and block focused time for deep work. I also keep stakeholders updated on progress.",
+                "ideal_answer": "Mention specific frameworks (Eisenhower matrix, MoSCoW), tools you use, how you handle competing priorities, and communication with stakeholders. Show flexibility and adaptability.",
+                "voice_clarity": 84,
+                "concept_clarity": 86
+            }
+        ]
+    },
+    104: {
+        "id": 104,
+        "interview_type": "upsc",
+        "status": "completed",
+        "overall_score": 71,
+        "content_score": 74,
+        "clarity_score": 68,
+        "fluency_score": 72,
+        "confidence_score": 70,
+        "emotion_score": 65,
+        "duration_minutes": 25.3,
+        "total_questions": 5,
+        "answered_questions": 5,
+        "feedback": "Good foundational knowledge of governance and ethics. Your analytical skills are developing well. Focus on presenting balanced perspectives and supporting arguments with current examples.",
+        "weak_areas": ["Current affairs integration", "Multiple perspectives", "Time management"],
+        "strong_areas": ["Constitutional knowledge", "Ethical reasoning", "Structured thinking"],
+        "recommendations": [
+            {"text": "Read newspaper editorials daily for current affairs"},
+            {"text": "Practice presenting multiple viewpoints on issues"},
+            {"text": "Work on time management - some answers were too long"},
+            {"text": "Include more recent examples and case studies"}
+        ],
+        "questions_summary": [
+            {
+                "question": "What are the key challenges facing India's agricultural sector?",
+                "score": 75,
+                "feedback": "Good points but missing recent policy changes",
+                "user_answer": "Key challenges include fragmented land holdings, dependence on monsoons, lack of modern technology, poor storage infrastructure, and middlemen exploitation. Government schemes like PM-KISAN are trying to address income issues.",
+                "ideal_answer": "Cover: 1) Structural issues (land fragmentation, small holdings), 2) Infrastructure (irrigation, storage, cold chains), 3) Market access (MSP issues, APMC reforms), 4) Climate change impact, 5) Technology adoption. Mention recent reforms like farm laws, e-NAM, PM-KISAN with critical analysis.",
+                "voice_clarity": 72,
+                "concept_clarity": 78
+            },
+            {
+                "question": "Discuss the importance of ethics in public administration.",
+                "score": 78,
+                "feedback": "Strong ethical framework presented",
+                "user_answer": "Ethics in public administration ensures accountability, transparency, and public trust. Civil servants must uphold integrity, impartiality, and dedication to public service. The Code of Conduct for civil servants outlines these principles.",
+                "ideal_answer": "Discuss: 1) Foundational values (integrity, objectivity, impartiality), 2) Constitutional morality, 3) Nolan Committee principles, 4) Recent examples of ethical dilemmas, 5) Role of RTI and Lokpal, 6) Work culture and organizational ethics. Use case studies.",
+                "voice_clarity": 75,
+                "concept_clarity": 80
+            },
+            {
+                "question": "What is your understanding of cooperative federalism?",
+                "score": 72,
+                "feedback": "Correct concept but needs more examples",
+                "user_answer": "Cooperative federalism is where the Centre and States work together for national development rather than in conflict. GST Council and NITI Aayog are examples. It balances federal structure with unified governance.",
+                "ideal_answer": "Define cooperative vs competitive federalism. Examples: GST Council (consensus-based), NITI Aayog replacing Planning Commission, Inter-State Council, Finance Commission. Discuss Article 263, recent tensions (GST compensation, farm laws), and need for cooperative federalism in diverse India.",
+                "voice_clarity": 70,
+                "concept_clarity": 74
+            },
+            {
+                "question": "How can India balance economic development with environmental sustainability?",
+                "score": 65,
+                "feedback": "Need more balanced perspective",
+                "user_answer": "India needs both development and environment protection. We can promote renewable energy, implement stricter pollution norms, and encourage sustainable industries. The Paris Agreement commits India to clean energy targets.",
+                "ideal_answer": "Discuss: 1) Green growth model, 2) NDCs under Paris Agreement, 3) National Action Plan on Climate Change, 4) Circular economy, 5) Environmental impact assessment reforms, 6) Case studies (renewable energy success, forest rights). Present multiple perspectives - development needs vs environmental limits.",
+                "voice_clarity": 65,
+                "concept_clarity": 66
+            },
+            {
+                "question": "What role does civil society play in strengthening democracy?",
+                "score": 68,
+                "feedback": "Good but could include international comparisons",
+                "user_answer": "Civil society acts as a watchdog, raises awareness on issues, and holds government accountable. NGOs, media, and citizen groups contribute to participatory democracy. RTI movement is an example of civil society impact.",
+                "ideal_answer": "Roles: 1) Advocacy and awareness, 2) Service delivery gap filling, 3) Policy input and monitoring, 4) Promoting participation, 5) Protecting rights. Examples: RTI movement, environmental activism, women's rights. Discuss challenges: foreign funding regulations, FCRA, space for dissent. International comparisons helpful.",
+                "voice_clarity": 68,
+                "concept_clarity": 70
+            }
+        ]
+    }
+}
             {"question": "What motivates you in your work?", "score": 88, "feedback": "Authentic and aligned with role"},
             {"question": "How do you prioritize your tasks?", "score": 85, "feedback": "Practical and organized approach"}
         ]
