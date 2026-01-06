@@ -399,39 +399,6 @@ DEMO_RESULTS = {
         ]
     }
 }
-            {"question": "What motivates you in your work?", "score": 88, "feedback": "Authentic and aligned with role"},
-            {"question": "How do you prioritize your tasks?", "score": 85, "feedback": "Practical and organized approach"}
-        ]
-    },
-    104: {
-        "id": 104,
-        "interview_type": "upsc",
-        "status": "completed",
-        "overall_score": 71,
-        "content_score": 74,
-        "clarity_score": 68,
-        "fluency_score": 72,
-        "confidence_score": 70,
-        "emotion_score": 65,
-        "duration_minutes": 25.3,
-        "feedback": "Good foundational knowledge of governance and ethics. Your analytical skills are developing well. Focus on presenting balanced perspectives and supporting arguments with current examples.",
-        "weak_areas": ["Current affairs integration", "Multiple perspectives", "Time management"],
-        "strong_areas": ["Constitutional knowledge", "Ethical reasoning", "Structured thinking"],
-        "recommendations": [
-            {"text": "Read editorials daily to improve current affairs knowledge"},
-            {"text": "Practice presenting multiple viewpoints on issues"},
-            {"text": "Work on time management - some answers were too long"},
-            {"text": "Include more recent examples and case studies"}
-        ],
-        "questions_summary": [
-            {"question": "What are the key challenges facing India's agricultural sector?", "score": 75, "feedback": "Good points but missing recent policy changes"},
-            {"question": "Discuss the importance of ethics in public administration.", "score": 78, "feedback": "Strong ethical framework presented"},
-            {"question": "What is your understanding of cooperative federalism?", "score": 72, "feedback": "Correct concept but needs more examples"},
-            {"question": "How can India balance economic development with environmental sustainability?", "score": 65, "feedback": "Need more balanced perspective"},
-            {"question": "What role does civil society play in strengthening democracy?", "score": 68, "feedback": "Good but could include international comparisons"}
-        ]
-    }
-}
 
 # In-memory storage for demo (resets on cold start)
 users_db = {}
