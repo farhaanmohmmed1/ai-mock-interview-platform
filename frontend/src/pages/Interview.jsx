@@ -292,7 +292,7 @@ const Interview = () => {
       formData.append('audio', blob, 'recording.webm');
       formData.append('question_id', currentQuestion.id);
 
-      const response = await fetch('${API_URL}/api/evaluation/transcribe', {
+      const response = await fetch(`${API_URL}/api/evaluation/transcribe`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -367,7 +367,7 @@ const Interview = () => {
           formData.append('audio', audioBlob, 'recording.webm');
           formData.append('question_id', currentQuestion.id);
 
-          const transcribeResponse = await fetch('${API_URL}/api/evaluation/transcribe', {
+          const transcribeResponse = await fetch(`${API_URL}/api/evaluation/transcribe`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -392,7 +392,7 @@ const Interview = () => {
       }
 
       // Now submit the answer
-      const response = await fetch('${API_URL}/api/evaluation/submit-text', {
+      const response = await fetch(`${API_URL}/api/evaluation/submit-text`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -100,7 +100,7 @@ const InterviewSetup = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('${API_URL}/api/resume/list', {
+      const response = await fetch(`${API_URL}/api/resume/list`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -151,7 +151,7 @@ const InterviewSetup = () => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('${API_URL}/api/resume/upload', {
+      const response = await fetch(`${API_URL}/api/resume/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -199,7 +199,7 @@ const InterviewSetup = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('${API_URL}/api/interview/create', {
+      const response = await fetch(`${API_URL}/api/interview/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

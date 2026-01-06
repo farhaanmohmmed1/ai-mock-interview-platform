@@ -47,7 +47,7 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('${API_URL}/api/dashboard/stats', {
+      const response = await fetch(`${API_URL}/api/dashboard/stats`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -55,14 +55,10 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setStats({
-          total_interviews: data.stats?.total_interviews || 0,
-          average_score: data.stats?.average_score || 0,
-          improvement_rate: data.stats?.improvement_rate || 0,
+          total_interviews: data.total_interviews || 0,
+          average_score: data.average_score || 0,
+          improvement_rate: data.improvement_rate || 0,
         });
-        // Also set recent interviews from dashboard response
-        if (data.recent_interviews) {
-          setRecentInterviews(data.recent_interviews);
-        }
       }
     } catch (err) {
       console.error('Dashboard fetch error:', err);
@@ -78,7 +74,7 @@ const Dashboard = () => {
   const fetchRecentInterviews = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('${API_URL}/api/interview/', {
+      const response = await fetch(`${API_URL}/api/interview/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
