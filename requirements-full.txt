@@ -27,7 +27,8 @@ python-docx==1.1.0
 pyresparser==1.0.6
 
 # Speech Processing
-SpeechRecognition==3.10.0
+openai-whisper==20231117  # High-accuracy speech recognition (97%+)
+SpeechRecognition==3.10.0  # Fallback speech recognition
 pydub==0.25.1
 librosa==0.10.1
 soundfile==0.12.1

@@ -19,6 +19,13 @@ try:
 except ImportError:
     AI_MODULES_AVAILABLE = False
 
+# Check if proctoring is available
+try:
+    from backend.api import proctoring
+    PROCTORING_AVAILABLE = True
+except ImportError:
+    PROCTORING_AVAILABLE = False
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -67,6 +74,10 @@ app.include_router(interview.router, prefix="/api/interview", tags=["Interview"]
 app.include_router(evaluation.router, prefix="/api/evaluation", tags=["Evaluation"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
 
+# Include proctoring router if available
+if PROCTORING_AVAILABLE:
+    app.include_router(proctoring.router, prefix="/api", tags=["Proctoring"])
+
 
 @app.get("/")
 async def root():
@@ -85,7 +96,8 @@ async def health_check():
     return {
         "status": "healthy",
         "database": "connected",
-        "ai_modules": "loaded" if AI_MODULES_AVAILABLE else "unavailable (lightweight mode)"
+        "ai_modules": "loaded" if AI_MODULES_AVAILABLE else "unavailable (lightweight mode)",
+        "proctoring": "available" if PROCTORING_AVAILABLE else "unavailable"
     }
 
 

@@ -12,21 +12,31 @@ from backend.api.auth import get_current_user
 try:
     from ai_modules.nlp.question_generator import QuestionGenerator
     from ai_modules.adaptive.adaptive_system import AdaptiveSystem
+    from ai_modules.agent import InterviewAgent
     AI_MODULES_AVAILABLE = True
+    AGENT_AVAILABLE = True
 except ImportError:
     AI_MODULES_AVAILABLE = False
+    AGENT_AVAILABLE = False
     QuestionGenerator = None
     AdaptiveSystem = None
+    InterviewAgent = None
 
 router = APIRouter()
 
-# Initialize AI modules only if available
+# Initialize AI modules and agent
 if AI_MODULES_AVAILABLE:
     question_generator = QuestionGenerator()
     adaptive_system = AdaptiveSystem()
 else:
     question_generator = None
     adaptive_system = None
+
+# Initialize the Interview Agent (central orchestrator)
+if AGENT_AVAILABLE:
+    interview_agent = InterviewAgent()
+else:
+    interview_agent = None
 
 
 class InterviewCreate(BaseModel):
@@ -82,6 +92,23 @@ class StartInterviewResponse(BaseModel):
     interview_id: int
     questions: List[QuestionResponse]
     message: str
+    difficulty_level: Optional[str] = None
+    context_summary: Optional[dict] = None
+
+
+class AgentInsightsResponse(BaseModel):
+    observations: List[dict] = []
+    decisions: List[dict] = []
+    current_phase: Optional[str] = None
+
+
+class InterviewStatusResponse(BaseModel):
+    interview_id: int
+    phase: str
+    questions_total: int
+    questions_answered: int
+    current_performance: dict
+    started_at: str
 
 
 @router.post("/create", response_model=StartInterviewResponse, status_code=status.HTTP_201_CREATED)
@@ -90,7 +117,7 @@ async def create_interview(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Create and start a new interview"""
+    """Create and start a new interview using the Interview Agent"""
     # Validate interview type
     valid_types = ["general", "technical", "hr", "upsc"]
     if interview_data.interview_type not in valid_types:
@@ -105,6 +132,8 @@ async def create_interview(
     
     # Get resume if technical interview
     resume = None
+    resume_data = None
+    user_skills = None
     if interview_data.interview_type == "technical":
         if not interview_data.resume_id:
             raise HTTPException(
@@ -122,6 +151,9 @@ async def create_interview(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Resume not found"
             )
+        
+        resume_data = resume.parsed_data
+        user_skills = resume.skills
     
     # Check AI module availability
     if not AI_MODULES_AVAILABLE or question_generator is None:
@@ -130,27 +162,16 @@ async def create_interview(
             detail="AI modules not available. Interview creation requires full deployment."
         )
     
-    # Use provided difficulty level or get adaptive one
-    difficulty = interview_data.difficulty_level
-    if not difficulty and adaptive_system:
-        difficulty = adaptive_system.get_recommended_difficulty(
-            user_id=current_user.id,
-            interview_type=interview_data.interview_type,
-            db=db
-        )
-    if not difficulty:
-        difficulty = "medium"
-    
     # Get interview mode
     interview_mode = interview_data.interview_mode or "standard"
     
-    # Create interview
+    # Create interview record first to get ID
     new_interview = Interview(
         user_id=current_user.id,
         resume_id=interview_data.resume_id,
         interview_type=interview_data.interview_type,
         status="in_progress",
-        difficulty_level=difficulty,
+        difficulty_level=interview_data.difficulty_level or "medium",
         started_at=datetime.utcnow()
     )
     
@@ -158,18 +179,74 @@ async def create_interview(
     db.commit()
     db.refresh(new_interview)
     
-    # Generate questions
-    questions_data = question_generator.generate_questions(
-        interview_type=interview_data.interview_type,
-        difficulty=difficulty,
-        interview_mode=interview_mode,
-        resume_data=resume.parsed_data if resume else None,
-        skills=resume.skills if resume else None,
-        user_id=current_user.id,
-        db=db
-    )
+    # Use Interview Agent if available for intelligent orchestration
+    context_summary = None
+    if AGENT_AVAILABLE and interview_agent is not None:
+        try:
+            # Start interview via agent - agent handles question generation, 
+            # difficulty recommendation, and context management
+            agent_session = interview_agent.start_interview(
+                interview_id=new_interview.id,
+                user_id=current_user.id,
+                interview_type=interview_data.interview_type,
+                interview_mode=interview_mode,
+                difficulty_level=interview_data.difficulty_level,  # Agent will adapt if None
+                resume_data=resume_data,
+                user_skills=user_skills,
+                db=db
+            )
+            
+            questions_data = agent_session["questions"]
+            difficulty = agent_session["difficulty_level"]
+            context_summary = agent_session.get("context_summary")
+            
+            # Update interview with agent-recommended difficulty
+            new_interview.difficulty_level = difficulty
+            
+        except Exception as e:
+            # Fall back to direct question generation if agent fails
+            difficulty = interview_data.difficulty_level or "medium"
+            if not difficulty and adaptive_system:
+                difficulty = adaptive_system.get_recommended_difficulty(
+                    user_id=current_user.id,
+                    interview_type=interview_data.interview_type,
+                    db=db
+                )
+            
+            questions_data = question_generator.generate_questions(
+                interview_type=interview_data.interview_type,
+                difficulty=difficulty,
+                interview_mode=interview_mode,
+                resume_data=resume_data,
+                skills=user_skills,
+                user_id=current_user.id,
+                db=db
+            )
+    else:
+        # Fallback: Use direct question generation without agent
+        difficulty = interview_data.difficulty_level
+        if not difficulty and adaptive_system:
+            difficulty = adaptive_system.get_recommended_difficulty(
+                user_id=current_user.id,
+                interview_type=interview_data.interview_type,
+                db=db
+            )
+        if not difficulty:
+            difficulty = "medium"
+        
+        new_interview.difficulty_level = difficulty
+        
+        questions_data = question_generator.generate_questions(
+            interview_type=interview_data.interview_type,
+            difficulty=difficulty,
+            interview_mode=interview_mode,
+            resume_data=resume_data,
+            skills=user_skills,
+            user_id=current_user.id,
+            db=db
+        )
     
-    # Save questions
+    # Save questions to database
     questions = []
     for idx, q_data in enumerate(questions_data):
         question = Question(
@@ -177,7 +254,7 @@ async def create_interview(
             question_text=q_data["text"],
             question_type=q_data["type"],
             category=q_data.get("category"),
-            difficulty=q_data["difficulty"],
+            difficulty=q_data.get("difficulty", difficulty),
             expected_keywords=q_data.get("keywords", []),
             order_number=idx + 1
         )
@@ -194,7 +271,89 @@ async def create_interview(
     return {
         "interview_id": new_interview.id,
         "questions": questions,
-        "message": f"{interview_data.interview_type.title()} interview started successfully"
+        "message": f"{interview_data.interview_type.title()} interview started successfully",
+        "difficulty_level": new_interview.difficulty_level,
+        "context_summary": context_summary
+    }
+
+
+@router.get("/agent/status/{interview_id}", response_model=InterviewStatusResponse)
+async def get_agent_interview_status(
+    interview_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get interview status from the Interview Agent"""
+    # Verify interview belongs to user
+    interview = db.query(Interview).filter(
+        Interview.id == interview_id,
+        Interview.user_id == current_user.id
+    ).first()
+    
+    if not interview:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview not found"
+        )
+    
+    if not AGENT_AVAILABLE or interview_agent is None:
+        # Return basic status if agent not available
+        return {
+            "interview_id": interview_id,
+            "phase": interview.status,
+            "questions_total": interview.total_questions,
+            "questions_answered": interview.answered_questions or 0,
+            "current_performance": {},
+            "started_at": interview.started_at.isoformat() if interview.started_at else ""
+        }
+    
+    status_data = interview_agent.get_interview_status(interview_id)
+    
+    if not status_data:
+        return {
+            "interview_id": interview_id,
+            "phase": interview.status,
+            "questions_total": interview.total_questions,
+            "questions_answered": interview.answered_questions or 0,
+            "current_performance": {},
+            "started_at": interview.started_at.isoformat() if interview.started_at else ""
+        }
+    
+    return status_data
+
+
+@router.get("/agent/insights/{interview_id}", response_model=AgentInsightsResponse)
+async def get_agent_insights(
+    interview_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get Interview Agent's observations and decisions for transparency"""
+    # Verify interview belongs to user
+    interview = db.query(Interview).filter(
+        Interview.id == interview_id,
+        Interview.user_id == current_user.id
+    ).first()
+    
+    if not interview:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview not found"
+        )
+    
+    if not AGENT_AVAILABLE or interview_agent is None:
+        return {
+            "observations": [],
+            "decisions": [],
+            "current_phase": interview.status
+        }
+    
+    insights = interview_agent.get_agent_insights(interview_id)
+    
+    return insights if insights else {
+        "observations": [],
+        "decisions": [],
+        "current_phase": interview.status
     }
 
 
@@ -259,33 +418,70 @@ async def complete_interview(
             detail="Interview already completed"
         )
     
-    # Calculate final scores and generate report
-    report_gen = None
-    try:
-        from ai_modules.adaptive.report_generator import ReportGenerator
-        report_gen = ReportGenerator()
-    except ImportError:
-        pass
+    # Use Interview Agent for comprehensive analysis if available
+    if AGENT_AVAILABLE and interview_agent is not None:
+        try:
+            # Complete interview via agent - agent handles:
+            # - Weak area identification
+            # - Strong area identification  
+            # - Skill gap analysis
+            # - Personalized suggestions
+            # - Learning path generation
+            # - Comprehensive report
+            agent_report = interview_agent.complete_interview(
+                interview_id=interview_id,
+                db=db
+            )
+            
+            report = {
+                "overall_score": agent_report.get("scores", {}).get("overall_score", 50),
+                "content_score": agent_report.get("scores", {}).get("content_score", 50),
+                "clarity_score": agent_report.get("scores", {}).get("clarity_score", 50),
+                "fluency_score": agent_report.get("scores", {}).get("fluency_score", 50),
+                "confidence_score": agent_report.get("scores", {}).get("confidence_score", 50),
+                "emotion_score": agent_report.get("scores", {}).get("confidence_score", 50),
+                "weak_areas": agent_report.get("weak_areas", []),
+                "strong_areas": agent_report.get("strong_areas", []),
+                "feedback": agent_report.get("feedback", "Interview completed."),
+                "recommendations": agent_report.get("suggestions", []),
+                "skill_gaps": agent_report.get("skill_gaps", []),
+                "learning_path": agent_report.get("learning_path", {}),
+                "agent_insights": agent_report.get("agent_insights", {})
+            }
+        except Exception as e:
+            # Fall back to direct report generation
+            report = None
+    else:
+        report = None
     
-    try:
-        if report_gen:
-            report = report_gen.generate_final_report(interview_id, db)
-        else:
-            raise Exception("Report generator not available")
-    except Exception as e:
-        # Generate default report if error
-        report = {
-            "overall_score": 50,
-            "content_score": 50,
-            "clarity_score": 50,
-            "fluency_score": 50,
-            "confidence_score": 50,
-            "emotion_score": 50,
-            "weak_areas": [],
-            "strong_areas": [],
-            "feedback": "Interview completed. Thank you for practicing!",
-            "recommendations": [{"text": "Keep practicing to improve your interview skills!"}]
-        }
+    # Fallback: Use direct report generator if agent failed or unavailable
+    if report is None:
+        report_gen = None
+        try:
+            from ai_modules.adaptive.report_generator import ReportGenerator
+            report_gen = ReportGenerator()
+        except ImportError:
+            pass
+        
+        try:
+            if report_gen:
+                report = report_gen.generate_final_report(interview_id, db)
+            else:
+                raise Exception("Report generator not available")
+        except Exception as e:
+            # Generate default report if error
+            report = {
+                "overall_score": 50,
+                "content_score": 50,
+                "clarity_score": 50,
+                "fluency_score": 50,
+                "confidence_score": 50,
+                "emotion_score": 50,
+                "weak_areas": [],
+                "strong_areas": [],
+                "feedback": "Interview completed. Thank you for practicing!",
+                "recommendations": [{"text": "Keep practicing to improve your interview skills!"}]
+            }
     
     # Update interview with scores
     interview.status = "completed"

@@ -1,16 +1,68 @@
-import speech_recognition as sr
 import librosa
 import numpy as np
-from typing import Dict
+from typing import Dict, Optional
 import os
 import soundfile as sf
 
+# Try to import Whisper (preferred) or fallback to speech_recognition
+WHISPER_AVAILABLE = False
+SPEECH_RECOGNITION_AVAILABLE = False
+
+try:
+    import whisper
+    WHISPER_AVAILABLE = True
+except ImportError:
+    pass
+
+try:
+    import speech_recognition as sr
+    SPEECH_RECOGNITION_AVAILABLE = True
+except ImportError:
+    pass
+
 
 class SpeechAnalyzer:
-    """Analyze speech for clarity, fluency, and transcription"""
+    """
+    Analyze speech for clarity, fluency, and transcription.
     
-    def __init__(self):
-        self.recognizer = sr.Recognizer()
+    Uses OpenAI Whisper for high-accuracy transcription (97%+).
+    Falls back to Google Speech Recognition if Whisper unavailable.
+    
+    Whisper Models:
+    - tiny: Fastest, ~32x realtime, ~72% accuracy
+    - base: Fast, ~16x realtime, ~82% accuracy  
+    - small: Balanced, ~6x realtime, ~90% accuracy
+    - medium: Accurate, ~2x realtime, ~95% accuracy
+    - large: Most accurate, ~1x realtime, ~97% accuracy
+    """
+    
+    def __init__(self, whisper_model: str = "base"):
+        """
+        Initialize speech analyzer.
+        
+        Args:
+            whisper_model: Whisper model size ('tiny', 'base', 'small', 'medium', 'large')
+                          Larger models are more accurate but slower.
+        """
+        self.whisper_model_name = whisper_model
+        self.whisper_model = None
+        self.recognizer = None
+        
+        # Initialize Whisper if available (preferred)
+        if WHISPER_AVAILABLE:
+            try:
+                self.whisper_model = whisper.load_model(whisper_model)
+                print(f"Whisper model '{whisper_model}' loaded successfully")
+            except Exception as e:
+                print(f"Failed to load Whisper model: {e}")
+        
+        # Fallback to speech_recognition
+        if self.whisper_model is None and SPEECH_RECOGNITION_AVAILABLE:
+            self.recognizer = sr.Recognizer()
+            print("Using Google Speech Recognition (fallback)")
+        
+        if self.whisper_model is None and self.recognizer is None:
+            print("WARNING: No speech recognition backend available!")
     
     def analyze_audio(self, audio_path: str) -> Dict:
         """Comprehensive audio analysis"""
@@ -38,6 +90,7 @@ class SpeechAnalyzer:
         
         return {
             "transcription": transcription,
+            "transcription_backend": self.get_transcription_backend(),
             "duration": audio_properties["duration"],
             "clarity_score": round(clarity_score, 2),
             "fluency_score": round(fluency_score, 2),
@@ -52,8 +105,64 @@ class SpeechAnalyzer:
         }
     
     def _transcribe_audio(self, audio_path: str) -> str:
-        """Transcribe audio to text"""
+        """
+        Transcribe audio to text using Whisper (preferred) or Google Speech API.
+        
+        Whisper provides ~97% accuracy vs ~85% for Google Speech Recognition.
+        """
+        # Try Whisper first (more accurate)
+        if self.whisper_model is not None:
+            return self._transcribe_with_whisper(audio_path)
+        
+        # Fallback to Google Speech Recognition
+        if self.recognizer is not None:
+            return self._transcribe_with_google(audio_path)
+        
+        return "[No speech recognition backend available]"
+    
+    def _transcribe_with_whisper(self, audio_path: str) -> str:
+        """
+        Transcribe using OpenAI Whisper.
+        
+        Whisper is a state-of-the-art speech recognition model with:
+        - 97%+ accuracy for English
+        - Robust to background noise
+        - Handles accents well
+        - Works offline
+        """
         try:
+            # Whisper can directly process audio files
+            result = self.whisper_model.transcribe(
+                audio_path,
+                language="en",  # Can be None for auto-detect
+                fp16=False,  # Use FP32 for CPU compatibility
+                verbose=False
+            )
+            
+            transcription = result.get("text", "").strip()
+            
+            if not transcription:
+                return "[No speech detected in audio]"
+            
+            return transcription
+            
+        except Exception as e:
+            print(f"Whisper transcription error: {e}")
+            # Try fallback to Google if available
+            if self.recognizer is not None:
+                return self._transcribe_with_google(audio_path)
+            return f"[Transcription error: {str(e)}]"
+    
+    def _transcribe_with_google(self, audio_path: str) -> str:
+        """
+        Transcribe using Google Speech Recognition (fallback).
+        
+        Less accurate (~85%) but doesn't require model download.
+        Requires internet connection.
+        """
+        try:
+            import speech_recognition as sr
+            
             with sr.AudioFile(audio_path) as source:
                 # Adjust for ambient noise
                 self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
@@ -64,14 +173,21 @@ class SpeechAnalyzer:
                 text = self.recognizer.recognize_google(audio)
                 return text
             except sr.UnknownValueError:
-                return "[Unable to transcribe audio]"
+                return "[Unable to transcribe audio - speech not clear]"
             except sr.RequestError:
-                # Fallback to basic transcription
-                return "[Speech recognition service unavailable]"
+                return "[Speech recognition service unavailable - check internet]"
                 
         except Exception as e:
-            print(f"Transcription error: {e}")
+            print(f"Google transcription error: {e}")
             return "[Error transcribing audio]"
+    
+    def get_transcription_backend(self) -> str:
+        """Return which transcription backend is being used"""
+        if self.whisper_model is not None:
+            return f"whisper-{self.whisper_model_name}"
+        elif self.recognizer is not None:
+            return "google-speech-recognition"
+        return "none"
     
     def _analyze_audio_properties(self, audio_path: str) -> Dict:
         """Analyze audio signal properties"""
