@@ -12,7 +12,7 @@ import cv2
 import base64
 from datetime import datetime
 
-from backend.core.security import get_current_user
+from backend.api.auth import get_current_user
 from backend.models import User
 
 # Import anti-cheat module

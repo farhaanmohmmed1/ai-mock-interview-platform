@@ -18,6 +18,7 @@
 class ProctoringClient {
     constructor(options = {}) {
         this.apiBase = options.apiBase || '/api/proctoring';
+        this.authToken = options.authToken || localStorage.getItem('token'); // Get auth token
         this.sessionId = null;
         this.isActive = false;
         this.videoStream = null;
@@ -71,7 +72,10 @@ class ProctoringClient {
             // Start server-side session
             const response = await fetch(`${this.apiBase}/session/start`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
                 body: JSON.stringify({
                     interview_id: interviewId,
                     sensitivity: sensitivity
@@ -194,7 +198,10 @@ class ProctoringClient {
         // Send to server for analysis
         const response = await fetch(`${this.apiBase}/analyze-frame`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.authToken}`
+            },
             body: JSON.stringify({
                 session_id: this.sessionId,
                 frame_base64: frameBase64,
@@ -340,7 +347,10 @@ class ProctoringClient {
         try {
             const response = await fetch(`${this.apiBase}/tab-switch`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
                 body: JSON.stringify({
                     session_id: this.sessionId,
                     event_type: eventType
@@ -481,7 +491,10 @@ class ProctoringClient {
         // Get final report from server
         try {
             const response = await fetch(`${this.apiBase}/session/${this.sessionId}/end`, {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.authToken}`
+                }
             });
             
             const result = await response.json();

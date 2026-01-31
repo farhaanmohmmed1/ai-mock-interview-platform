@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
@@ -23,7 +23,9 @@ import {
   DialogActions,
   AppBar,
   Toolbar,
+  Snackbar,
 } from '@mui/material';
+import ProctoringClient from '../proctoring';
 import {
   Videocam,
   VideocamOff,
@@ -81,10 +83,18 @@ const Interview = () => {
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState(null);
   const [transcribing, setTranscribing] = useState(false);
+  const [liveTranscriptSupported, setLiveTranscriptSupported] = useState(true);
   
   // Dialog state
   const [exitDialogOpen, setExitDialogOpen] = useState(false);
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
+
+  // Proctoring state
+  const proctoringClientRef = useRef(null);
+  const [proctoringActive, setProctoringActive] = useState(false);
+  const [proctoringAlert, setProctoringAlert] = useState('');
+  const [tabSwitchCount, setTabSwitchCount] = useState(0);
+  const [proctoringViolations, setProctoringViolations] = useState([]);
 
   // Keep currentAnswerRef in sync with currentAnswer
   useEffect(() => {
@@ -103,11 +113,129 @@ const Interview = () => {
     
     setQuestionStartTime(Date.now());
     startCamera();
+    initProctoring();
     
     return () => {
       stopCamera();
+      stopProctoring();
     };
   }, [type, setupData.interviewId]);
+
+  // Initialize proctoring system
+  const initProctoring = async () => {
+    try {
+      proctoringClientRef.current = new ProctoringClient({
+        apiBase: `${API_URL}/api/proctoring`,
+        enableTabSwitchDetection: true,
+        enableCopyPasteDetection: true,
+        showAlerts: true,
+        onViolation: handleProctoringViolation,
+        onAlert: handleProctoringAlert,
+      });
+
+      // Check if proctoring is available
+      const status = await proctoringClientRef.current.checkStatus();
+      if (status.available) {
+        // Start proctoring session
+        await proctoringClientRef.current.startSession(interviewId, 'medium');
+        setProctoringActive(true);
+        console.log('Proctoring initialized successfully');
+        
+        // Wait for camera to be ready, then start frame capture
+        setTimeout(() => {
+          if (videoRef.current && proctoringClientRef.current) {
+            // Use the existing video element for proctoring
+            proctoringClientRef.current.videoElement = videoRef.current;
+            
+            // Create a hidden canvas for frame capture
+            const canvas = document.createElement('canvas');
+            canvas.width = 640;
+            canvas.height = 480;
+            proctoringClientRef.current.canvasElement = canvas;
+            
+            // Start frame capture for face detection
+            proctoringClientRef.current.startFrameCapture();
+            console.log('Frame capture started for proctoring');
+          }
+        }, 2000); // Wait 2 seconds for camera to initialize
+      } else {
+        console.log('Proctoring not available, using basic monitoring');
+        // Fall back to basic tab switch detection
+        setupBasicTabSwitchDetection();
+      }
+    } catch (error) {
+      console.error('Failed to initialize proctoring:', error);
+      // Fall back to basic tab switch detection
+      setupBasicTabSwitchDetection();
+    }
+  };
+
+  // Basic tab switch detection fallback
+  const setupBasicTabSwitchDetection = () => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setTabSwitchCount(prev => prev + 1);
+        setProctoringAlert('⚠️ Tab switch detected! Please stay on this page during the interview.');
+        setProctoringViolations(prev => [...prev, {
+          type: 'tab_switch',
+          timestamp: new Date().toISOString(),
+          message: 'User switched to another tab'
+        }]);
+      }
+    };
+
+    const handleWindowBlur = () => {
+      setProctoringAlert('⚠️ Window lost focus. Please keep this window active.');
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
+
+    // Store cleanup function
+    window._proctoringCleanup = () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleWindowBlur);
+    };
+  };
+
+  const stopProctoring = async () => {
+    if (proctoringClientRef.current && proctoringActive) {
+      try {
+        await proctoringClientRef.current.endSession();
+      } catch (error) {
+        console.error('Error stopping proctoring:', error);
+      }
+    }
+    // Clean up basic detection if used
+    if (window._proctoringCleanup) {
+      window._proctoringCleanup();
+      delete window._proctoringCleanup;
+    }
+  };
+
+  const handleProctoringViolation = (violations) => {
+    console.log('Proctoring violations detected:', violations);
+    setProctoringViolations(prev => [...prev, ...violations]);
+    
+    violations.forEach(v => {
+      if (v.type === 'tab_switch') {
+        setTabSwitchCount(prev => prev + 1);
+        setProctoringAlert('⚠️ Tab switch detected! Please stay on this page.');
+      } else if (v.type === 'multiple_faces') {
+        setProctoringAlert('🚨 Multiple faces detected! Only the candidate should be visible.');
+      } else if (v.type === 'no_face') {
+        setProctoringAlert('⚠️ Face not visible. Please stay in front of the camera.');
+      } else if (v.type === 'looking_away') {
+        setProctoringAlert('👀 Please look at the screen during the interview.');
+      } else if (v.type === 'different_person') {
+        setProctoringAlert('🚨 ALERT: Face does not match registered user!');
+      }
+    });
+  };
+
+  const handleProctoringAlert = (message) => {
+    setProctoringAlert(message);
+  };
 
   useEffect(() => {
     // Timer
@@ -259,7 +387,10 @@ const Interview = () => {
           console.error('Failed to start speech recognition:', e);
         }
       } else {
-        setError('Speech recognition not supported. Please use Chrome or Edge browser.');
+        // Live transcription not available, but recording still works
+        // Audio will be transcribed by Whisper when recording stops
+        setLiveTranscriptSupported(false);
+        console.log('Live speech recognition not available. Audio will be transcribed after recording.');
       }
     } catch (err) {
       console.error('Error starting recording:', err);
@@ -571,9 +702,18 @@ const Interview = () => {
             <Paper sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">Camera Preview</Typography>
-                <IconButton onClick={toggleCamera} color={cameraEnabled ? 'primary' : 'default'}>
-                  {cameraEnabled ? <Videocam /> : <VideocamOff />}
-                </IconButton>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {tabSwitchCount > 0 && (
+                    <Chip 
+                      label={`⚠️ ${tabSwitchCount} tab switch${tabSwitchCount > 1 ? 'es' : ''}`}
+                      size="small"
+                      color="warning"
+                    />
+                  )}
+                  <IconButton onClick={toggleCamera} color={cameraEnabled ? 'primary' : 'default'}>
+                    {cameraEnabled ? <Videocam /> : <VideocamOff />}
+                  </IconButton>
+                </Box>
               </Box>
               
               <Box
@@ -715,6 +855,12 @@ const Interview = () => {
                           <strong>Live transcript:</strong> {liveTranscript}
                         </Typography>
                       </Paper>
+                    )}
+                    {/* Info for browsers without live transcription */}
+                    {!liveTranscriptSupported && !liveTranscript && (
+                      <Typography variant="caption" color="info.main" sx={{ mb: 2, display: 'block' }}>
+                        💡 Your speech will be transcribed after you stop recording
+                      </Typography>
                     )}
                     <Button
                       variant="contained"
@@ -941,6 +1087,27 @@ const Interview = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Proctoring Alert Snackbar */}
+      <Snackbar
+        open={!!proctoringAlert}
+        autoHideDuration={5000}
+        onClose={() => setProctoringAlert('')}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={() => setProctoringAlert('')} 
+          severity="warning" 
+          sx={{ width: '100%' }}
+        >
+          {proctoringAlert}
+          {tabSwitchCount > 0 && (
+            <Typography variant="caption" display="block">
+              Tab switches detected: {tabSwitchCount}
+            </Typography>
+          )}
+        </Alert>
+      </Snackbar>
     </>
   );
 };
