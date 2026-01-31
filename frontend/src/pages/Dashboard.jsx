@@ -98,52 +98,95 @@ const Dashboard = () => {
   };
 
   return (
-    <>
-      <AppBar position="static" sx={{ mb: 3 }}>
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            AI Mock Interview Platform
+    <Box sx={{ minHeight: '100vh', bgcolor: '#000000' }}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="overline" sx={{ color: '#0EA5E9', fontWeight: 600, letterSpacing: '0.1em' }}>
+            DASHBOARD
           </Typography>
-          <IconButton color="inherit" onClick={() => navigate('/profile')}>
-            <Person />
-          </IconButton>
-          <Button color="inherit" onClick={handleLogout} startIcon={<Logout />}>
-            Logout
-          </Button>
-        </Toolbar>
-      </AppBar>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Interview Dashboard
-        </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#FFFFFF', mt: 0.5 }}>
+            Welcome back{user?.full_name ? `, ${user.full_name.split(' ')[0]}` : ''}
+          </Typography>
+        </Box>
 
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 5 }}>
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-            <Box display="flex" alignItems="center" mb={1}>
-              <Assessment color="primary" sx={{ mr: 1 }} />
-              <Typography variant="h6">Total Interviews</Typography>
+          <Paper 
+            sx={{ 
+              p: 3, 
+              bgcolor: '#1A1A1A', 
+              border: '1px solid #262626',
+            }}
+          >
+            <Box display="flex" alignItems="center" mb={2}>
+              <Box sx={{ 
+                width: 40, 
+                height: 40, 
+                bgcolor: 'rgba(14, 165, 233, 0.15)', 
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mr: 2
+              }}>
+                <Assessment sx={{ color: '#0EA5E9', fontSize: 22 }} />
+              </Box>
+              <Typography variant="body2" sx={{ color: '#888888', fontWeight: 500 }}>Total Interviews</Typography>
             </Box>
-            <Typography variant="h3">{stats.total_interviews}</Typography>
+            <Typography variant="h3" sx={{ color: '#FFFFFF', fontWeight: 700 }}>{stats.total_interviews}</Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-            <Box display="flex" alignItems="center" mb={1}>
-              <School color="primary" sx={{ mr: 1 }} />
-              <Typography variant="h6">Average Score</Typography>
+          <Paper 
+            sx={{ 
+              p: 3, 
+              bgcolor: '#1A1A1A', 
+              border: '1px solid #262626',
+            }}
+          >
+            <Box display="flex" alignItems="center" mb={2}>
+              <Box sx={{ 
+                width: 40, 
+                height: 40, 
+                bgcolor: 'rgba(168, 85, 247, 0.15)', 
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mr: 2
+              }}>
+                <School sx={{ color: '#A855F7', fontSize: 22 }} />
+              </Box>
+              <Typography variant="body2" sx={{ color: '#888888', fontWeight: 500 }}>Average Score</Typography>
             </Box>
-            <Typography variant="h3">{stats.average_score}%</Typography>
+            <Typography variant="h3" sx={{ color: '#FFFFFF', fontWeight: 700 }}>{stats.average_score}%</Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-            <Box display="flex" alignItems="center" mb={1}>
-              <TrendingUp color="success" sx={{ mr: 1 }} />
-              <Typography variant="h6">Improvement</Typography>
+          <Paper 
+            sx={{ 
+              p: 3, 
+              bgcolor: '#1A1A1A', 
+              border: '1px solid #262626',
+            }}
+          >
+            <Box display="flex" alignItems="center" mb={2}>
+              <Box sx={{ 
+                width: 40, 
+                height: 40, 
+                bgcolor: 'rgba(16, 185, 129, 0.15)', 
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mr: 2
+              }}>
+                <TrendingUp sx={{ color: '#10B981', fontSize: 22 }} />
+              </Box>
+              <Typography variant="body2" sx={{ color: '#888888', fontWeight: 500 }}>Improvement</Typography>
             </Box>
-            <Typography variant="h3" color="success.main">
+            <Typography variant="h3" sx={{ color: '#10B981', fontWeight: 700 }}>
               +{stats.improvement_rate}%
             </Typography>
           </Paper>
@@ -151,31 +194,44 @@ const Dashboard = () => {
       </Grid>
 
       {/* Interview Types */}
-      <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
-        Start New Interview
-      </Typography>
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h5" sx={{ fontWeight: 600, color: '#FFFFFF' }}>
+          Start New Interview
+        </Typography>
+      </Box>
+      <Grid container spacing={3} sx={{ mb: 5 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
+          <Card sx={{ 
+            bgcolor: '#1A1A1A', 
+            border: '1px solid #262626',
+            borderTop: '2px solid #10B981',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+            <CardContent sx={{ flexGrow: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#FFFFFF', mb: 1 }}>
                 General Interview
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: '#888888', lineHeight: 1.6 }}>
                 Practice common interview questions and behavioral scenarios.
               </Typography>
               <Box sx={{ mt: 2 }}>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{ color: '#555555' }}>
                   Duration: ~20 minutes
                 </Typography>
               </Box>
             </CardContent>
-            <CardActions>
+            <CardActions sx={{ p: 2, pt: 0 }}>
               <Button
                 size="small"
                 variant="contained"
                 startIcon={<VideoCall />}
                 onClick={() => startNewInterview('general')}
+                sx={{ 
+                  bgcolor: '#10B981', 
+                  '&:hover': { bgcolor: '#059669' },
+                }}
               >
                 Start Interview
               </Button>
@@ -184,26 +240,37 @@ const Dashboard = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
+          <Card sx={{ 
+            bgcolor: '#1A1A1A', 
+            border: '1px solid #262626',
+            borderTop: '2px solid #3B82F6',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+            <CardContent sx={{ flexGrow: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#FFFFFF', mb: 1 }}>
                 Technical Interview
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: '#888888', lineHeight: 1.6 }}>
                 Resume-based technical questions tailored to your skills.
               </Typography>
               <Box sx={{ mt: 2 }}>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{ color: '#555555' }}>
                   Duration: ~30 minutes
                 </Typography>
               </Box>
             </CardContent>
-            <CardActions>
+            <CardActions sx={{ p: 2, pt: 0 }}>
               <Button
                 size="small"
                 variant="contained"
                 startIcon={<VideoCall />}
                 onClick={() => startNewInterview('technical')}
+                sx={{ 
+                  bgcolor: '#3B82F6', 
+                  '&:hover': { bgcolor: '#2563EB' },
+                }}
               >
                 Start Interview
               </Button>
@@ -212,26 +279,37 @@ const Dashboard = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
+          <Card sx={{ 
+            bgcolor: '#1A1A1A', 
+            border: '1px solid #262626',
+            borderTop: '2px solid #F59E0B',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+            <CardContent sx={{ flexGrow: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#FFFFFF', mb: 1 }}>
                 HR Interview
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: '#888888', lineHeight: 1.6 }}>
                 Practice HR questions about culture fit and soft skills.
               </Typography>
               <Box sx={{ mt: 2 }}>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{ color: '#555555' }}>
                   Duration: ~15 minutes
                 </Typography>
               </Box>
             </CardContent>
-            <CardActions>
+            <CardActions sx={{ p: 2, pt: 0 }}>
               <Button
                 size="small"
                 variant="contained"
                 startIcon={<VideoCall />}
                 onClick={() => startNewInterview('hr')}
+                sx={{ 
+                  bgcolor: '#F59E0B', 
+                  '&:hover': { bgcolor: '#D97706' },
+                }}
               >
                 Start Interview
               </Button>
@@ -240,27 +318,37 @@ const Dashboard = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ borderTop: '4px solid #9c27b0' }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ color: '#9c27b0' }}>
-                🏛️ UPSC Interview
+          <Card sx={{ 
+            bgcolor: '#1A1A1A', 
+            border: '1px solid #262626',
+            borderTop: '2px solid #A855F7',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+            <CardContent sx={{ flexGrow: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#FFFFFF', mb: 1 }}>
+                UPSC Interview
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Civil Services style: current affairs, ethics, and personality assessment. No resume needed.
+              <Typography variant="body2" sx={{ color: '#888888', lineHeight: 1.6 }}>
+                Civil Services style: current affairs, ethics, and personality assessment.
               </Typography>
               <Box sx={{ mt: 2 }}>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{ color: '#555555' }}>
                   Duration: ~25 minutes
                 </Typography>
               </Box>
             </CardContent>
-            <CardActions>
+            <CardActions sx={{ p: 2, pt: 0 }}>
               <Button
                 size="small"
                 variant="contained"
-                color="secondary"
                 startIcon={<Gavel />}
                 onClick={() => startNewInterview('upsc')}
+                sx={{ 
+                  bgcolor: '#A855F7', 
+                  '&:hover': { bgcolor: '#9333EA' },
+                }}
               >
                 Start UPSC Mock
               </Button>
@@ -270,54 +358,74 @@ const Dashboard = () => {
       </Grid>
 
       {/* Recent Interviews */}
-      <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
-        Recent Interviews
-      </Typography>
-      <Paper sx={{ p: 2 }}>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h5" sx={{ fontWeight: 600, color: '#FFFFFF' }}>
+          Recent Interviews
+        </Typography>
+      </Box>
+      <Paper sx={{ p: 3, bgcolor: '#1A1A1A', border: '1px solid #262626' }}>
         {recentInterviews.length === 0 ? (
-          <Typography color="text.secondary" align="center" sx={{ py: 4 }}>
+          <Typography sx={{ color: '#555555', textAlign: 'center', py: 4 }}>
             No interviews yet. Start your first interview above!
           </Typography>
         ) : (
-          recentInterviews.map((interview) => (
+          recentInterviews.map((interview, index) => (
             <Box
               key={interview.id}
               sx={{
                 p: 2,
-                mb: 2,
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 1,
+                mb: index < recentInterviews.length - 1 ? 2 : 0,
+                bgcolor: '#0B0B0B',
+                border: '1px solid #262626',
+                borderRadius: '6px',
                 cursor: interview.status === 'completed' ? 'pointer' : 'default',
-                '&:hover': interview.status === 'completed' ? { bgcolor: 'action.hover' } : {},
+                transition: 'all 0.15s ease',
+                '&:hover': interview.status === 'completed' ? { 
+                  borderColor: '#333333',
+                  bgcolor: '#111111',
+                } : {},
               }}
               onClick={() => interview.status === 'completed' && navigate(`/results/${interview.id}`)}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h6" sx={{ textTransform: 'capitalize' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#FFFFFF', textTransform: 'capitalize' }}>
                   {interview.interview_type} Interview
                 </Typography>
                 <Chip 
                   label={interview.status} 
-                  color={interview.status === 'completed' ? 'success' : 'warning'}
                   size="small"
+                  sx={{
+                    bgcolor: interview.status === 'completed' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                    color: interview.status === 'completed' ? '#10B981' : '#F59E0B',
+                    border: `1px solid ${interview.status === 'completed' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
+                    fontWeight: 500,
+                    fontSize: '0.75rem',
+                  }}
                 />
               </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              <Typography variant="body2" sx={{ color: '#888888', mt: 1 }}>
                 {interview.status === 'completed' 
                   ? `Score: ${interview.overall_score?.toFixed(0) || 0}%`
                   : 'In Progress'
                 }
               </Typography>
               {interview.status === 'completed' && (
-                <LinearProgress
-                  variant="determinate"
-                  value={interview.overall_score || 0}
-                  sx={{ mt: 1 }}
-                  color={interview.overall_score >= 70 ? 'success' : interview.overall_score >= 50 ? 'warning' : 'error'}
-                />
+                <Box sx={{ mt: 1.5, mb: 1 }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={interview.overall_score || 0}
+                    sx={{ 
+                      height: 4,
+                      borderRadius: 2,
+                      bgcolor: '#262626',
+                      '& .MuiLinearProgress-bar': {
+                        bgcolor: interview.overall_score >= 70 ? '#10B981' : interview.overall_score >= 50 ? '#F59E0B' : '#EF4444',
+                      },
+                    }}
+                  />
+                </Box>
               )}
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: '#555555' }}>
                 {interview.completed_at 
                   ? `Completed: ${new Date(interview.completed_at).toLocaleDateString()}`
                   : `Started: ${new Date(interview.created_at).toLocaleDateString()}`
@@ -328,7 +436,7 @@ const Dashboard = () => {
         )}
       </Paper>
     </Container>
-    </>
+    </Box>
   );
 };
 

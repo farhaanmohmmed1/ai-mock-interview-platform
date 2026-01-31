@@ -266,20 +266,20 @@ const InterviewSetup = () => {
       easy: {
         title: 'Easy',
         description: 'Basic questions to build confidence. Great for beginners.',
-        icon: '🌱',
-        color: 'success',
+        icon: null,
+        color: '#10B981',
       },
       medium: {
         title: 'Moderate',
         description: 'Balanced mix of questions. Recommended for most candidates.',
-        icon: '⚡',
-        color: 'warning',
+        icon: null,
+        color: '#F59E0B',
       },
       hard: {
         title: 'Hard',
         description: 'Challenging questions for experienced candidates.',
-        icon: '🔥',
-        color: 'error',
+        icon: null,
+        color: '#EF4444',
       },
     };
     return descriptions[diff];
@@ -305,29 +305,41 @@ const InterviewSetup = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="md" sx={{ mt: 8, textAlign: 'center' }}>
-        <CircularProgress />
-        <Typography sx={{ mt: 2 }}>Loading...</Typography>
-      </Container>
+      <Box sx={{ minHeight: '100vh', bgcolor: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box textAlign="center">
+          <CircularProgress sx={{ color: '#0EA5E9' }} />
+          <Typography sx={{ mt: 2, color: '#FFFFFF' }}>Loading...</Typography>
+        </Box>
+      </Box>
     );
   }
 
   return (
-    <>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            {type.charAt(0).toUpperCase() + type.slice(1)} Interview Setup
+    <Box sx={{ minHeight: '100vh', bgcolor: '#000000' }}>
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        {/* Header */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="overline" sx={{ color: '#0EA5E9', fontWeight: 600, letterSpacing: '0.1em' }}>
+            INTERVIEW SETUP
           </Typography>
-          <Button color="inherit" startIcon={<Home />} onClick={() => navigate('/dashboard')}>
-            Dashboard
-          </Button>
-        </Toolbar>
-      </AppBar>
+          <Typography variant="h4" sx={{ fontWeight: 700, color: '#FFFFFF', mt: 0.5 }}>
+            {type.charAt(0).toUpperCase() + type.slice(1)} Interview
+          </Typography>
+        </Box>
 
-      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
         {/* Stepper */}
-        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+        <Stepper 
+          activeStep={activeStep} 
+          sx={{ 
+            mb: 4,
+            '& .MuiStepLabel-label': { color: '#888888' },
+            '& .MuiStepLabel-label.Mui-active': { color: '#FFFFFF' },
+            '& .MuiStepLabel-label.Mui-completed': { color: '#10B981' },
+            '& .MuiStepIcon-root': { color: '#333333' },
+            '& .MuiStepIcon-root.Mui-active': { color: '#0EA5E9' },
+            '& .MuiStepIcon-root.Mui-completed': { color: '#10B981' },
+          }}
+        >
           {steps.map((label) => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
@@ -336,28 +348,46 @@ const InterviewSetup = () => {
         </Stepper>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
+          <Alert 
+            severity="error" 
+            sx={{ 
+              mb: 3, 
+              bgcolor: 'rgba(239, 68, 68, 0.1)', 
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              '& .MuiAlert-icon': { color: '#EF4444' },
+            }} 
+            onClose={() => setError('')}
+          >
             {error}
           </Alert>
         )}
 
         {/* Step Content */}
-        <Paper sx={{ p: 4 }}>
+        <Paper sx={{ p: 4, bgcolor: '#1A1A1A', border: '1px solid #262626' }}>
           {/* Step 1: Resume Selection (skipped for UPSC) */}
           {!isUPSC && activeStep === 0 && (
             <Box>
-              <Typography variant="h5" gutterBottom>
-                <Description sx={{ mr: 1, verticalAlign: 'middle' }} />
+              <Typography variant="h5" sx={{ fontWeight: 600, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <Description sx={{ color: '#0EA5E9' }} />
                 Select Your Resume
               </Typography>
-              <Typography color="text.secondary" paragraph>
+              <Typography sx={{ color: '#888888', mb: 3 }}>
                 {type === 'technical'
                   ? 'Your resume will be used to generate personalized technical questions based on your skills.'
                   : 'Upload a resume to get personalized questions (optional for this interview type).'}
               </Typography>
 
               {resumeError && (
-                <Alert severity="error" sx={{ mb: 2 }} onClose={() => setResumeError('')}>
+                <Alert 
+                  severity="error" 
+                  sx={{ 
+                    mb: 3, 
+                    bgcolor: 'rgba(239, 68, 68, 0.1)', 
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    '& .MuiAlert-icon': { color: '#EF4444' },
+                  }} 
+                  onClose={() => setResumeError('')}
+                >
                   {resumeError}
                 </Alert>
               )}
@@ -375,26 +405,38 @@ const InterviewSetup = () => {
                   <Button
                     variant="outlined"
                     component="span"
-                    startIcon={uploadingResume ? <CircularProgress size={20} /> : <CloudUpload />}
+                    startIcon={uploadingResume ? <CircularProgress size={20} sx={{ color: '#0EA5E9' }} /> : <CloudUpload />}
                     disabled={uploadingResume}
+                    sx={{ 
+                      borderColor: '#333333', 
+                      color: '#E0E0E0',
+                      '&:hover': { borderColor: '#0EA5E9', bgcolor: 'rgba(14, 165, 233, 0.08)' },
+                    }}
                   >
                     {uploadingResume ? 'Uploading...' : 'Upload New Resume'}
                   </Button>
                 </label>
-                <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                <Typography variant="caption" display="block" sx={{ mt: 1, color: '#555555' }}>
                   Supported formats: PDF, DOCX, TXT (Max 10MB)
                 </Typography>
               </Box>
 
-              <Divider sx={{ my: 3 }} />
+              <Divider sx={{ my: 3, borderColor: '#262626' }} />
 
               {/* Existing Resumes */}
-              <Typography variant="h6" gutterBottom>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#FFFFFF', mb: 2 }}>
                 Your Resumes
               </Typography>
 
               {resumes.length === 0 ? (
-                <Alert severity="info">
+                <Alert 
+                  severity="info"
+                  sx={{ 
+                    bgcolor: 'rgba(14, 165, 233, 0.1)', 
+                    border: '1px solid rgba(14, 165, 233, 0.3)',
+                    '& .MuiAlert-icon': { color: '#0EA5E9' },
+                  }}
+                >
                   No resumes uploaded yet. Upload your resume to get personalized interview questions.
                 </Alert>
               ) : (
@@ -402,12 +444,12 @@ const InterviewSetup = () => {
                   {resumes.map((resume) => (
                     <Grid item xs={12} key={resume.id}>
                       <Card
-                        variant="outlined"
                         sx={{
                           cursor: 'pointer',
-                          border: selectedResume?.id === resume.id ? 2 : 1,
-                          borderColor: selectedResume?.id === resume.id ? 'primary.main' : 'divider',
-                          bgcolor: selectedResume?.id === resume.id ? 'action.selected' : 'background.paper',
+                          bgcolor: selectedResume?.id === resume.id ? 'rgba(14, 165, 233, 0.1)' : '#0B0B0B',
+                          border: selectedResume?.id === resume.id ? '1px solid rgba(14, 165, 233, 0.5)' : '1px solid #262626',
+                          transition: 'all 0.15s ease',
+                          '&:hover': { borderColor: '#333333' },
                         }}
                         onClick={() => setSelectedResume(resume)}
                       >
@@ -415,24 +457,49 @@ const InterviewSetup = () => {
                           <Radio
                             checked={selectedResume?.id === resume.id}
                             onChange={() => setSelectedResume(resume)}
+                            sx={{ color: '#555555', '&.Mui-checked': { color: '#0EA5E9' } }}
                           />
                           <Box sx={{ flexGrow: 1, ml: 2 }}>
-                            <Typography variant="subtitle1" fontWeight="bold">
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#FFFFFF' }}>
                               {resume.filename}
                               {resume.is_active && (
-                                <Chip label="Active" size="small" color="primary" sx={{ ml: 1 }} />
+                                <Chip 
+                                  label="Active" 
+                                  size="small" 
+                                  sx={{ 
+                                    ml: 1, 
+                                    bgcolor: 'rgba(14, 165, 233, 0.15)', 
+                                    color: '#0EA5E9',
+                                    border: '1px solid rgba(14, 165, 233, 0.3)',
+                                  }} 
+                                />
                               )}
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="body2" sx={{ color: '#888888' }}>
                               Uploaded: {new Date(resume.uploaded_at).toLocaleDateString()}
                             </Typography>
                             {resume.skills && resume.skills.length > 0 && (
                               <Box sx={{ mt: 1 }}>
                                 {resume.skills.slice(0, 5).map((skill, idx) => (
-                                  <Chip key={idx} label={skill} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
+                                  <Chip 
+                                    key={idx} 
+                                    label={skill} 
+                                    size="small" 
+                                    sx={{ 
+                                      mr: 0.5, 
+                                      mb: 0.5, 
+                                      bgcolor: '#1A1A1A', 
+                                      color: '#E0E0E0',
+                                      border: '1px solid #333333',
+                                    }} 
+                                  />
                                 ))}
                                 {resume.skills.length > 5 && (
-                                  <Chip label={`+${resume.skills.length - 5} more`} size="small" variant="outlined" />
+                                  <Chip 
+                                    label={`+${resume.skills.length - 5} more`} 
+                                    size="small" 
+                                    sx={{ bgcolor: 'transparent', color: '#888888', border: '1px solid #333333' }} 
+                                  />
                                 )}
                               </Box>
                             )}
@@ -443,15 +510,16 @@ const InterviewSetup = () => {
                               setPreviewResume(resume);
                               setPreviewOpen(true);
                             }}
+                            sx={{ color: '#888888', '&:hover': { color: '#0EA5E9' } }}
                           >
                             <Visibility />
                           </IconButton>
                           <IconButton
-                            color="error"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteResume(resume.id);
                             }}
+                            sx={{ color: '#888888', '&:hover': { color: '#EF4444' } }}
                           >
                             <Delete />
                           </IconButton>
@@ -470,6 +538,7 @@ const InterviewSetup = () => {
                       setSelectedResume(null);
                       handleNext();
                     }}
+                    sx={{ color: '#888888', '&:hover': { color: '#0EA5E9' } }}
                   >
                     Skip - Continue without resume
                   </Button>
@@ -481,15 +550,15 @@ const InterviewSetup = () => {
           {/* Step 1: Difficulty Selection (Step 0 for UPSC, Step 1 for others) */}
           {((isUPSC && activeStep === 0) || (!isUPSC && activeStep === 1)) && (
             <Box>
-              <Typography variant="h5" gutterBottom>
-                <Psychology sx={{ mr: 1, verticalAlign: 'middle' }} />
+              <Typography variant="h5" sx={{ fontWeight: 600, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+                <Psychology sx={{ color: '#A855F7' }} />
                 Choose Interview Settings
               </Typography>
 
               {/* Interview Mode - only show for non-UPSC */}
               {!isUPSC && (
                 <>
-                  <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: '#FFFFFF', mb: 2 }}>
                     Interview Mode
                   </Typography>
                   <Grid container spacing={2} sx={{ mb: 4 }}>
@@ -498,25 +567,28 @@ const InterviewSetup = () => {
                       return (
                         <Grid item xs={12} md={6} key={mode}>
                           <Card
-                            variant="outlined"
                             sx={{
                               cursor: 'pointer',
                               height: '100%',
-                              border: interviewMode === mode ? 2 : 1,
-                              borderColor: interviewMode === mode ? 'primary.main' : 'divider',
-                              bgcolor: interviewMode === mode ? 'action.selected' : 'background.paper',
+                              bgcolor: interviewMode === mode ? 'rgba(14, 165, 233, 0.1)' : '#0B0B0B',
+                              border: interviewMode === mode ? '1px solid rgba(14, 165, 233, 0.5)' : '1px solid #262626',
+                              transition: 'all 0.15s ease',
+                              '&:hover': { borderColor: '#333333' },
                             }}
                             onClick={() => setInterviewMode(mode)}
                           >
                             <CardContent>
                               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                <Radio checked={interviewMode === mode} />
-                                {modeInfo.icon}
-                                <Typography variant="h6" sx={{ ml: 1 }}>
+                                <Radio 
+                                  checked={interviewMode === mode} 
+                                  sx={{ color: '#555555', '&.Mui-checked': { color: '#0EA5E9' } }}
+                                />
+                                <Box sx={{ color: '#0EA5E9' }}>{modeInfo.icon}</Box>
+                                <Typography variant="h6" sx={{ ml: 1, fontWeight: 600, color: '#FFFFFF' }}>
                                   {modeInfo.title}
                                 </Typography>
                               </Box>
-                              <Typography variant="body2" color="text.secondary" paragraph>
+                              <Typography variant="body2" sx={{ color: '#888888', mb: 2 }}>
                                 {modeInfo.description}
                               </Typography>
                               <Box>
@@ -525,8 +597,7 @@ const InterviewSetup = () => {
                                     key={idx}
                                     label={feature}
                                     size="small"
-                                    variant="outlined"
-                                    sx={{ mr: 0.5, mb: 0.5 }}
+                                    sx={{ mr: 0.5, mb: 0.5, bgcolor: 'transparent', color: '#888888', border: '1px solid #333333' }}
                                   />
                                 ))}
                               </Box>
@@ -541,11 +612,11 @@ const InterviewSetup = () => {
 
               {/* For UPSC, show description */}
               {isUPSC && (
-                <Box sx={{ mb: 4, p: 2, bgcolor: '#f3e5f5', borderRadius: 2 }}>
-                  <Typography variant="h6" sx={{ color: '#9c27b0', mb: 1 }}>
-                    🏛️ UPSC Civil Services Interview Mode
+                <Box sx={{ mb: 4, p: 3, bgcolor: 'rgba(168, 85, 247, 0.1)', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '6px' }}>
+                  <Typography variant="h6" sx={{ color: '#A855F7', mb: 1, fontWeight: 600 }}>
+                    UPSC Civil Services Interview Mode
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{ color: '#888888' }}>
                     This interview focuses on current affairs, ethics & integrity, personality assessment, 
                     administrative scenarios, and opinion-based questions - similar to the actual UPSC 
                     Personality Test (Interview).
@@ -554,7 +625,7 @@ const InterviewSetup = () => {
               )}
 
               {/* Difficulty Level */}
-              <Typography variant="h6" sx={{ mb: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#FFFFFF', mb: 2 }}>
                 Difficulty Level
               </Typography>
               <Grid container spacing={2}>
@@ -563,22 +634,24 @@ const InterviewSetup = () => {
                   return (
                     <Grid item xs={12} md={4} key={diff}>
                       <Card
-                        variant="outlined"
                         sx={{
                           cursor: 'pointer',
-                          border: difficulty === diff ? 2 : 1,
-                          borderColor: difficulty === diff ? `${diffInfo.color}.main` : 'divider',
-                          bgcolor: difficulty === diff ? 'action.selected' : 'background.paper',
+                          bgcolor: difficulty === diff ? `${diffInfo.color}15` : '#0B0B0B',
+                          border: difficulty === diff ? `1px solid ${diffInfo.color}50` : '1px solid #262626',
+                          transition: 'all 0.15s ease',
+                          '&:hover': { borderColor: '#333333' },
                         }}
                         onClick={() => setDifficulty(diff)}
                       >
                         <CardContent sx={{ textAlign: 'center' }}>
-                          <Radio checked={difficulty === diff} />
-                          <Typography variant="h4">{diffInfo.icon}</Typography>
-                          <Typography variant="h6" sx={{ mt: 1 }}>
+                          <Radio 
+                            checked={difficulty === diff} 
+                            sx={{ color: '#555555', '&.Mui-checked': { color: diffInfo.color } }}
+                          />
+                          <Typography variant="h6" sx={{ mt: 1, fontWeight: 600, color: '#FFFFFF' }}>
                             {diffInfo.title}
                           </Typography>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body2" sx={{ color: '#888888' }}>
                             {diffInfo.description}
                           </Typography>
                         </CardContent>
@@ -593,48 +666,53 @@ const InterviewSetup = () => {
           {/* Final Step: Confirmation (Step 1 for UPSC, Step 2 for others) */}
           {((isUPSC && activeStep === 1) || (!isUPSC && activeStep === 2)) && (
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h5" gutterBottom>
-                <CheckCircle sx={{ mr: 1, verticalAlign: 'middle', color: 'success.main' }} />
+              <Typography variant="h5" sx={{ fontWeight: 600, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 }}>
+                <CheckCircle sx={{ color: '#10B981' }} />
                 Ready to Start!
               </Typography>
 
-              <Paper variant="outlined" sx={{ p: 3, my: 3, textAlign: 'left' }}>
-                <Typography variant="h6" gutterBottom>
+              <Paper sx={{ p: 3, my: 3, textAlign: 'left', bgcolor: '#0B0B0B', border: '1px solid #262626' }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: '#FFFFFF', mb: 2 }}>
                   Interview Summary
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={6}>
-                    <Typography color="text.secondary">Interview Type</Typography>
-                    <Typography fontWeight="bold">
-                      {type === 'upsc' ? '🏛️ UPSC Civil Services' : type.charAt(0).toUpperCase() + type.slice(1)}
+                    <Typography sx={{ color: '#888888', fontSize: '0.875rem' }}>Interview Type</Typography>
+                    <Typography sx={{ fontWeight: 600, color: '#FFFFFF' }}>
+                      {type === 'upsc' ? 'UPSC Civil Services' : type.charAt(0).toUpperCase() + type.slice(1)}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography color="text.secondary">Mode</Typography>
-                    <Typography fontWeight="bold">
+                    <Typography sx={{ color: '#888888', fontSize: '0.875rem' }}>Mode</Typography>
+                    <Typography sx={{ fontWeight: 600, color: '#FFFFFF' }}>
                       {getModeDescription(interviewMode).title}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography color="text.secondary">Difficulty</Typography>
-                    <Typography fontWeight="bold">
+                    <Typography sx={{ color: '#888888', fontSize: '0.875rem' }}>Difficulty</Typography>
+                    <Typography sx={{ fontWeight: 600, color: '#FFFFFF' }}>
                       {getDifficultyDescription(difficulty).title}
                     </Typography>
                   </Grid>
                   {!isUPSC && (
                     <Grid item xs={6}>
-                      <Typography color="text.secondary">Resume</Typography>
-                      <Typography fontWeight="bold">
+                      <Typography sx={{ color: '#888888', fontSize: '0.875rem' }}>Resume</Typography>
+                      <Typography sx={{ fontWeight: 600, color: '#FFFFFF' }}>
                         {selectedResume ? selectedResume.filename : 'Not selected'}
                       </Typography>
                     </Grid>
                   )}
                   {selectedResume?.skills && selectedResume.skills.length > 0 && (
                     <Grid item xs={12}>
-                      <Typography color="text.secondary">Skills Detected</Typography>
-                      <Box sx={{ mt: 1 }}>
+                      <Typography sx={{ color: '#888888', fontSize: '0.875rem', mb: 1 }}>Skills Detected</Typography>
+                      <Box>
                         {selectedResume.skills.map((skill, idx) => (
-                          <Chip key={idx} label={skill} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
+                          <Chip 
+                            key={idx} 
+                            label={skill} 
+                            size="small" 
+                            sx={{ mr: 0.5, mb: 0.5, bgcolor: '#1A1A1A', color: '#E0E0E0', border: '1px solid #333333' }} 
+                          />
                         ))}
                       </Box>
                     </Grid>
@@ -642,16 +720,25 @@ const InterviewSetup = () => {
                 </Grid>
               </Paper>
 
-              <Alert severity="info" sx={{ mb: 3, textAlign: 'left' }}>
-                <Typography variant="body2">
-                  <strong>Tips for the interview:</strong>
+              <Alert 
+                severity="info" 
+                sx={{ 
+                  mb: 3, 
+                  textAlign: 'left',
+                  bgcolor: 'rgba(14, 165, 233, 0.1)', 
+                  border: '1px solid rgba(14, 165, 233, 0.3)',
+                  '& .MuiAlert-icon': { color: '#0EA5E9' },
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#FFFFFF', mb: 1 }}>
+                  Tips for the interview:
                 </Typography>
-                <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                <Box component="ul" sx={{ m: 0, pl: 2.5, color: '#E0E0E0' }}>
                   <li>Find a quiet place with good lighting</li>
                   <li>Enable your camera for better engagement</li>
                   <li>Answer each question thoughtfully before moving to the next</li>
                   <li>Take your time - quality matters more than speed</li>
-                </ul>
+                </Box>
               </Alert>
 
               <Button
@@ -659,7 +746,8 @@ const InterviewSetup = () => {
                 size="large"
                 onClick={startInterview}
                 disabled={starting}
-                startIcon={starting ? <CircularProgress size={20} /> : <ArrowForward />}
+                startIcon={starting ? <CircularProgress size={20} sx={{ color: '#FFFFFF' }} /> : <ArrowForward />}
+                sx={{ bgcolor: '#0EA5E9', '&:hover': { bgcolor: '#0284C7' } }}
               >
                 {starting ? 'Preparing Interview...' : 'Start Interview'}
               </Button>
@@ -672,6 +760,7 @@ const InterviewSetup = () => {
               disabled={activeStep === 0}
               onClick={handleBack}
               startIcon={<ArrowBack />}
+              sx={{ color: '#888888', '&:hover': { color: '#FFFFFF' }, '&.Mui-disabled': { color: '#333333' } }}
             >
               Back
             </Button>
@@ -681,6 +770,7 @@ const InterviewSetup = () => {
                 onClick={handleNext}
                 disabled={!canProceed()}
                 endIcon={<ArrowForward />}
+                sx={{ bgcolor: '#0EA5E9', '&:hover': { bgcolor: '#0284C7' } }}
               >
                 Next
               </Button>
@@ -690,39 +780,51 @@ const InterviewSetup = () => {
       </Container>
 
       {/* Resume Preview Dialog */}
-      <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Resume Details - {previewResume?.filename}</DialogTitle>
+      <Dialog 
+        open={previewOpen} 
+        onClose={() => setPreviewOpen(false)} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{
+          sx: { bgcolor: '#1A1A1A', border: '1px solid #262626' }
+        }}
+      >
+        <DialogTitle sx={{ color: '#FFFFFF' }}>Resume Details - {previewResume?.filename}</DialogTitle>
         <DialogContent>
           {previewResume && (
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={12}>
-                <Typography variant="subtitle2" color="text.secondary">
+                <Typography variant="subtitle2" sx={{ color: '#888888', mb: 1 }}>
                   Skills Extracted
                 </Typography>
-                <Box sx={{ mt: 1 }}>
+                <Box>
                   {previewResume.skills?.length > 0 ? (
                     previewResume.skills.map((skill, idx) => (
-                      <Chip key={idx} label={skill} sx={{ mr: 0.5, mb: 0.5 }} />
+                      <Chip 
+                        key={idx} 
+                        label={skill} 
+                        sx={{ mr: 0.5, mb: 0.5, bgcolor: '#0B0B0B', color: '#E0E0E0', border: '1px solid #333333' }} 
+                      />
                     ))
                   ) : (
-                    <Typography color="text.secondary">No skills detected</Typography>
+                    <Typography sx={{ color: '#555555' }}>No skills detected</Typography>
                   )}
                 </Box>
               </Grid>
               {previewResume.experience_years && (
                 <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                  <Typography variant="subtitle2" sx={{ color: '#888888' }}>
                     Experience
                   </Typography>
-                  <Typography>{previewResume.experience_years} years</Typography>
+                  <Typography sx={{ color: '#FFFFFF' }}>{previewResume.experience_years} years</Typography>
                 </Grid>
               )}
               {previewResume.education && (
                 <Grid item xs={12}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                  <Typography variant="subtitle2" sx={{ color: '#888888' }}>
                     Education
                   </Typography>
-                  <Typography>
+                  <Typography sx={{ color: '#FFFFFF' }}>
                     {typeof previewResume.education === 'object'
                       ? JSON.stringify(previewResume.education, null, 2)
                       : previewResume.education}
@@ -732,11 +834,11 @@ const InterviewSetup = () => {
             </Grid>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPreviewOpen(false)}>Close</Button>
+        <DialogActions sx={{ borderTop: '1px solid #262626' }}>
+          <Button onClick={() => setPreviewOpen(false)} sx={{ color: '#888888' }}>Close</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </Box>
   );
 };
 

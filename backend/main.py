@@ -4,9 +4,11 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import os
 import sys
+from pathlib import Path
 
-# Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add parent directory to path (OS-agnostic)
+BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR))
 
 from backend.core.config import settings
 from backend.core.database import engine, Base
@@ -31,23 +33,22 @@ except ImportError:
 async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
     # Startup
-    print("🚀 Starting AI Interview Platform...")
+    print("Starting AI Interview Platform...")
     
     # Create tables
     Base.metadata.create_all(bind=engine)
-    print("✅ Database tables created")
+    print("[OK] Database tables created")
     
-    # Create necessary directories
-    os.makedirs("data/uploads", exist_ok=True)
-    os.makedirs("data/recordings", exist_ok=True)
-    os.makedirs("data/videos", exist_ok=True)
-    os.makedirs("data/models", exist_ok=True)
-    print("✅ Data directories created")
+    # Create necessary directories (OS-agnostic paths)
+    data_dirs = ["uploads", "recordings", "videos", "models"]
+    for dir_name in data_dirs:
+        (BASE_DIR / "data" / dir_name).mkdir(parents=True, exist_ok=True)
+    print("[OK] Data directories created")
     
     yield
     
     # Shutdown
-    print("🛑 Shutting down AI Interview Platform...")
+    print("Shutting down AI Interview Platform...")
 
 
 # Initialize FastAPI app

@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+from pathlib import Path
 
 from backend.core.database import get_db
 from backend.models import User, Interview, Question, Response
@@ -100,9 +101,9 @@ async def transcribe_audio(
         )
     
     # Save uploaded audio to temp file
-    temp_dir = tempfile.mkdtemp()
-    temp_audio_path = os.path.join(temp_dir, "audio.webm")
-    wav_path = os.path.join(temp_dir, "audio.wav")
+    temp_dir = Path(tempfile.mkdtemp())
+    temp_audio_path = temp_dir / "audio.webm"
+    wav_path = temp_dir / "audio.wav"
     
     try:
         # Save the uploaded file
@@ -113,9 +114,9 @@ async def transcribe_audio(
         # Convert webm to wav using ffmpeg
         try:
             subprocess.run([
-                "ffmpeg", "-y", "-i", temp_audio_path,
+                "ffmpeg", "-y", "-i", str(temp_audio_path),
                 "-ar", "16000", "-ac", "1",
-                wav_path
+                str(wav_path)
             ], check=True, capture_output=True)
         except subprocess.CalledProcessError as e:
             raise HTTPException(
@@ -135,7 +136,7 @@ async def transcribe_audio(
                 detail="AI modules not available. Speech analysis requires full deployment."
             )
         
-        result = speech_analyzer.analyze_audio(wav_path)
+        result = speech_analyzer.analyze_audio(str(wav_path))
         
         return {
             "transcription": result.get("transcription", ""),
@@ -149,7 +150,7 @@ async def transcribe_audio(
         )
     finally:
         # Cleanup temp files
-        shutil.rmtree(temp_dir, ignore_errors=True)
+        shutil.rmtree(str(temp_dir), ignore_errors=True)
 
 
 @router.post("/submit-text", response_model=ResponseSubmit, status_code=status.HTTP_201_CREATED)
@@ -260,16 +261,16 @@ async def submit_audio_response(
             detail="Interview not found or access denied"
         )
     
-    # Save audio file
-    audio_dir = f"data/recordings/interview_{interview.id}"
-    os.makedirs(audio_dir, exist_ok=True)
+    # Save audio file (OS-agnostic paths)
+    audio_dir = Path("data") / "recordings" / f"interview_{interview.id}"
+    audio_dir.mkdir(parents=True, exist_ok=True)
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     # Get original file extension
-    original_ext = os.path.splitext(audio_file.filename or "recording.webm")[1] or ".webm"
-    temp_audio_path = os.path.join(audio_dir, f"q{question_id}_{timestamp}_temp{original_ext}")
-    audio_path = os.path.join(audio_dir, f"q{question_id}_{timestamp}.wav")
+    original_ext = Path(audio_file.filename or "recording.webm").suffix or ".webm"
+    temp_audio_path = audio_dir / f"q{question_id}_{timestamp}_temp{original_ext}"
+    audio_path = audio_dir / f"q{question_id}_{timestamp}.wav"
     
     # Save the uploaded file
     with open(temp_audio_path, "wb") as buffer:
@@ -279,22 +280,22 @@ async def submit_audio_response(
     if original_ext.lower() != ".wav":
         try:
             subprocess.run([
-                "ffmpeg", "-i", temp_audio_path,
+                "ffmpeg", "-i", str(temp_audio_path),
                 "-acodec", "pcm_s16le",
                 "-ar", "16000",
                 "-ac", "1",
-                "-y", audio_path
+                "-y", str(audio_path)
             ], check=True, capture_output=True)
             # Remove temp file
-            os.remove(temp_audio_path)
+            temp_audio_path.unlink(missing_ok=True)
         except subprocess.CalledProcessError as e:
             # If ffmpeg fails, try to use the original file
-            os.rename(temp_audio_path, audio_path)
+            temp_audio_path.rename(audio_path)
         except FileNotFoundError:
             # ffmpeg not installed, try to use original file
-            os.rename(temp_audio_path, audio_path)
+            temp_audio_path.rename(audio_path)
     else:
-        os.rename(temp_audio_path, audio_path)
+        temp_audio_path.rename(audio_path)
     
     # Check AI module availability
     if not AI_MODULES_AVAILABLE or speech_analyzer is None or answer_evaluator is None:
@@ -305,7 +306,7 @@ async def submit_audio_response(
     
     # Analyze speech
     try:
-        speech_analysis = speech_analyzer.analyze_audio(audio_path)
+        speech_analysis = speech_analyzer.analyze_audio(str(audio_path))
         text_response = speech_analysis["transcription"]
     except Exception as e:
         raise HTTPException(
@@ -393,27 +394,27 @@ async def submit_video_response(
             detail="Interview not found or access denied"
         )
     
-    # Save files
-    media_dir = f"data/videos/interview_{interview.id}"
-    os.makedirs(media_dir, exist_ok=True)
+    # Save files (OS-agnostic paths)
+    media_dir = Path("data") / "videos" / f"interview_{interview.id}"
+    media_dir.mkdir(parents=True, exist_ok=True)
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     # Save video
     video_filename = f"q{question_id}_{timestamp}.webm"
-    video_path = os.path.join(media_dir, video_filename)
+    video_path = media_dir / video_filename
     with open(video_path, "wb") as buffer:
         shutil.copyfileobj(video_file.file, buffer)
     
     # Save audio
     audio_filename = f"q{question_id}_{timestamp}.wav"
-    audio_path = os.path.join(media_dir, audio_filename)
+    audio_path = media_dir / audio_filename
     with open(audio_path, "wb") as buffer:
         shutil.copyfileobj(audio_file.file, buffer)
     
     # Analyze speech
     try:
-        speech_analysis = speech_analyzer.analyze_audio(audio_path)
+        speech_analysis = speech_analyzer.analyze_audio(str(audio_path))
         text_response = speech_analysis["transcription"]
     except Exception as e:
         raise HTTPException(
@@ -423,7 +424,7 @@ async def submit_video_response(
     
     # Analyze emotions
     try:
-        emotion_analysis = emotion_analyzer.analyze_video(video_path)
+        emotion_analysis = emotion_analyzer.analyze_video(str(video_path))
     except Exception as e:
         emotion_analysis = {"error": str(e), "confidence_score": 0}
     
@@ -443,8 +444,8 @@ async def submit_video_response(
         interview_id=interview.id,
         question_id=question.id,
         text_response=text_response,
-        audio_path=audio_path,
-        video_path=video_path,
+        audio_path=str(audio_path),
+        video_path=str(video_path),
         content_score=evaluation["content_score"],
         relevance_score=evaluation["relevance_score"],
         clarity_score=speech_analysis["clarity_score"],

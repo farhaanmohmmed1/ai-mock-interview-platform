@@ -1,0 +1,32 @@
+# EditorConfig helps maintain consistent coding styles across different editors
+# https://editorconfig.org
+
+root = true
+
+[*]
+# Use LF line endings for cross-platform consistency
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+[*.py]
+indent_size = 4
+
+[*.{js,jsx,ts,tsx,json}]
+indent_size = 2
+
+[*.{yml,yaml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.bat]
+# Windows batch files require CRLF
+end_of_line = crlf
+
+[Makefile]
+indent_style = tab

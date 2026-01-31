@@ -50,34 +50,56 @@ tp/
 - PostgreSQL (or SQLite for development)
 - FFmpeg (for audio processing)
 
-### Backend Setup
+### Quick Start (Cross-Platform)
+
+The project includes setup scripts for both Windows and Linux/macOS:
+
+**Linux/macOS:**
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+
+**Windows:**
+```cmd
+setupforwindows.bat
+```
+
+### Manual Backend Setup
 
 1. Clone the repository and navigate to the project directory
 
 2. Create a virtual environment:
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-3. Install dependencies:
+3. Activate the virtual environment:
+
+| Operating System | Command |
+|-----------------|---------|
+| **Linux/macOS** | `source venv/bin/activate` |
+| **Windows (CMD)** | `venv\Scripts\activate.bat` |
+| **Windows (PowerShell)** | `venv\Scripts\Activate.ps1` |
+
+4. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Download spaCy models:
+5. Download spaCy models:
 ```bash
 python -m spacy download en_core_web_sm
 python -m spacy download en_core_web_lg
 ```
 
-5. Configure environment variables:
+6. Configure environment variables:
 ```bash
 cp .env.example .env
 # Edit .env with your configuration
 ```
 
-6. Initialize the database:
+7. Initialize the database:
 ```bash
 python backend/init_db.py
 ```

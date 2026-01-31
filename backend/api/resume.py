@@ -5,6 +5,7 @@ from typing import Optional, List
 import os
 import shutil
 from datetime import datetime
+from pathlib import Path
 
 from backend.core.database import get_db
 from backend.core.config import settings
@@ -73,31 +74,31 @@ async def upload_resume(
             detail=f"File size exceeds maximum allowed size of {settings.MAX_UPLOAD_SIZE / 1048576:.2f} MB"
         )
     
-    # Create user-specific upload directory
-    user_upload_dir = f"data/uploads/user_{current_user.id}"
-    os.makedirs(user_upload_dir, exist_ok=True)
+    # Create user-specific upload directory (OS-agnostic)
+    user_upload_dir = Path("data") / "uploads" / f"user_{current_user.id}"
+    user_upload_dir.mkdir(parents=True, exist_ok=True)
     
     # Save file
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{timestamp}_{file.filename}"
-    file_path = os.path.join(user_upload_dir, filename)
+    file_path = user_upload_dir / filename
     
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
     # Parse resume
     if not AI_MODULES_AVAILABLE or resume_parser is None:
-        os.remove(file_path)
+        file_path.unlink(missing_ok=True)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="AI modules not available. Resume parsing requires full deployment."
         )
     
     try:
-        parsed_data = resume_parser.parse_resume(file_path)
+        parsed_data = resume_parser.parse_resume(str(file_path))
     except Exception as e:
         # Clean up file if parsing fails
-        os.remove(file_path)
+        file_path.unlink(missing_ok=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to parse resume: {str(e)}"
@@ -110,7 +111,7 @@ async def upload_resume(
     new_resume = Resume(
         user_id=current_user.id,
         filename=file.filename,
-        file_path=file_path,
+        file_path=str(file_path),  # Store as string for DB compatibility
         parsed_data=parsed_data.get("raw_data"),
         skills=parsed_data.get("skills", []),
         experience_years=parsed_data.get("experience_years"),

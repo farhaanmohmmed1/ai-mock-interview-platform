@@ -1,4 +1,6 @@
 # Minimal requirements for Vercel
 fastapi==0.104.1
 pydantic==2.5.0
+pydantic-settings==2.1.0
 email-validator==2.3.0
+python-dotenv==1.0.0

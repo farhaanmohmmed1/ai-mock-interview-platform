@@ -632,52 +632,54 @@ const Interview = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="md" sx={{ mt: 8, textAlign: 'center' }}>
-        <CircularProgress size={60} />
-        <Typography variant="h6" sx={{ mt: 2 }}>
-          Preparing your {type} interview...
-        </Typography>
-        <Typography color="text.secondary">
-          Generating personalized questions
-        </Typography>
-      </Container>
+      <Box sx={{ bgcolor: '#000000', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress size={60} sx={{ color: '#0EA5E9' }} />
+          <Typography variant="h6" sx={{ mt: 2, color: '#FFFFFF' }}>
+            Preparing your {type} interview...
+          </Typography>
+          <Typography sx={{ color: '#888888' }}>
+            Generating personalized questions
+          </Typography>
+        </Box>
+      </Box>
     );
   }
 
   if (error && !interviewId) {
     return (
-      <Container maxWidth="md" sx={{ mt: 8 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-        <Button variant="contained" onClick={() => navigate('/dashboard')}>
-          Back to Dashboard
-        </Button>
-      </Container>
+      <Box sx={{ bgcolor: '#000000', minHeight: '100vh', pt: 8 }}>
+        <Container maxWidth="md">
+          <Alert severity="error" sx={{ mb: 2, bgcolor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+            {error}
+          </Alert>
+          <Button variant="contained" onClick={() => navigate('/dashboard')} sx={{ bgcolor: '#0EA5E9', '&:hover': { bgcolor: '#0284C7' } }}>
+            Back to Dashboard
+          </Button>
+        </Container>
+      </Box>
     );
   }
 
   return (
-    <>
-      <AppBar position="static">
+    <Box sx={{ bgcolor: '#000000', minHeight: '100vh' }}>
+      <AppBar position="static" sx={{ bgcolor: '#0A0A0A', borderBottom: '1px solid #1E1E1E' }}>
         <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+          <Typography variant="h6" sx={{ flexGrow: 1, color: '#FFFFFF' }}>
             {type.charAt(0).toUpperCase() + type.slice(1)} Interview
           </Typography>
           <Chip
-            icon={<Timer />}
+            icon={<Timer sx={{ color: '#FFFFFF' }} />}
             label={formatTime(elapsedTime)}
-            color="default"
-            sx={{ mr: 2, bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
+            sx={{ mr: 2, bgcolor: '#1A1A1A', color: '#FFFFFF', border: '1px solid #333333' }}
           />
           <Chip
-            icon={<QuestionAnswer />}
+            icon={<QuestionAnswer sx={{ color: '#FFFFFF' }} />}
             label={`${answeredCount}/${questions.length}`}
-            color="default"
-            sx={{ mr: 2, bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
+            sx={{ mr: 2, bgcolor: '#1A1A1A', color: '#FFFFFF', border: '1px solid #333333' }}
           />
           <Button
-            color="inherit"
+            sx={{ color: '#888888', '&:hover': { color: '#FFFFFF' } }}
             startIcon={<ExitToApp />}
             onClick={() => setExitDialogOpen(true)}
           >
@@ -687,11 +689,23 @@ const Interview = () => {
       </AppBar>
 
       {/* Progress Bar */}
-      <LinearProgress variant="determinate" value={progress} sx={{ height: 8 }} />
+      <LinearProgress 
+        variant="determinate" 
+        value={progress} 
+        sx={{ 
+          height: 4, 
+          bgcolor: '#1A1A1A',
+          '& .MuiLinearProgress-bar': { bgcolor: '#0EA5E9' }
+        }} 
+      />
 
       <Container maxWidth="lg" sx={{ mt: 3, mb: 4 }}>
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+          <Alert 
+            severity="error" 
+            sx={{ mb: 2, bgcolor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)' }} 
+            onClose={() => setError('')}
+          >
             {error}
           </Alert>
         )}
@@ -699,18 +713,18 @@ const Interview = () => {
         <Box sx={{ display: 'flex', gap: 3 }}>
           {/* Left Panel - Webcam */}
           <Box sx={{ width: 350, flexShrink: 0 }}>
-            <Paper sx={{ p: 2 }}>
+            <Paper sx={{ p: 2, bgcolor: '#0A0A0A', border: '1px solid #1E1E1E' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">Camera Preview</Typography>
+                <Typography variant="h6" sx={{ color: '#FFFFFF' }}>Camera Preview</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   {tabSwitchCount > 0 && (
                     <Chip 
-                      label={`⚠️ ${tabSwitchCount} tab switch${tabSwitchCount > 1 ? 'es' : ''}`}
+                      label={`${tabSwitchCount} tab switch${tabSwitchCount > 1 ? 'es' : ''}`}
                       size="small"
-                      color="warning"
+                      sx={{ bgcolor: 'rgba(234, 179, 8, 0.2)', color: '#EAB308', border: '1px solid rgba(234, 179, 8, 0.3)' }}
                     />
                   )}
-                  <IconButton onClick={toggleCamera} color={cameraEnabled ? 'primary' : 'default'}>
+                  <IconButton onClick={toggleCamera} sx={{ color: cameraEnabled ? '#0EA5E9' : '#666666' }}>
                     {cameraEnabled ? <Videocam /> : <VideocamOff />}
                   </IconButton>
                 </Box>
@@ -720,12 +734,13 @@ const Interview = () => {
                 sx={{
                   width: '100%',
                   aspectRatio: '4/3',
-                  bgcolor: 'black',
+                  bgcolor: '#111111',
                   borderRadius: 1,
                   overflow: 'hidden',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  border: '1px solid #262626',
                 }}
               >
                 {cameraEnabled ? (
@@ -737,7 +752,7 @@ const Interview = () => {
                     style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }}
                   />
                 ) : (
-                  <Typography color="grey.500">
+                  <Typography sx={{ color: '#555555' }}>
                     {cameraError || 'Camera disabled'}
                   </Typography>
                 )}
@@ -745,21 +760,21 @@ const Interview = () => {
 
               {/* Question Progress */}
               <Box sx={{ mt: 3 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                <Typography variant="subtitle2" sx={{ color: '#888888', mb: 1 }}>
                   Progress
                 </Typography>
-                <Stepper activeStep={currentQuestionIndex} orientation="vertical">
+                <Stepper activeStep={currentQuestionIndex} orientation="vertical" sx={{ 
+                  '& .MuiStepLabel-label': { color: '#888888' },
+                  '& .MuiStepLabel-label.Mui-active': { color: '#FFFFFF' },
+                  '& .MuiStepLabel-label.Mui-completed': { color: '#888888' },
+                  '& .MuiStepIcon-root': { color: '#333333' },
+                  '& .MuiStepIcon-root.Mui-active': { color: '#0EA5E9' },
+                  '& .MuiStepIcon-root.Mui-completed': { color: '#10B981' },
+                }}>
                   {questions.map((q, index) => (
                     <Step key={q.id} completed={answers[q.id] !== undefined}>
-                      <StepLabel
-                        StepIconProps={{
-                          sx: {
-                            '&.Mui-completed': { color: 'success.main' },
-                            '&.Mui-active': { color: 'primary.main' },
-                          },
-                        }}
-                      >
-                        <Typography variant="body2" noWrap sx={{ maxWidth: 250 }}>
+                      <StepLabel>
+                        <Typography variant="body2" noWrap sx={{ maxWidth: 250, color: 'inherit' }}>
                           Q{index + 1}: {q.question_text.substring(0, 30)}...
                         </Typography>
                       </StepLabel>
@@ -773,37 +788,39 @@ const Interview = () => {
           {/* Right Panel - Question and Answer */}
           <Box sx={{ flexGrow: 1 }}>
             {currentQuestion && (
-              <Card sx={{ mb: 3 }}>
+              <Card sx={{ mb: 3, bgcolor: '#0A0A0A', border: '1px solid #1E1E1E' }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Typography variant="overline" color="text.secondary">
+                    <Typography variant="overline" sx={{ color: '#888888' }}>
                       Question {currentQuestionIndex + 1} of {questions.length}
                     </Typography>
                     <Box>
                       <Chip
                         label={currentQuestion.question_type}
                         size="small"
-                        color="primary"
-                        variant="outlined"
-                        sx={{ mr: 1 }}
+                        sx={{ mr: 1, bgcolor: 'rgba(14, 165, 233, 0.15)', color: '#0EA5E9', border: '1px solid rgba(14, 165, 233, 0.3)' }}
                       />
                       <Chip
                         label={currentQuestion.difficulty}
                         size="small"
-                        color={
-                          currentQuestion.difficulty === 'easy' ? 'success' :
-                          currentQuestion.difficulty === 'medium' ? 'warning' : 'error'
-                        }
+                        sx={{
+                          bgcolor: currentQuestion.difficulty === 'easy' ? 'rgba(16, 185, 129, 0.15)' :
+                                   currentQuestion.difficulty === 'medium' ? 'rgba(234, 179, 8, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                          color: currentQuestion.difficulty === 'easy' ? '#10B981' :
+                                 currentQuestion.difficulty === 'medium' ? '#EAB308' : '#EF4444',
+                          border: `1px solid ${currentQuestion.difficulty === 'easy' ? 'rgba(16, 185, 129, 0.3)' :
+                                   currentQuestion.difficulty === 'medium' ? 'rgba(234, 179, 8, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                        }}
                       />
                     </Box>
                   </Box>
                   
-                  <Typography variant="h5" gutterBottom>
+                  <Typography variant="h5" sx={{ color: '#FFFFFF', mb: 1 }}>
                     {currentQuestion.question_text}
                   </Typography>
 
                   {currentQuestion.category && (
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" sx={{ color: '#888888' }}>
                       Category: {currentQuestion.category}
                     </Typography>
                   )}
@@ -812,15 +829,14 @@ const Interview = () => {
             )}
 
             {/* Answer Input */}
-            <Paper sx={{ p: 3 }}>
+            <Paper sx={{ p: 3, bgcolor: '#0A0A0A', border: '1px solid #1E1E1E' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">
+                <Typography variant="h6" sx={{ color: '#FFFFFF' }}>
                   Your Answer
                 </Typography>
                 <Chip
-                  label="🎤 Voice Recording"
-                  color="primary"
-                  variant="outlined"
+                  label="Voice Recording"
+                  sx={{ bgcolor: 'rgba(14, 165, 233, 0.15)', color: '#0EA5E9', border: '1px solid rgba(14, 165, 233, 0.3)' }}
                 />
               </Box>
 
@@ -830,9 +846,9 @@ const Interview = () => {
                   p: 3, 
                   mb: 3, 
                   border: '2px dashed',
-                  borderColor: isRecording ? 'error.main' : 'grey.300',
+                  borderColor: isRecording ? '#EF4444' : '#333333',
                   borderRadius: 2,
-                  bgcolor: isRecording ? 'error.light' : 'grey.50',
+                  bgcolor: isRecording ? 'rgba(239, 68, 68, 0.1)' : '#111111',
                   textAlign: 'center',
                   transition: 'all 0.3s ease'
                 }}
@@ -840,35 +856,34 @@ const Interview = () => {
                 {isRecording ? (
                   <>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-                      <FiberManualRecord sx={{ color: 'error.main', animation: 'pulse 1s infinite', mr: 1 }} />
-                      <Typography variant="h4" color="error.main">
+                      <FiberManualRecord sx={{ color: '#EF4444', animation: 'pulse 1s infinite', mr: 1 }} />
+                      <Typography variant="h4" sx={{ color: '#EF4444' }}>
                         {formatTime(recordingTime)}
                       </Typography>
                     </Box>
-                    <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+                    <Typography variant="body1" sx={{ color: '#888888', mb: 1 }}>
                       Recording your answer... Speak clearly
                     </Typography>
                     {/* Live Transcription Display */}
                     {liveTranscript && (
-                      <Paper sx={{ p: 2, mb: 2, bgcolor: 'white', textAlign: 'left', maxHeight: 100, overflow: 'auto' }}>
-                        <Typography variant="body2" color="text.secondary">
-                          <strong>Live transcript:</strong> {liveTranscript}
+                      <Paper sx={{ p: 2, mb: 2, bgcolor: '#1A1A1A', border: '1px solid #262626', textAlign: 'left', maxHeight: 100, overflow: 'auto' }}>
+                        <Typography variant="body2" sx={{ color: '#E0E0E0' }}>
+                          <strong style={{ color: '#888888' }}>Live transcript:</strong> {liveTranscript}
                         </Typography>
                       </Paper>
                     )}
                     {/* Info for browsers without live transcription */}
                     {!liveTranscriptSupported && !liveTranscript && (
-                      <Typography variant="caption" color="info.main" sx={{ mb: 2, display: 'block' }}>
-                        💡 Your speech will be transcribed after you stop recording
+                      <Typography variant="caption" sx={{ color: '#0EA5E9', mb: 2, display: 'block' }}>
+                        Your speech will be transcribed after you stop recording
                       </Typography>
                     )}
                     <Button
                       variant="contained"
-                      color="error"
                       size="large"
                       startIcon={<Stop />}
                       onClick={stopRecording}
-                      sx={{ px: 4 }}
+                      sx={{ px: 4, bgcolor: '#EF4444', '&:hover': { bgcolor: '#DC2626' } }}
                     >
                       Stop Recording
                     </Button>
@@ -877,39 +892,38 @@ const Interview = () => {
                   <>
                     {transcribing ? (
                       <>
-                        <CircularProgress size={48} sx={{ mb: 1 }} />
-                        <Typography variant="h6" color="primary.main" sx={{ mb: 1 }}>
+                        <CircularProgress size={48} sx={{ mb: 1, color: '#0EA5E9' }} />
+                        <Typography variant="h6" sx={{ color: '#0EA5E9', mb: 1 }}>
                           Transcribing your answer...
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" sx={{ color: '#888888' }}>
                           Please wait while we convert your speech to text
                         </Typography>
                       </>
                     ) : (
                       <>
-                        <CheckCircle sx={{ fontSize: 48, color: 'success.main', mb: 1 }} />
-                        <Typography variant="h6" color="success.main" sx={{ mb: 1 }}>
+                        <CheckCircle sx={{ fontSize: 48, color: '#10B981', mb: 1 }} />
+                        <Typography variant="h6" sx={{ color: '#10B981', mb: 1 }}>
                           Recording Complete!
                         </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        <Typography variant="body2" sx={{ color: '#888888', mb: 2 }}>
                           Duration: {formatTime(recordingTime)}
                         </Typography>
                         {currentAnswer && (
-                          <Paper sx={{ p: 2, mb: 2, bgcolor: 'grey.100', textAlign: 'left' }}>
-                            <Typography variant="body2">
-                              <strong>Transcription:</strong> {currentAnswer}
+                          <Paper sx={{ p: 2, mb: 2, bgcolor: '#1A1A1A', border: '1px solid #262626', textAlign: 'left' }}>
+                            <Typography variant="body2" sx={{ color: '#E0E0E0' }}>
+                              <strong style={{ color: '#888888' }}>Transcription:</strong> {currentAnswer}
                             </Typography>
                           </Paper>
                         )}
                         {!currentAnswer && (
-                          <Alert severity="warning" sx={{ mb: 2 }}>
+                          <Alert severity="warning" sx={{ mb: 2, bgcolor: 'rgba(234, 179, 8, 0.1)', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
                             Could not transcribe audio. Please type your answer below or try recording again.
                           </Alert>
                         )}
                         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
                           <Button
                             variant="outlined"
-                            color="primary"
                             startIcon={<Mic />}
                             onClick={() => {
                               setAudioBlob(null);
@@ -917,6 +931,7 @@ const Interview = () => {
                               setCurrentAnswer('');
                               setLiveTranscript('');
                             }}
+                            sx={{ color: '#0EA5E9', borderColor: '#0EA5E9', '&:hover': { borderColor: '#0EA5E9', bgcolor: 'rgba(14, 165, 233, 0.1)' } }}
                           >
                             Record Again
                           </Button>
@@ -926,21 +941,20 @@ const Interview = () => {
                   </>
                 ) : (
                   <>
-                    <Mic sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
-                    <Typography variant="h6" sx={{ mb: 1 }}>
+                    <Mic sx={{ fontSize: 48, color: '#0EA5E9', mb: 1 }} />
+                    <Typography variant="h6" sx={{ color: '#FFFFFF', mb: 1 }}>
                       Click to Start Recording
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    <Typography variant="body2" sx={{ color: '#888888', mb: 2 }}>
                       Answer the question by speaking. Your response will be transcribed automatically.
                     </Typography>
                     <Button
                       variant="contained"
-                      color="primary"
                       size="large"
                       startIcon={<Mic />}
                       onClick={startRecording}
                       disabled={submitting}
-                      sx={{ px: 4 }}
+                      sx={{ px: 4, bgcolor: '#0EA5E9', '&:hover': { bgcolor: '#0284C7' } }}
                     >
                       Start Recording
                     </Button>
@@ -950,16 +964,16 @@ const Interview = () => {
 
               {/* Transcription status */}
               {transcribing && (
-                <Alert severity="info" sx={{ mb: 2 }}>
+                <Alert severity="info" sx={{ mb: 2, bgcolor: 'rgba(14, 165, 233, 0.1)', border: '1px solid rgba(14, 165, 233, 0.3)' }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CircularProgress size={20} />
-                    <Typography>Transcribing your audio response...</Typography>
+                    <CircularProgress size={20} sx={{ color: '#0EA5E9' }} />
+                    <Typography sx={{ color: '#E0E0E0' }}>Transcribing your audio response...</Typography>
                   </Box>
                 </Alert>
               )}
 
               {/* Optional text input for corrections */}
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              <Typography variant="body2" sx={{ color: '#888888', mb: 1 }}>
                 Or type your answer (optional):
               </Typography>
               <TextField
@@ -970,7 +984,17 @@ const Interview = () => {
                 value={currentAnswer}
                 onChange={(e) => setCurrentAnswer(e.target.value)}
                 disabled={submitting}
-                sx={{ mb: 2 }}
+                sx={{ 
+                  mb: 2,
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: '#111111',
+                    color: '#E0E0E0',
+                    '& fieldset': { borderColor: '#333333' },
+                    '&:hover fieldset': { borderColor: '#444444' },
+                    '&.Mui-focused fieldset': { borderColor: '#0EA5E9' },
+                  },
+                  '& .MuiInputBase-input::placeholder': { color: '#555555' },
+                }}
               />
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -987,6 +1011,12 @@ const Interview = () => {
                       setRecordingTime(0);
                       setLiveTranscript('');
                     }}
+                    sx={{ 
+                      color: '#888888', 
+                      borderColor: '#333333', 
+                      '&:hover': { borderColor: '#555555', bgcolor: 'rgba(255,255,255,0.05)' },
+                      '&.Mui-disabled': { color: '#444444', borderColor: '#222222' }
+                    }}
                   >
                     Previous
                   </Button>
@@ -994,10 +1024,15 @@ const Interview = () => {
                   {/* Skip Button */}
                   <Button
                     variant="outlined"
-                    color="warning"
                     endIcon={<SkipNext />}
                     disabled={submitting || isRecording}
                     onClick={skipQuestion}
+                    sx={{ 
+                      color: '#EAB308', 
+                      borderColor: 'rgba(234, 179, 8, 0.5)', 
+                      '&:hover': { borderColor: '#EAB308', bgcolor: 'rgba(234, 179, 8, 0.1)' },
+                      '&.Mui-disabled': { color: '#444444', borderColor: '#222222' }
+                    }}
                   >
                     Skip Question
                   </Button>
@@ -1005,7 +1040,7 @@ const Interview = () => {
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   {currentAnswer.length > 0 && (
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" sx={{ color: '#888888' }}>
                       {currentAnswer.length} characters
                     </Typography>
                   )}
@@ -1013,19 +1048,20 @@ const Interview = () => {
                   {currentQuestionIndex === questions.length - 1 ? (
                     <Button
                       variant="contained"
-                      color="success"
-                      endIcon={submitting ? <CircularProgress size={20} color="inherit" /> : <CheckCircle />}
+                      endIcon={submitting ? <CircularProgress size={20} sx={{ color: '#FFFFFF' }} /> : <CheckCircle />}
                       onClick={submitAnswer}
                       disabled={(!currentAnswer.trim() && !audioBlob) || submitting || isRecording}
+                      sx={{ bgcolor: '#10B981', '&:hover': { bgcolor: '#059669' } }}
                     >
                       {submitting ? (transcribing ? 'Transcribing...' : 'Submitting...') : 'Submit & Complete'}
                     </Button>
                   ) : (
                     <Button
                       variant="contained"
-                      endIcon={submitting ? <CircularProgress size={20} color="inherit" /> : <NavigateNext />}
+                      endIcon={submitting ? <CircularProgress size={20} sx={{ color: '#FFFFFF' }} /> : <NavigateNext />}
                       onClick={submitAnswer}
                       disabled={(!currentAnswer.trim() && !audioBlob) || submitting || isRecording}
+                      sx={{ bgcolor: '#0EA5E9', '&:hover': { bgcolor: '#0284C7' } }}
                     >
                       {submitting ? (transcribing ? 'Transcribing...' : 'Submitting...') : 'Submit & Next'}
                     </Button>
@@ -1035,15 +1071,15 @@ const Interview = () => {
             </Paper>
 
             {/* Tips */}
-            <Paper sx={{ p: 2, mt: 2, bgcolor: 'info.light' }}>
-              <Typography variant="subtitle2" gutterBottom>
-                💡 Interview Tips
+            <Paper sx={{ p: 2, mt: 2, bgcolor: '#0B0B0B', border: '1px solid #1E1E1E' }}>
+              <Typography variant="subtitle2" sx={{ color: '#FFFFFF', mb: 1 }}>
+                Interview Tips
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                • Speak clearly and maintain eye contact with the camera<br />
-                • Structure your answer with a clear beginning, middle, and end<br />
-                • Use specific examples to support your points<br />
-                • Take a moment to think before answering
+              <Typography variant="body2" sx={{ color: '#888888' }}>
+                - Speak clearly and maintain eye contact with the camera<br />
+                - Structure your answer with a clear beginning, middle, and end<br />
+                - Use specific examples to support your points<br />
+                - Take a moment to think before answering
               </Typography>
             </Paper>
           </Box>
@@ -1051,39 +1087,47 @@ const Interview = () => {
       </Container>
 
       {/* Exit Confirmation Dialog */}
-      <Dialog open={exitDialogOpen} onClose={() => setExitDialogOpen(false)}>
-        <DialogTitle>Exit Interview?</DialogTitle>
+      <Dialog 
+        open={exitDialogOpen} 
+        onClose={() => setExitDialogOpen(false)}
+        PaperProps={{ sx: { bgcolor: '#1A1A1A', border: '1px solid #262626' } }}
+      >
+        <DialogTitle sx={{ color: '#FFFFFF' }}>Exit Interview?</DialogTitle>
         <DialogContent>
-          <Typography>
+          <Typography sx={{ color: '#E0E0E0' }}>
             Are you sure you want to exit? Your progress will be lost and the interview will be cancelled.
           </Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setExitDialogOpen(false)}>Continue Interview</Button>
-          <Button onClick={exitInterview} color="error">
+        <DialogActions sx={{ borderTop: '1px solid #262626' }}>
+          <Button onClick={() => setExitDialogOpen(false)} sx={{ color: '#888888' }}>Continue Interview</Button>
+          <Button onClick={exitInterview} sx={{ color: '#EF4444', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}>
             Exit & Cancel
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Complete Interview Dialog */}
-      <Dialog open={completeDialogOpen} onClose={() => setCompleteDialogOpen(false)}>
-        <DialogTitle>Complete Interview?</DialogTitle>
+      <Dialog 
+        open={completeDialogOpen} 
+        onClose={() => setCompleteDialogOpen(false)}
+        PaperProps={{ sx: { bgcolor: '#1A1A1A', border: '1px solid #262626' } }}
+      >
+        <DialogTitle sx={{ color: '#FFFFFF' }}>Complete Interview?</DialogTitle>
         <DialogContent>
-          <Typography>
+          <Typography sx={{ color: '#E0E0E0' }}>
             You have answered all {questions.length} questions. 
             Click "Complete" to submit your interview and see your results.
           </Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCompleteDialogOpen(false)}>Review Answers</Button>
+        <DialogActions sx={{ borderTop: '1px solid #262626' }}>
+          <Button onClick={() => setCompleteDialogOpen(false)} sx={{ color: '#888888' }}>Review Answers</Button>
           <Button
             onClick={completeInterview}
-            color="primary"
             variant="contained"
             disabled={submitting}
+            sx={{ bgcolor: '#0EA5E9', '&:hover': { bgcolor: '#0284C7' } }}
           >
-            {submitting ? <CircularProgress size={20} /> : 'Complete Interview'}
+            {submitting ? <CircularProgress size={20} sx={{ color: '#FFFFFF' }} /> : 'Complete Interview'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1098,17 +1142,22 @@ const Interview = () => {
         <Alert 
           onClose={() => setProctoringAlert('')} 
           severity="warning" 
-          sx={{ width: '100%' }}
+          sx={{ 
+            width: '100%',
+            bgcolor: 'rgba(234, 179, 8, 0.15)',
+            border: '1px solid rgba(234, 179, 8, 0.3)',
+            color: '#E0E0E0',
+          }}
         >
           {proctoringAlert}
           {tabSwitchCount > 0 && (
-            <Typography variant="caption" display="block">
+            <Typography variant="caption" display="block" sx={{ color: '#888888' }}>
               Tab switches detected: {tabSwitchCount}
             </Typography>
           )}
         </Alert>
       </Snackbar>
-    </>
+    </Box>
   );
 };
 

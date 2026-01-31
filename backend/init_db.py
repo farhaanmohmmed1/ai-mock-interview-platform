@@ -5,10 +5,11 @@ Creates all tables and optionally seeds with sample data
 """
 
 import sys
-import os
+from pathlib import Path
 
-# Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add parent directory to path (OS-agnostic)
+BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR))
 
 from backend.core.database import engine, Base
 from backend.models import User, Resume, Interview, Question, Response, PerformanceMetric, AdaptiveProfile

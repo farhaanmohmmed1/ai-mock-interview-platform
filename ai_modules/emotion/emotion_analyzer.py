@@ -35,36 +35,38 @@ class EmotionAnalyzer:
         if not cap.isOpened():
             raise ValueError("Could not open video file")
         
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        duration = total_frames / fps if fps > 0 else 0
-        
-        # Sample frames for analysis
-        frame_interval = int(fps * sample_rate)  # Sample every N seconds
-        
-        emotions_timeline = []
-        frame_count = 0
-        
-        while True:
-            ret, frame = cap.read()
+        try:
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            duration = total_frames / fps if fps > 0 else 0
             
-            if not ret:
-                break
+            # Prevent division by zero for sample interval
+            frame_interval = max(1, int(fps * sample_rate)) if fps > 0 else 1
             
-            # Analyze every Nth frame
-            if frame_count % frame_interval == 0:
-                emotion_data = self._analyze_frame(frame, frame_count / fps if fps > 0 else 0)
-                if emotion_data:
-                    emotions_timeline.append(emotion_data)
+            emotions_timeline = []
+            frame_count = 0
             
-            frame_count += 1
-        
-        cap.release()
-        
-        # Aggregate results
-        result = self._aggregate_emotions(emotions_timeline, duration)
-        
-        return result
+            while True:
+                ret, frame = cap.read()
+                
+                if not ret:
+                    break
+                
+                # Analyze every Nth frame
+                if frame_count % frame_interval == 0:
+                    emotion_data = self._analyze_frame(frame, frame_count / fps if fps > 0 else 0)
+                    if emotion_data:
+                        emotions_timeline.append(emotion_data)
+                
+                frame_count += 1
+            
+            # Aggregate results
+            result = self._aggregate_emotions(emotions_timeline, duration)
+            
+            return result
+        finally:
+            # Ensure video capture is released even if an exception occurs
+            cap.release()
     
     def _analyze_frame(self, frame, timestamp: float) -> Dict:
         """Analyze emotions in a single frame"""

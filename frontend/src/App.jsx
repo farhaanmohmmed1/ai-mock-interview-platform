@@ -38,26 +38,195 @@ export const useAuth = () => useContext(AuthContext);
 
 const theme = createTheme({
   palette: {
+    mode: 'dark',
     primary: {
-      main: '#1976d2',
+      main: '#0EA5E9',
+      light: '#38BDF8',
+      dark: '#0284C7',
     },
     secondary: {
-      main: '#dc004e',
+      main: '#6366F1',
     },
     background: {
-      default: '#f5f5f5',
+      default: '#000000',
+      paper: '#1A1A1A',
+    },
+    text: {
+      primary: '#FFFFFF',
+      secondary: '#E0E0E0',
+      disabled: '#555555',
+    },
+    divider: '#333333',
+    success: {
+      main: '#10B981',
+    },
+    warning: {
+      main: '#F59E0B',
+    },
+    error: {
+      main: '#EF4444',
+    },
+    info: {
+      main: '#6366F1',
     },
   },
   typography: {
-    fontFamily: [
-      '-apple-system',
-      'BlinkMacSystemFont',
-      '"Segoe UI"',
-      'Roboto',
-      '"Helvetica Neue"',
-      'Arial',
-      'sans-serif',
-    ].join(','),
+    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    h1: { fontWeight: 700, letterSpacing: '-0.02em' },
+    h2: { fontWeight: 700, letterSpacing: '-0.02em' },
+    h3: { fontWeight: 600, letterSpacing: '-0.02em' },
+    h4: { fontWeight: 600, letterSpacing: '-0.01em' },
+    h5: { fontWeight: 600 },
+    h6: { fontWeight: 600 },
+    button: { fontWeight: 500, textTransform: 'none' },
+  },
+  shape: {
+    borderRadius: 6,
+  },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundColor: '#000000',
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 6,
+          textTransform: 'none',
+          fontWeight: 500,
+        },
+        contained: {
+          boxShadow: 'none',
+          '&:hover': {
+            boxShadow: 'none',
+          },
+        },
+        outlined: {
+          borderColor: '#333333',
+          '&:hover': {
+            borderColor: '#0EA5E9',
+            backgroundColor: 'rgba(14, 165, 233, 0.08)',
+          },
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none',
+          backgroundColor: '#1A1A1A',
+          border: '1px solid #262626',
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none',
+          backgroundColor: '#1A1A1A',
+          border: '1px solid #262626',
+          boxShadow: 'none',
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#0B0B0B',
+          borderBottom: '1px solid #262626',
+          boxShadow: 'none',
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            backgroundColor: '#0B0B0B',
+            '& fieldset': {
+              borderColor: '#333333',
+            },
+            '&:hover fieldset': {
+              borderColor: '#444444',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#0EA5E9',
+            },
+          },
+        },
+      },
+    },
+    MuiDivider: {
+      styleOverrides: {
+        root: {
+          borderColor: '#262626',
+        },
+      },
+    },
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: '#1A1A1A',
+          border: '1px solid #333333',
+        },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          '&:hover': {
+            backgroundColor: 'rgba(14, 165, 233, 0.08)',
+          },
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: 4,
+        },
+        outlined: {
+          borderColor: '#333333',
+        },
+      },
+    },
+    MuiLinearProgress: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#262626',
+          borderRadius: 2,
+        },
+        bar: {
+          borderRadius: 2,
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          borderBottom: '1px solid #262626',
+        },
+        head: {
+          backgroundColor: 'transparent',
+          fontWeight: 600,
+          color: '#888888',
+          textTransform: 'uppercase',
+          fontSize: '0.75rem',
+          letterSpacing: '0.05em',
+        },
+      },
+    },
+    MuiAvatar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#0EA5E9',
+          color: '#FFFFFF',
+        },
+      },
+    },
   },
 });
 
@@ -92,14 +261,14 @@ const NavBar = () => {
   if (hideNavbar) return null;
 
   return (
-    <AppBar position="static" sx={{ mb: 0 }}>
+    <AppBar position="static" elevation={0}>
       <Toolbar>
         <Typography
           variant="h6"
-          sx={{ cursor: 'pointer', fontWeight: 'bold' }}
+          sx={{ cursor: 'pointer', fontWeight: 700, color: '#FFFFFF' }}
           onClick={() => navigate('/dashboard')}
         >
-          🎯 AI Mock Interview
+          AI Mock Interview
         </Typography>
         
         <Box sx={{ flexGrow: 1, display: 'flex', gap: 1, ml: 4 }}>
@@ -120,7 +289,7 @@ const NavBar = () => {
             {user?.full_name || user?.username || 'Demo User'}
           </Typography>
           <IconButton onClick={handleMenuOpen} sx={{ p: 0 }}>
-            <Avatar sx={{ bgcolor: '#fff', color: '#1976d2', fontWeight: 'bold' }}>
+            <Avatar sx={{ bgcolor: '#0EA5E9', color: '#FFFFFF', fontWeight: 600, fontSize: '0.9rem' }}>
               {getInitials(user?.full_name || user?.username)}
             </Avatar>
           </IconButton>

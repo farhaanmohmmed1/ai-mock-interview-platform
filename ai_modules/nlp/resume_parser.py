@@ -3,6 +3,7 @@ import docx
 import re
 import spacy
 from typing import Dict, List, Optional
+from pathlib import Path
 import json
 
 
@@ -18,13 +19,18 @@ class ResumeParser:
     
     def parse_resume(self, file_path: str) -> Dict:
         """Parse resume file and extract information"""
-        # Extract text
-        if file_path.endswith('.pdf'):
-            text = self._extract_pdf_text(file_path)
-        elif file_path.endswith('.docx'):
-            text = self._extract_docx_text(file_path)
-        elif file_path.endswith('.txt'):
-            with open(file_path, 'r', encoding='utf-8') as f:
+        # Convert to Path for OS-agnostic operations
+        path = Path(file_path)
+        
+        # Extract text based on file extension
+        suffix = path.suffix.lower()
+        if suffix == '.pdf':
+            text = self._extract_pdf_text(str(path))
+        elif suffix == '.docx':
+            text = self._extract_docx_text(str(path))
+        elif suffix == '.txt':
+            # Use newline='' for consistent line ending handling across OS
+            with open(path, 'r', encoding='utf-8', newline='') as f:
                 text = f.read()
         else:
             raise ValueError("Unsupported file format")
@@ -98,6 +104,9 @@ class ResumeParser:
     
     def _extract_experience_years(self, text: str) -> Optional[float]:
         """Extract years of experience"""
+        from datetime import datetime
+        current_year = datetime.now().year
+        
         # Look for patterns like "5 years", "3+ years", "2-3 years"
         patterns = [
             r'(\d+)\+?\s*years?\s+(?:of\s+)?experience',
@@ -110,7 +119,7 @@ class ResumeParser:
             if match:
                 try:
                     return float(match.group(1))
-                except:
+                except (ValueError, TypeError):
                     pass
         
         # Count work experience entries
@@ -127,8 +136,8 @@ class ResumeParser:
                     if len(years) == 2:
                         total_years += int(years[1]) - int(years[0])
                     elif 'present' in date_range.lower() or 'current' in date_range.lower():
-                        total_years += 2024 - int(years[0])
-                return float(total_years)
+                        total_years += current_year - int(years[0])
+                return float(total_years) if total_years > 0 else None
         
         return None
     
