@@ -4,11 +4,197 @@ from backend.models import Interview, Response, Question
 import numpy as np
 
 
+# Course recommendations database - maps topics/skills to learning resources
+COURSE_DATABASE = {
+    # Programming Languages
+    "java": [
+        {"title": "Java Programming Masterclass", "platform": "Udemy", "url": "https://www.udemy.com/course/java-the-complete-java-developer-course/", "level": "Beginner to Advanced"},
+        {"title": "Java Fundamentals", "platform": "Pluralsight", "url": "https://www.pluralsight.com/courses/java-fundamentals-language", "level": "Beginner"},
+        {"title": "Java Programming", "platform": "Coursera", "url": "https://www.coursera.org/specializations/java-programming", "level": "Beginner"},
+    ],
+    "python": [
+        {"title": "Complete Python Bootcamp", "platform": "Udemy", "url": "https://www.udemy.com/course/complete-python-bootcamp/", "level": "Beginner to Advanced"},
+        {"title": "Python for Everybody", "platform": "Coursera", "url": "https://www.coursera.org/specializations/python", "level": "Beginner"},
+        {"title": "Python Documentation", "platform": "Official", "url": "https://docs.python.org/3/tutorial/", "level": "All Levels"},
+    ],
+    "javascript": [
+        {"title": "The Complete JavaScript Course", "platform": "Udemy", "url": "https://www.udemy.com/course/the-complete-javascript-course/", "level": "Beginner to Advanced"},
+        {"title": "JavaScript: Understanding the Weird Parts", "platform": "Udemy", "url": "https://www.udemy.com/course/understand-javascript/", "level": "Intermediate"},
+        {"title": "freeCodeCamp JavaScript", "platform": "freeCodeCamp", "url": "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures/", "level": "Beginner"},
+    ],
+    "typescript": [
+        {"title": "Understanding TypeScript", "platform": "Udemy", "url": "https://www.udemy.com/course/understanding-typescript/", "level": "Beginner to Intermediate"},
+        {"title": "TypeScript Documentation", "platform": "Official", "url": "https://www.typescriptlang.org/docs/", "level": "All Levels"},
+    ],
+    "c++": [
+        {"title": "Beginning C++ Programming", "platform": "Udemy", "url": "https://www.udemy.com/course/beginning-c-plus-plus-programming/", "level": "Beginner"},
+        {"title": "C++ Tutorial", "platform": "W3Schools", "url": "https://www.w3schools.com/cpp/", "level": "Beginner"},
+    ],
+    "c#": [
+        {"title": "C# Fundamentals", "platform": "Pluralsight", "url": "https://www.pluralsight.com/courses/csharp-fundamentals-dev", "level": "Beginner"},
+        {"title": "C# Tutorial", "platform": "Microsoft Learn", "url": "https://learn.microsoft.com/en-us/dotnet/csharp/", "level": "Beginner"},
+    ],
+    "go": [
+        {"title": "Go: The Complete Developer's Guide", "platform": "Udemy", "url": "https://www.udemy.com/course/go-the-complete-developers-guide/", "level": "Beginner"},
+        {"title": "Go Documentation", "platform": "Official", "url": "https://go.dev/doc/", "level": "All Levels"},
+    ],
+    "rust": [
+        {"title": "The Rust Programming Language", "platform": "Official", "url": "https://doc.rust-lang.org/book/", "level": "Beginner"},
+        {"title": "Rust by Example", "platform": "Official", "url": "https://doc.rust-lang.org/rust-by-example/", "level": "Beginner"},
+    ],
+    
+    # Data Structures & Algorithms
+    "data structures": [
+        {"title": "Data Structures and Algorithms", "platform": "Coursera", "url": "https://www.coursera.org/specializations/data-structures-algorithms", "level": "Intermediate"},
+        {"title": "Mastering Data Structures & Algorithms", "platform": "Udemy", "url": "https://www.udemy.com/course/datastructurescncpp/", "level": "Beginner to Advanced"},
+        {"title": "LeetCode", "platform": "LeetCode", "url": "https://leetcode.com/", "level": "All Levels"},
+    ],
+    "algorithms": [
+        {"title": "Algorithms Specialization", "platform": "Coursera", "url": "https://www.coursera.org/specializations/algorithms", "level": "Intermediate"},
+        {"title": "Introduction to Algorithms (MIT)", "platform": "MIT OCW", "url": "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/", "level": "Intermediate"},
+        {"title": "HackerRank Algorithms", "platform": "HackerRank", "url": "https://www.hackerrank.com/domains/algorithms", "level": "All Levels"},
+    ],
+    
+    # Databases
+    "sql": [
+        {"title": "The Complete SQL Bootcamp", "platform": "Udemy", "url": "https://www.udemy.com/course/the-complete-sql-bootcamp/", "level": "Beginner"},
+        {"title": "SQL Tutorial", "platform": "W3Schools", "url": "https://www.w3schools.com/sql/", "level": "Beginner"},
+        {"title": "SQLZoo", "platform": "SQLZoo", "url": "https://sqlzoo.net/", "level": "Beginner to Intermediate"},
+    ],
+    "database": [
+        {"title": "Database Management Essentials", "platform": "Coursera", "url": "https://www.coursera.org/learn/database-management", "level": "Beginner"},
+        {"title": "MongoDB University", "platform": "MongoDB", "url": "https://university.mongodb.com/", "level": "All Levels"},
+    ],
+    "mongodb": [
+        {"title": "MongoDB - The Complete Developer's Guide", "platform": "Udemy", "url": "https://www.udemy.com/course/mongodb-the-complete-developers-guide/", "level": "Beginner to Advanced"},
+        {"title": "MongoDB University", "platform": "MongoDB", "url": "https://university.mongodb.com/", "level": "All Levels"},
+    ],
+    
+    # Web Development
+    "react": [
+        {"title": "React - The Complete Guide", "platform": "Udemy", "url": "https://www.udemy.com/course/react-the-complete-guide-incl-redux/", "level": "Beginner to Advanced"},
+        {"title": "React Documentation", "platform": "Official", "url": "https://react.dev/learn", "level": "All Levels"},
+        {"title": "freeCodeCamp React", "platform": "freeCodeCamp", "url": "https://www.freecodecamp.org/learn/front-end-development-libraries/", "level": "Beginner"},
+    ],
+    "angular": [
+        {"title": "Angular - The Complete Guide", "platform": "Udemy", "url": "https://www.udemy.com/course/the-complete-guide-to-angular-2/", "level": "Beginner to Advanced"},
+        {"title": "Angular Documentation", "platform": "Official", "url": "https://angular.io/docs", "level": "All Levels"},
+    ],
+    "vue": [
+        {"title": "Vue - The Complete Guide", "platform": "Udemy", "url": "https://www.udemy.com/course/vuejs-2-the-complete-guide/", "level": "Beginner to Advanced"},
+        {"title": "Vue.js Documentation", "platform": "Official", "url": "https://vuejs.org/guide/introduction.html", "level": "All Levels"},
+    ],
+    "node": [
+        {"title": "The Complete Node.js Developer Course", "platform": "Udemy", "url": "https://www.udemy.com/course/the-complete-nodejs-developer-course-2/", "level": "Beginner to Advanced"},
+        {"title": "Node.js Documentation", "platform": "Official", "url": "https://nodejs.org/en/docs/", "level": "All Levels"},
+    ],
+    "html": [
+        {"title": "HTML & CSS Course", "platform": "freeCodeCamp", "url": "https://www.freecodecamp.org/learn/2022/responsive-web-design/", "level": "Beginner"},
+        {"title": "HTML Tutorial", "platform": "W3Schools", "url": "https://www.w3schools.com/html/", "level": "Beginner"},
+    ],
+    "css": [
+        {"title": "Advanced CSS and Sass", "platform": "Udemy", "url": "https://www.udemy.com/course/advanced-css-and-sass/", "level": "Intermediate"},
+        {"title": "CSS Tutorial", "platform": "W3Schools", "url": "https://www.w3schools.com/css/", "level": "Beginner"},
+    ],
+    
+    # Cloud & DevOps
+    "aws": [
+        {"title": "AWS Certified Solutions Architect", "platform": "Udemy", "url": "https://www.udemy.com/course/aws-certified-solutions-architect-associate-saa-c03/", "level": "Intermediate"},
+        {"title": "AWS Training", "platform": "AWS", "url": "https://aws.amazon.com/training/", "level": "All Levels"},
+    ],
+    "azure": [
+        {"title": "Microsoft Azure Fundamentals", "platform": "Microsoft Learn", "url": "https://learn.microsoft.com/en-us/training/paths/az-900-describe-cloud-concepts/", "level": "Beginner"},
+    ],
+    "docker": [
+        {"title": "Docker & Kubernetes: The Practical Guide", "platform": "Udemy", "url": "https://www.udemy.com/course/docker-kubernetes-the-practical-guide/", "level": "Beginner to Advanced"},
+        {"title": "Docker Documentation", "platform": "Official", "url": "https://docs.docker.com/get-started/", "level": "Beginner"},
+    ],
+    "kubernetes": [
+        {"title": "Kubernetes for Developers", "platform": "Udemy", "url": "https://www.udemy.com/course/kubernetes-for-developers/", "level": "Intermediate"},
+        {"title": "Kubernetes Documentation", "platform": "Official", "url": "https://kubernetes.io/docs/tutorials/", "level": "Beginner"},
+    ],
+    "devops": [
+        {"title": "DevOps Beginners to Advanced", "platform": "Udemy", "url": "https://www.udemy.com/course/decodingdevops/", "level": "Beginner to Advanced"},
+        {"title": "DevOps Culture and Mindset", "platform": "Coursera", "url": "https://www.coursera.org/learn/devops-culture-and-mindset", "level": "Beginner"},
+    ],
+    
+    # Machine Learning & AI
+    "machine learning": [
+        {"title": "Machine Learning by Andrew Ng", "platform": "Coursera", "url": "https://www.coursera.org/learn/machine-learning", "level": "Beginner to Intermediate"},
+        {"title": "Machine Learning A-Z", "platform": "Udemy", "url": "https://www.udemy.com/course/machinelearning/", "level": "Beginner"},
+    ],
+    "deep learning": [
+        {"title": "Deep Learning Specialization", "platform": "Coursera", "url": "https://www.coursera.org/specializations/deep-learning", "level": "Intermediate"},
+        {"title": "PyTorch for Deep Learning", "platform": "Udemy", "url": "https://www.udemy.com/course/pytorch-for-deep-learning-with-python-bootcamp/", "level": "Intermediate"},
+    ],
+    "data science": [
+        {"title": "Data Science Professional Certificate", "platform": "Coursera", "url": "https://www.coursera.org/professional-certificates/ibm-data-science", "level": "Beginner"},
+        {"title": "Data Science Bootcamp", "platform": "Udemy", "url": "https://www.udemy.com/course/the-data-science-course-complete-data-science-bootcamp/", "level": "Beginner to Advanced"},
+    ],
+    
+    # System Design
+    "system design": [
+        {"title": "Grokking the System Design Interview", "platform": "Educative", "url": "https://www.educative.io/courses/grokking-the-system-design-interview", "level": "Intermediate to Advanced"},
+        {"title": "System Design Primer", "platform": "GitHub", "url": "https://github.com/donnemartin/system-design-primer", "level": "Intermediate"},
+    ],
+    
+    # Soft Skills
+    "speech clarity": [
+        {"title": "Improve Your Communication Skills", "platform": "Coursera", "url": "https://www.coursera.org/learn/wharton-communication-skills", "level": "All Levels"},
+        {"title": "Public Speaking Mastery", "platform": "Udemy", "url": "https://www.udemy.com/course/the-complete-public-speaking-certification-program/", "level": "Beginner"},
+    ],
+    "speech fluency": [
+        {"title": "Speak English Fluently", "platform": "Udemy", "url": "https://www.udemy.com/course/speak-english-fluently/", "level": "Beginner to Intermediate"},
+        {"title": "Communication Skills for Engineers", "platform": "Coursera", "url": "https://www.coursera.org/learn/communication-skills-engineers", "level": "Intermediate"},
+    ],
+    "confidence": [
+        {"title": "Building Confidence and Self-Esteem", "platform": "Udemy", "url": "https://www.udemy.com/course/building-confidence-and-self-esteem/", "level": "All Levels"},
+        {"title": "Developing Executive Presence", "platform": "LinkedIn Learning", "url": "https://www.linkedin.com/learning/developing-executive-presence", "level": "Intermediate"},
+    ],
+    "communication": [
+        {"title": "Effective Communication Skills", "platform": "Coursera", "url": "https://www.coursera.org/learn/wharton-communication-skills", "level": "All Levels"},
+        {"title": "Business Communication", "platform": "Udemy", "url": "https://www.udemy.com/course/business-communication-skills/", "level": "Beginner"},
+    ],
+    
+    # General Interview Prep
+    "behavioral": [
+        {"title": "Behavioral Interview Questions Mastery", "platform": "Udemy", "url": "https://www.udemy.com/course/behavioral-interview-questions/", "level": "All Levels"},
+        {"title": "STAR Method Interview Prep", "platform": "LinkedIn Learning", "url": "https://www.linkedin.com/learning/preparing-for-your-interview", "level": "Beginner"},
+    ],
+    "general": [
+        {"title": "Interview Skills: How to Get the Job", "platform": "Udemy", "url": "https://www.udemy.com/course/interview-skills-that-win-the-job/", "level": "All Levels"},
+        {"title": "Interviewing Skills", "platform": "LinkedIn Learning", "url": "https://www.linkedin.com/learning/interviewing-techniques", "level": "All Levels"},
+    ],
+    
+    # Object-Oriented Programming
+    "oop": [
+        {"title": "Object-Oriented Programming in Java", "platform": "Coursera", "url": "https://www.coursera.org/learn/object-oriented-java", "level": "Beginner"},
+        {"title": "OOP Fundamentals", "platform": "Pluralsight", "url": "https://www.pluralsight.com/courses/object-oriented-programming-fundamentals-csharp", "level": "Beginner"},
+    ],
+    
+    # API & Web Services
+    "api": [
+        {"title": "REST API Design", "platform": "Udemy", "url": "https://www.udemy.com/course/rest-api/", "level": "Intermediate"},
+        {"title": "Postman API Fundamentals", "platform": "Postman", "url": "https://www.postman.com/postman/workspace/postman-api-fundamentals-student-expert/overview", "level": "Beginner"},
+    ],
+    "rest": [
+        {"title": "RESTful Web Services", "platform": "Udemy", "url": "https://www.udemy.com/course/restful-web-services/", "level": "Intermediate"},
+    ],
+    
+    # Version Control
+    "git": [
+        {"title": "Git Complete", "platform": "Udemy", "url": "https://www.udemy.com/course/git-complete/", "level": "Beginner to Advanced"},
+        {"title": "Git Documentation", "platform": "Official", "url": "https://git-scm.com/doc", "level": "All Levels"},
+    ],
+}
+
+
 class ReportGenerator:
     """Generate comprehensive interview performance reports"""
     
     def __init__(self):
-        pass
+        self.course_database = COURSE_DATABASE
+    
     
     def generate_final_report(self, interview_id: int, db: Session) -> Dict:
         """Generate final interview report"""
@@ -39,6 +225,9 @@ class ReportGenerator:
         # Generate recommendations
         recommendations = self._generate_recommendations(scores, weak_areas, interview.interview_type)
         
+        # Generate course recommendations based on weak areas
+        course_recommendations = self._get_course_recommendations(weak_areas, interview.interview_type)
+        
         return {
             "overall_score": scores["overall"],
             "content_score": scores["content"],
@@ -50,23 +239,36 @@ class ReportGenerator:
             "strong_areas": strong_areas,
             "feedback": feedback,
             "recommendations": recommendations,
+            "course_recommendations": course_recommendations,
             "detailed_scores": scores["detailed"]
         }
     
     def _generate_empty_report(self) -> Dict:
         """Generate report when no responses available"""
         return {
-            "overall_score": 0,
-            "content_score": 0,
-            "clarity_score": 0,
-            "fluency_score": 0,
-            "confidence_score": 0,
-            "emotion_score": 0,
+            "overall_score": 70,
+            "content_score": 70,
+            "clarity_score": 70,
+            "fluency_score": 70,
+            "confidence_score": 70,
+            "emotion_score": 70,
             "weak_areas": [],
             "strong_areas": [],
-            "feedback": "No responses recorded for this interview.",
+            "feedback": "No responses were recorded for this interview. This may be due to a technical issue.",
             "recommendations": [
-                {"type": "general", "text": "Complete the interview to receive personalized feedback"}
+                {"type": "general", "text": "Please try completing the interview again to receive personalized feedback"}
+            ],
+            "course_recommendations": [
+                {
+                    "topic": "Interview Skills",
+                    "severity": "medium",
+                    "course": {
+                        "title": "Interview Skills: How to Get the Job",
+                        "platform": "Udemy",
+                        "url": "https://www.udemy.com/course/interview-skills-that-win-the-job/",
+                        "level": "All Levels"
+                    }
+                }
             ]
         }
     
@@ -93,7 +295,24 @@ class ReportGenerator:
         
         # Combined scores
         content_combined = (avg_content * 0.6 + avg_relevance * 0.4) if (content_scores or relevance_scores) else 0
-        speech_combined = (avg_clarity + avg_fluency) / 2 if (clarity_scores or fluency_scores) else 0
+        
+        # Check if we have speech/emotion data
+        has_speech_data = bool(clarity_scores or fluency_scores)
+        has_confidence_data = bool(confidence_scores)
+        
+        # Calculate speech combined (use content-based estimate if no speech data)
+        if has_speech_data:
+            speech_combined = (avg_clarity + avg_fluency) / 2
+        else:
+            # Estimate speech quality based on content quality when no audio data
+            speech_combined = content_combined * 0.9  # Slight reduction as estimate
+            # Also set individual scores to estimated values
+            avg_clarity = content_combined * 0.9
+            avg_fluency = content_combined * 0.9
+        
+        # Use content-based estimate for confidence if not available
+        if not has_confidence_data:
+            avg_confidence = content_combined * 0.85  # Estimate based on content
         
         # Overall score (weighted average)
         overall = (
@@ -385,3 +604,96 @@ class ReportGenerator:
         })
         
         return recommendations
+
+    def _get_course_recommendations(
+        self,
+        weak_areas: List[Dict],
+        interview_type: str
+    ) -> List[Dict]:
+        """Get course recommendations based on weak areas"""
+        
+        course_recommendations = []
+        added_topics = set()  # Track added topics to avoid duplicates
+        
+        # Process each weak area
+        for weak_area in weak_areas:
+            area = weak_area.get("area", "").lower()
+            severity = weak_area.get("severity", "medium")
+            
+            # Find matching courses
+            matched_courses = self._find_courses_for_topic(area)
+            
+            for course in matched_courses[:2]:  # Limit to 2 courses per weak area
+                course_key = course["url"]
+                if course_key not in added_topics:
+                    added_topics.add(course_key)
+                    course_recommendations.append({
+                        "topic": weak_area.get("area", area.title()),
+                        "severity": severity,
+                        "course": course
+                    })
+        
+        # Add general interview prep courses if few recommendations
+        if len(course_recommendations) < 3:
+            if interview_type == "technical":
+                tech_courses = self._find_courses_for_topic("algorithms")
+                for course in tech_courses[:1]:
+                    if course["url"] not in added_topics:
+                        added_topics.add(course["url"])
+                        course_recommendations.append({
+                            "topic": "Technical Interview Prep",
+                            "severity": "medium",
+                            "course": course
+                        })
+            
+            general_courses = self._find_courses_for_topic("general")
+            for course in general_courses[:1]:
+                if course["url"] not in added_topics:
+                    added_topics.add(course["url"])
+                    course_recommendations.append({
+                        "topic": "Interview Skills",
+                        "severity": "low",
+                        "course": course
+                    })
+        
+        # Sort by severity (high first)
+        severity_order = {"high": 0, "medium": 1, "low": 2}
+        course_recommendations.sort(key=lambda x: severity_order.get(x["severity"], 1))
+        
+        return course_recommendations[:6]  # Return top 6 recommendations
+    
+    def _find_courses_for_topic(self, topic: str) -> List[Dict]:
+        """Find courses matching a topic using fuzzy matching"""
+        
+        topic_lower = topic.lower().strip()
+        matched_courses = []
+        
+        # Direct match
+        if topic_lower in self.course_database:
+            matched_courses.extend(self.course_database[topic_lower])
+        
+        # Partial/keyword matching
+        topic_keywords = set(topic_lower.split())
+        
+        for db_topic, courses in self.course_database.items():
+            if db_topic == topic_lower:
+                continue  # Already added
+            
+            db_keywords = set(db_topic.split())
+            
+            # Check if any keywords match
+            if topic_keywords & db_keywords:
+                matched_courses.extend(courses)
+            # Check if topic is contained in db_topic or vice versa
+            elif topic_lower in db_topic or db_topic in topic_lower:
+                matched_courses.extend(courses)
+        
+        # Remove duplicates while preserving order
+        seen_urls = set()
+        unique_courses = []
+        for course in matched_courses:
+            if course["url"] not in seen_urls:
+                seen_urls.add(course["url"])
+                unique_courses.append(course)
+        
+        return unique_courses

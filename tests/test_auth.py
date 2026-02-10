@@ -19,14 +19,14 @@ def test_password_hashing():
 
 def test_access_token():
     """Test JWT token creation and decoding"""
-    data = {"sub": 1, "username": "testuser"}
+    data = {"sub": "1", "username": "testuser"}
     token = create_access_token(data)
     
     assert token is not None
     
     decoded = decode_access_token(token)
     assert decoded is not None
-    assert decoded["sub"] == 1
+    assert decoded["sub"] == "1"
     assert decoded["username"] == "testuser"
 
 

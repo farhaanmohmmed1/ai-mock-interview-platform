@@ -76,6 +76,7 @@ class Interview(Base):
     strong_areas = Column(JSON, nullable=True)
     feedback = Column(Text, nullable=True)
     recommendations = Column(JSON, nullable=True)
+    course_recommendations = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

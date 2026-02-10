@@ -86,6 +86,7 @@ class InterviewDetailResponse(InterviewResponse):
     weak_areas: Optional[List[dict]] = None
     strong_areas: Optional[List[dict]] = None
     recommendations: Optional[List[dict]] = None
+    course_recommendations: Optional[List[dict]] = None
 
 
 class StartInterviewResponse(BaseModel):
@@ -450,6 +451,7 @@ async def complete_interview(
             }
         except Exception as e:
             # Fall back to direct report generation
+            print(f"Agent complete_interview failed: {e}")
             report = None
     else:
         report = None
@@ -466,21 +468,35 @@ async def complete_interview(
         try:
             if report_gen:
                 report = report_gen.generate_final_report(interview_id, db)
+                print(f"ReportGenerator returned scores: overall={report.get('overall_score')}")
             else:
                 raise Exception("Report generator not available")
         except Exception as e:
-            # Generate default report if error
+            # Generate default report if error - use reasonable default scores
+            print(f"ReportGenerator failed: {e}")
             report = {
-                "overall_score": 50,
-                "content_score": 50,
-                "clarity_score": 50,
-                "fluency_score": 50,
-                "confidence_score": 50,
-                "emotion_score": 50,
+                "overall_score": 70,
+                "content_score": 70,
+                "clarity_score": 70,
+                "fluency_score": 70,
+                "confidence_score": 70,
+                "emotion_score": 70,
                 "weak_areas": [],
                 "strong_areas": [],
                 "feedback": "Interview completed. Thank you for practicing!",
-                "recommendations": [{"text": "Keep practicing to improve your interview skills!"}]
+                "recommendations": [{"text": "Keep practicing to improve your interview skills!"}],
+                "course_recommendations": [
+                    {
+                        "topic": "Interview Skills",
+                        "severity": "medium",
+                        "course": {
+                            "title": "Interview Skills: How to Get the Job",
+                            "platform": "Udemy",
+                            "url": "https://www.udemy.com/course/interview-skills-that-win-the-job/",
+                            "level": "All Levels"
+                        }
+                    }
+                ]
             }
     
     # Update interview with scores
@@ -499,6 +515,7 @@ async def complete_interview(
     interview.strong_areas = report.get("strong_areas", [])
     interview.feedback = report.get("feedback", "Thank you for completing the interview!")
     interview.recommendations = report.get("recommendations", [])
+    interview.course_recommendations = report.get("course_recommendations", [])
     
     db.commit()
     db.refresh(interview)

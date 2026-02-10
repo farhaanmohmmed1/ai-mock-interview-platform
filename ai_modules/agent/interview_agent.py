@@ -538,10 +538,18 @@ class InterviewAgent:
         # Combined content score
         combined_content = (avg_content * 0.6 + avg_relevance * 0.4)
         
-        # Use defaults for speech/emotion if not available
-        avg_clarity = context.get_average_score("clarity") or 70
-        avg_fluency = context.get_average_score("fluency") or 70
-        avg_confidence = context.get_average_score("confidence") or 70
+        # Get speech/emotion scores from context, estimate from content if not available
+        avg_clarity = context.get_average_score("clarity")
+        avg_fluency = context.get_average_score("fluency")
+        avg_confidence = context.get_average_score("confidence")
+        
+        # If speech/emotion data not available, estimate based on content performance
+        if avg_clarity == 0:
+            avg_clarity = combined_content * 0.9  # Slight reduction as estimate
+        if avg_fluency == 0:
+            avg_fluency = combined_content * 0.9
+        if avg_confidence == 0:
+            avg_confidence = combined_content * 0.85
         
         # Overall score (weighted)
         overall = (

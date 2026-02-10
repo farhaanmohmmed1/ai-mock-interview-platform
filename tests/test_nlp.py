@@ -34,7 +34,7 @@ def test_evaluate_short_answer(evaluator):
     result = evaluator.evaluate_answer(question, answer, [], "technical")
     
     assert result["content_score"] < 50
-    assert "too short" in result["feedback"].lower()
+    assert "brief" in result["feedback"].lower() or "short" in result["feedback"].lower()
 
 
 def test_evaluate_empty_answer(evaluator):

@@ -32,6 +32,8 @@ import {
   EmojiEmotions,
   RecordVoiceOver,
   Psychology,
+  School,
+  OpenInNew,
 } from '@mui/icons-material';
 import API_URL from '../config';
 
@@ -425,6 +427,90 @@ const Results = () => {
               </List>
             </Paper>
           </Grid>
+
+          {/* Course Recommendations */}
+          {results?.course_recommendations && results.course_recommendations.length > 0 && (
+            <Grid item xs={12}>
+              <Paper sx={{ p: 3, bgcolor: '#1A1A1A', border: '1px solid #262626' }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: '#A855F7', display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <School sx={{ color: '#A855F7' }} />
+                  Recommended Learning Resources
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#888888', mb: 3 }}>
+                  Based on your performance, we recommend these courses to help you improve:
+                </Typography>
+                <Divider sx={{ mb: 3, borderColor: '#262626' }} />
+                <Grid container spacing={2}>
+                  {results.course_recommendations.map((rec, index) => (
+                    <Grid item xs={12} md={6} key={index}>
+                      <Card 
+                        sx={{ 
+                          bgcolor: '#0B0B0B', 
+                          border: '1px solid #262626',
+                          height: '100%',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            borderColor: '#A855F7',
+                            transform: 'translateY(-2px)',
+                          }
+                        }}
+                      >
+                        <CardContent>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                            <Chip 
+                              label={rec.topic}
+                              size="small"
+                              sx={{
+                                bgcolor: rec.severity === 'high' ? 'rgba(239, 68, 68, 0.15)' : rec.severity === 'medium' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(14, 165, 233, 0.15)',
+                                color: rec.severity === 'high' ? '#EF4444' : rec.severity === 'medium' ? '#F59E0B' : '#0EA5E9',
+                                border: `1px solid ${rec.severity === 'high' ? 'rgba(239, 68, 68, 0.3)' : rec.severity === 'medium' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(14, 165, 233, 0.3)'}`,
+                                fontWeight: 600,
+                              }}
+                            />
+                            <Chip 
+                              label={rec.course?.level || 'All Levels'}
+                              size="small"
+                              sx={{
+                                bgcolor: 'rgba(168, 85, 247, 0.15)',
+                                color: '#A855F7',
+                                border: '1px solid rgba(168, 85, 247, 0.3)',
+                                fontSize: '0.7rem',
+                              }}
+                            />
+                          </Box>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#FFFFFF', mt: 2, mb: 1 }}>
+                            {rec.course?.title}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: '#888888', mb: 2 }}>
+                            Platform: <span style={{ color: '#E0E0E0' }}>{rec.course?.platform}</span>
+                          </Typography>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            endIcon={<OpenInNew sx={{ fontSize: '16px !important' }} />}
+                            href={rec.course?.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{
+                              borderColor: '#A855F7',
+                              color: '#A855F7',
+                              textTransform: 'none',
+                              '&:hover': {
+                                borderColor: '#9333EA',
+                                bgcolor: 'rgba(168, 85, 247, 0.1)',
+                              }
+                            }}
+                          >
+                            Start Learning
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Paper>
+            </Grid>
+          )}
 
           {/* Questions Summary */}
           {results?.questions_summary && results.questions_summary.length > 0 && (
