@@ -56,7 +56,7 @@ class Interview(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    resume_id = Column(Integer, ForeignKey("resumes.id"), nullable=True)
+    resume_id = Column(Integer, ForeignKey("resumes.id", ondelete="SET NULL"), nullable=True)
     interview_type = Column(String(50), nullable=False)  # general, technical, hr
     status = Column(String(50), default="pending")  # pending, in_progress, completed, cancelled
     difficulty_level = Column(String(20), default="medium")  # easy, medium, hard
@@ -99,6 +99,12 @@ class Question(Base):
     difficulty = Column(String(20), nullable=True)
     expected_keywords = Column(JSON, nullable=True)
     order_number = Column(Integer, nullable=True)
+    # New fields for company questions and tags
+    tags = Column(JSON, nullable=True)  # List of tags (e.g., ["google", "system-design", "medium"])
+    company = Column(String(50), nullable=True)  # Source company (e.g., "google", "amazon")
+    company_name = Column(String(100), nullable=True)  # Display name (e.g., "Google", "Amazon")
+    source = Column(String(100), nullable=True)  # Source (e.g., "Glassdoor", "LeetCode", "AI Generated")
+    from_dataset = Column(Boolean, default=False)  # True if from company questions dataset
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships

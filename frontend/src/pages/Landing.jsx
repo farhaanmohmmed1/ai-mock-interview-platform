@@ -133,7 +133,7 @@ const Landing = () => {
     {
       step: 2,
       title: 'Choose Interview Type',
-      description: 'Select from General, Technical, HR, or UPSC interview modes. Pick your difficulty level based on your preparation.',
+      description: 'Select from General, Technical, HR, Full, or UPSC interview modes. Pick your difficulty level based on your preparation.',
     },
     {
       step: 3,

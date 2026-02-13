@@ -9,7 +9,7 @@ from pathlib import Path
 
 from backend.core.database import get_db
 from backend.core.config import settings
-from backend.models import User, Resume
+from backend.models import User, Resume, Interview
 from backend.api.auth import get_current_user
 
 # Conditional imports for AI modules (may not be available on Vercel)
@@ -167,26 +167,53 @@ async def delete_resume(
     db: Session = Depends(get_db)
 ):
     """Delete resume"""
-    resume = db.query(Resume).filter(
-        Resume.id == resume_id,
-        Resume.user_id == current_user.id
-    ).first()
-    
-    if not resume:
+    try:
+        resume = db.query(Resume).filter(
+            Resume.id == resume_id,
+            Resume.user_id == current_user.id
+        ).first()
+        
+        if not resume:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Resume not found"
+            )
+        
+        # First, unlink any interviews that reference this resume
+        try:
+            db.query(Interview).filter(Interview.resume_id == resume_id).update(
+                {"resume_id": None}, 
+                synchronize_session='fetch'
+            )
+            db.flush()
+        except Exception as e:
+            print(f"Warning: Could not unlink interviews: {e}")
+            db.rollback()
+        
+        # Delete file (handle both relative and absolute paths)
+        try:
+            file_path = Path(resume.file_path)
+            if file_path.exists():
+                file_path.unlink()
+        except Exception as e:
+            print(f"Warning: Could not delete file {resume.file_path}: {e}")
+        
+        # Delete from database
+        db.delete(resume)
+        db.commit()
+        
+        return None
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"Error deleting resume {resume_id}: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Resume not found"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete resume: {str(e)}"
         )
-    
-    # Delete file
-    if os.path.exists(resume.file_path):
-        os.remove(resume.file_path)
-    
-    # Delete from database
-    db.delete(resume)
-    db.commit()
-    
-    return None
 
 
 @router.get("/active/current", response_model=ResumeResponse)

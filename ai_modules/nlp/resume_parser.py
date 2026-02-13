@@ -71,36 +71,236 @@ class ResumeParser:
             return ""
     
     def _extract_skills(self, text: str) -> List[str]:
-        """Extract skills from text"""
-        # Common technical skills
-        skill_keywords = [
-            'python', 'java', 'javascript', 'c\\+\\+', 'c#', 'ruby', 'php', 'swift', 'kotlin',
-            'react', 'angular', 'vue', 'node.js', 'django', 'flask', 'spring', 'express',
-            'sql', 'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch',
-            'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'jenkins', 'git',
-            'machine learning', 'deep learning', 'nlp', 'computer vision', 'tensorflow', 'pytorch',
-            'html', 'css', 'rest api', 'graphql', 'microservices',
-            'agile', 'scrum', 'jira', 'ci/cd', 'devops',
-            'data analysis', 'pandas', 'numpy', 'scikit-learn', 'tableau', 'power bi'
-        ]
+        """Extract skills from text with comprehensive skill detection"""
         
-        skills = []
+        # Comprehensive technical skills database
+        skill_keywords = {
+            # Programming Languages
+            'python', 'java', 'javascript', 'typescript', 'c', 'c++', 'c#', 'ruby', 'php', 
+            'swift', 'kotlin', 'go', 'golang', 'rust', 'scala', 'perl', 'r', 'matlab',
+            'objective-c', 'dart', 'lua', 'haskell', 'clojure', 'elixir', 'erlang',
+            'groovy', 'vb.net', 'visual basic', 'cobol', 'fortran', 'assembly',
+            
+            # Web Frontend
+            'html', 'html5', 'css', 'css3', 'sass', 'scss', 'less', 'tailwind', 'tailwindcss',
+            'bootstrap', 'material ui', 'materialui', 'mui', 'chakra ui', 'ant design',
+            'react', 'reactjs', 'react.js', 'redux', 'next.js', 'nextjs', 'gatsby',
+            'angular', 'angularjs', 'vue', 'vuejs', 'vue.js', 'vuex', 'nuxt', 'nuxtjs',
+            'svelte', 'ember', 'backbone', 'jquery', 'ajax', 'webpack', 'vite', 'parcel',
+            'babel', 'eslint', 'prettier', 'npm', 'yarn', 'pnpm',
+            
+            # Web Backend
+            'node.js', 'nodejs', 'node', 'express', 'expressjs', 'express.js', 'nestjs', 'fastify',
+            'django', 'flask', 'fastapi', 'pyramid', 'tornado', 'bottle',
+            'spring', 'spring boot', 'springboot', 'hibernate', 'maven', 'gradle',
+            'rails', 'ruby on rails', 'sinatra',
+            'laravel', 'symfony', 'codeigniter', 'yii',
+            'asp.net', '.net', '.net core', 'dotnet', 'blazor',
+            'gin', 'echo', 'fiber', 'beego',
+            
+            # Databases
+            'sql', 'mysql', 'postgresql', 'postgres', 'sqlite', 'oracle', 'sql server', 'mssql',
+            'mariadb', 'db2', 'teradata', 'snowflake', 'redshift',
+            'mongodb', 'mongoose', 'couchdb', 'cassandra', 'dynamodb', 'firebase',
+            'redis', 'memcached', 'elasticsearch', 'solr', 'neo4j', 'graphdb', 'arangodb',
+            'influxdb', 'timescaledb', 'clickhouse',
+            
+            # Cloud & DevOps
+            'aws', 'amazon web services', 'ec2', 's3', 'lambda', 'rds', 'cloudfront', 'sqs', 'sns',
+            'azure', 'microsoft azure', 'azure devops',
+            'gcp', 'google cloud', 'google cloud platform', 'bigquery', 'cloud functions',
+            'heroku', 'digitalocean', 'linode', 'vercel', 'netlify', 'railway',
+            'docker', 'kubernetes', 'k8s', 'openshift', 'rancher', 'helm',
+            'terraform', 'ansible', 'puppet', 'chef', 'vagrant', 'packer',
+            'jenkins', 'gitlab ci', 'github actions', 'circleci', 'travis ci', 'bamboo',
+            'ci/cd', 'cicd', 'continuous integration', 'continuous deployment',
+            'nginx', 'apache', 'tomcat', 'iis', 'caddy',
+            
+            # Data Science & ML
+            'machine learning', 'ml', 'deep learning', 'dl', 'artificial intelligence', 'ai',
+            'neural networks', 'cnn', 'rnn', 'lstm', 'transformer', 'bert', 'gpt',
+            'tensorflow', 'keras', 'pytorch', 'torch', 'caffe', 'mxnet', 'theano',
+            'scikit-learn', 'sklearn', 'scipy', 'numpy', 'pandas', 'matplotlib', 'seaborn',
+            'nltk', 'spacy', 'huggingface', 'transformers', 'opencv', 'cv2',
+            'jupyter', 'jupyter notebook', 'colab', 'kaggle',
+            'data science', 'data analysis', 'data analytics', 'data engineering',
+            'data mining', 'data visualization', 'statistics', 'statistical analysis',
+            'regression', 'classification', 'clustering', 'nlp', 'natural language processing',
+            'computer vision', 'image processing', 'speech recognition',
+            'mlops', 'mlflow', 'kubeflow', 'airflow', 'dvc',
+            
+            # Big Data
+            'hadoop', 'hdfs', 'mapreduce', 'spark', 'pyspark', 'apache spark',
+            'hive', 'pig', 'kafka', 'apache kafka', 'flink', 'storm', 'presto',
+            'databricks', 'dbt', 'etl', 'data pipeline', 'data warehouse',
+            
+            # Mobile Development
+            'android', 'ios', 'react native', 'flutter', 'xamarin', 'cordova', 'ionic',
+            'swiftui', 'uikit', 'jetpack compose', 'android studio', 'xcode',
+            
+            # APIs & Protocols
+            'rest', 'rest api', 'restful', 'graphql', 'grpc', 'soap', 'websocket', 'websockets',
+            'json', 'xml', 'yaml', 'protobuf', 'api design', 'openapi', 'swagger',
+            'oauth', 'oauth2', 'jwt', 'saml', 'sso',
+            
+            # Version Control
+            'git', 'github', 'gitlab', 'bitbucket', 'svn', 'mercurial',
+            
+            # Testing
+            'unit testing', 'integration testing', 'e2e testing', 'tdd', 'bdd',
+            'jest', 'mocha', 'chai', 'jasmine', 'cypress', 'selenium', 'playwright',
+            'pytest', 'unittest', 'nose', 'robot framework',
+            'junit', 'testng', 'mockito', 'powermock',
+            'postman', 'insomnia', 'soapui',
+            
+            # Project Management & Methodologies
+            'agile', 'scrum', 'kanban', 'waterfall', 'lean', 'xp',
+            'jira', 'confluence', 'trello', 'asana', 'monday', 'notion',
+            
+            # BI & Visualization
+            'tableau', 'power bi', 'powerbi', 'looker', 'metabase', 'grafana',
+            'excel', 'google sheets', 'qlik', 'sisense',
+            'd3.js', 'd3', 'chart.js', 'plotly', 'highcharts',
+            
+            # Design & UX
+            'figma', 'sketch', 'adobe xd', 'invision', 'zeplin',
+            'photoshop', 'illustrator', 'ui/ux', 'ui design', 'ux design',
+            'wireframing', 'prototyping', 'user research',
+            
+            # Security
+            'cybersecurity', 'security', 'penetration testing', 'ethical hacking',
+            'owasp', 'encryption', 'ssl', 'tls', 'https', 'firewall',
+            'vulnerability assessment', 'siem', 'soc',
+            
+            # Networking
+            'networking', 'tcp/ip', 'http', 'dns', 'load balancing',
+            'vpn', 'routing', 'switching', 'cisco', 'ccna', 'ccnp',
+            
+            # Operating Systems
+            'linux', 'unix', 'ubuntu', 'centos', 'debian', 'redhat', 'rhel', 'fedora',
+            'windows', 'windows server', 'macos', 'shell scripting', 'bash', 'powershell',
+            
+            # Soft Skills
+            'leadership', 'communication', 'teamwork', 'problem solving', 'problem-solving',
+            'critical thinking', 'analytical', 'time management', 'project management',
+            'presentation', 'public speaking', 'mentoring', 'collaboration',
+            
+            # Computer Science Fundamentals
+            'data structures', 'algorithms', 'oop', 'object oriented programming',
+            'design patterns', 'solid principles', 'system design', 'software architecture',
+            'microservices', 'distributed systems', 'concurrency', 'multithreading',
+            'data modeling', 'database design', 'normalization',
+            
+            # IT Operations & Administration
+            'system administration', 'database administration', 'dba', 'server administration',
+            'network administration', 'it support', 'help desk', 'technical support',
+            'active directory', 'ldap', 'vmware', 'virtualization', 'hyper-v',
+            
+            # Enterprise Tools & Platforms  
+            'servicenow', 'salesforce', 'sap', 'oracle erp', 'workday', 'dynamics 365',
+            'sharepoint', 'office 365', 'microsoft 365', 'gsuite', 'google workspace',
+            
+            # Storage & Backup
+            'storage', 'san', 'nas', 'backup', 'disaster recovery', 'raid',
+            
+            # Blockchain & Emerging Tech
+            'blockchain', 'ethereum', 'solidity', 'web3', 'smart contracts',
+            'iot', 'internet of things', 'embedded systems', 'arduino', 'raspberry pi',
+            
+            # CRM & ERP
+            'crm', 'erp', 'customer relationship management',
+        }
+        
+        skills = set()
         text_lower = text.lower()
         
+        # Method 1: Direct keyword matching from comprehensive list
         for skill in skill_keywords:
-            pattern = r'\b' + skill.replace('+', r'\+').replace('.', r'\.') + r'\b'
+            # Escape special characters for regex
+            escaped_skill = re.escape(skill)
+            # Match whole words only
+            pattern = r'(?<![a-zA-Z])' + escaped_skill + r'(?![a-zA-Z])'
             if re.search(pattern, text_lower):
-                skills.append(skill.replace('\\+', '+').replace(r'\.', '.'))
+                # Clean up skill name for display
+                display_skill = skill.replace('.', '').title() if '.' not in skill else skill
+                if skill in ['aws', 'gcp', 'sql', 'html', 'css', 'api', 'ci/cd', 'ai', 'ml', 'dl', 'ui/ux']:
+                    display_skill = skill.upper()
+                elif skill in ['javascript', 'typescript', 'python', 'java', 'react', 'angular', 'vue', 'django', 'flask', 'nodejs', 'docker', 'kubernetes']:
+                    display_skill = skill.capitalize() if len(skill) > 3 else skill.title()
+                skills.add(display_skill)
         
-        # Extract from skills section
-        skills_section = re.search(r'skills?:?(.*?)(?=\n\n|\n[A-Z]|\Z)', text, re.IGNORECASE | re.DOTALL)
-        if skills_section:
-            section_text = skills_section.group(1)
-            # Extract words that might be skills
-            potential_skills = re.findall(r'\b[A-Za-z][A-Za-z0-9+#\.]*\b', section_text)
-            skills.extend([s for s in potential_skills if len(s) > 2 and s.lower() not in ['and', 'the', 'with', 'for']])
+        # Method 2: Extract skills from dedicated skills section
+        # Only add skills that match our known skills database to avoid garbage extraction
+        skills_section_patterns = [
+            r'(?:technical\s+)?skills?\s*[:|\-|–]?\s*(.*?)(?=\n\s*\n|\n[A-Z][a-z]+\s*[:|\-]|experience|education|projects|certifications|$)',
+            r'competenc(?:y|ies)\s*[:|\-|–]?\s*(.*?)(?=\n\s*\n|\n[A-Z][a-z]+\s*[:|\-]|$)',
+            r'technologies?\s*[:|\-|–]?\s*(.*?)(?=\n\s*\n|\n[A-Z][a-z]+\s*[:|\-]|$)',
+            r'tools?\s*(?:&|and)?\s*technologies?\s*[:|\-|–]?\s*(.*?)(?=\n\s*\n|\n[A-Z][a-z]+\s*[:|\-]|$)',
+        ]
         
-        return list(set(skills))[:20]  # Return unique skills, max 20
+        for pattern in skills_section_patterns:
+            match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
+            if match:
+                section_text = match.group(1)
+                # Re-check this section against our known skills database
+                # This avoids adding arbitrary multi-word chunks as skills
+                section_lower = section_text.lower()
+                for skill in skill_keywords:
+                    escaped_skill = re.escape(skill)
+                    skill_pattern = r'(?<![a-zA-Z])' + escaped_skill + r'(?![a-zA-Z])'
+                    if re.search(skill_pattern, section_lower):
+                        display_skill = skill.replace('.', '').title() if '.' not in skill else skill
+                        if skill in ['aws', 'gcp', 'sql', 'html', 'css', 'api', 'ci/cd', 'ai', 'ml', 'dl', 'ui/ux']:
+                            display_skill = skill.upper()
+                        elif skill in ['javascript', 'typescript', 'python', 'java', 'react', 'angular', 'vue', 'django', 'flask', 'nodejs', 'docker', 'kubernetes']:
+                            display_skill = skill.capitalize() if len(skill) > 3 else skill.title()
+                        skills.add(display_skill)
+        
+        # Method 3: Extract skills near keywords like "proficient in", "experience with"
+        # Re-check matched text against known skills database
+        context_patterns = [
+            r'(?:proficient|experienced|skilled|expertise|knowledge|familiar)\s+(?:in|with)\s+([A-Za-z0-9+#,\s\-]+?)(?:\.|,\s*(?:and|including)|$)',
+            r'(?:worked|working)\s+with\s+([A-Za-z0-9+#,\s\-]+?)(?:\.|,\s*(?:and|including)|$)',
+        ]
+        
+        for pattern in context_patterns:
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            for match_text in matches:
+                match_lower = match_text.lower()
+                # Only add skills that match our database
+                for skill in skill_keywords:
+                    escaped_skill = re.escape(skill)
+                    skill_pattern = r'(?<![a-zA-Z])' + escaped_skill + r'(?![a-zA-Z])'
+                    if re.search(skill_pattern, match_lower):
+                        display_skill = skill.replace('.', '').title() if '.' not in skill else skill
+                        if skill in ['aws', 'gcp', 'sql', 'html', 'css', 'api', 'ci/cd', 'ai', 'ml', 'dl', 'ui/ux']:
+                            display_skill = skill.upper()
+                        elif skill in ['javascript', 'typescript', 'python', 'java', 'react', 'angular', 'vue', 'django', 'flask', 'nodejs', 'docker', 'kubernetes']:
+                            display_skill = skill.capitalize() if len(skill) > 3 else skill.title()
+                        skills.add(display_skill)
+        
+        # Clean up and format skills
+        cleaned_skills = []
+        for skill in skills:
+            skill = skill.strip()
+            # Skip if too short or just numbers
+            if len(skill) < 2 or skill.isdigit():
+                continue
+            cleaned_skills.append(skill)
+        
+        # Sort skills: programming languages first, then frameworks, then others
+        priority_skills = ['Python', 'Java', 'JavaScript', 'TypeScript', 'C++', 'C#', 'SQL', 'React', 'Angular', 'Vue', 'Node.js', 'Django', 'Flask', 'Spring', 'AWS', 'Docker', 'Kubernetes', 'Git']
+        
+        def skill_priority(s):
+            s_lower = s.lower()
+            for i, ps in enumerate(priority_skills):
+                if ps.lower() in s_lower:
+                    return i
+            return len(priority_skills)
+        
+        cleaned_skills = sorted(set(cleaned_skills), key=skill_priority)
+        
+        return cleaned_skills[:30]  # Return up to 30 unique skills
     
     def _extract_experience_years(self, text: str) -> Optional[float]:
         """Extract years of experience"""
@@ -142,36 +342,9 @@ class ResumeParser:
         return None
     
     def _extract_education(self, text: str) -> Dict:
-        """Extract education information"""
-        education = {
-            "degrees": [],
-            "institutions": [],
-            "fields": []
-        }
-        
-        # Find education section
-        edu_section = re.search(r'education:?(.*?)(?=experience|projects|skills|\Z)', 
-                               text, re.IGNORECASE | re.DOTALL)
-        
-        if edu_section:
-            section_text = edu_section.group(1)
-            
-            # Extract degrees
-            degrees = ['ph\.?d', 'doctor', 'master', 'm\.?s\.?', 'm\.?tech', 'bachelor', 'b\.?s\.?', 'b\.?tech', 'b\.?e\.?', 'diploma']
-            for degree in degrees:
-                if re.search(degree, section_text, re.IGNORECASE):
-                    education["degrees"].append(degree.replace(r'\.?', '.'))
-            
-            # Extract years
-            years = re.findall(r'(?:19|20)\d{2}', section_text)
-            if years:
-                education["years"] = years
-            
-            # Extract institutions (capitalized words, likely names)
-            institutions = re.findall(r'[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+(?:\s+(?:University|Institute|College|School))?', section_text)
-            education["institutions"] = institutions[:3]
-        
-        return education
+        """Extract education information - minimal extraction"""
+        # Return empty dict as education details are not needed
+        return {}
     
     def _extract_projects(self, text: str) -> List[Dict]:
         """Extract project information"""

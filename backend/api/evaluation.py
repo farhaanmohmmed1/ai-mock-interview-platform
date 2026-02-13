@@ -19,23 +19,28 @@ try:
     from ai_modules.speech.speech_analyzer import SpeechAnalyzer
     from ai_modules.emotion.emotion_analyzer import EmotionAnalyzer
     AI_MODULES_AVAILABLE = True
-except ImportError:
+    print("[Evaluation] AI Modules imported successfully")
+except ImportError as e:
     AI_MODULES_AVAILABLE = False
     AnswerEvaluator = None
     SpeechAnalyzer = None
     EmotionAnalyzer = None
+    print(f"[Evaluation] AI Modules import failed: {e}")
 
 router = APIRouter()
 
 # Initialize AI modules only if available
 if AI_MODULES_AVAILABLE:
+    print("[Evaluation] Initializing AI modules...")
     answer_evaluator = AnswerEvaluator()
     speech_analyzer = SpeechAnalyzer()
     emotion_analyzer = EmotionAnalyzer()
+    print(f"[Evaluation] SpeechAnalyzer initialized: whisper={speech_analyzer.whisper_model is not None}")
 else:
     answer_evaluator = None
     speech_analyzer = None
     emotion_analyzer = None
+    print("[Evaluation] AI modules not available")
 
 
 class ResponseCreate(BaseModel):
@@ -111,22 +116,42 @@ async def transcribe_audio(
             content = await audio.read()
             f.write(content)
         
+        print(f"[Transcribe] Audio saved: {temp_audio_path}, size: {len(content)} bytes")
+        
         # Convert webm to wav using ffmpeg
-        try:
-            subprocess.run([
-                "ffmpeg", "-y", "-i", str(temp_audio_path),
-                "-ar", "16000", "-ac", "1",
-                str(wav_path)
-            ], check=True, capture_output=True)
-        except subprocess.CalledProcessError as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to convert audio format. Please ensure ffmpeg is installed."
-            )
-        except FileNotFoundError:
+        ffmpeg_path = "ffmpeg"
+        # Try common Windows paths if not in PATH
+        ffmpeg_paths = [
+            "ffmpeg",
+            r"C:\Users\farhaan\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.0.1-full_build\bin\ffmpeg.exe"
+        ]
+        
+        ffmpeg_cmd = None
+        for fp in ffmpeg_paths:
+            if shutil.which(fp) or os.path.exists(fp):
+                ffmpeg_cmd = fp
+                break
+        
+        if not ffmpeg_cmd:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="ffmpeg not found. Please install ffmpeg for audio processing."
+            )
+        
+        print(f"[Transcribe] Using ffmpeg: {ffmpeg_cmd}")
+        
+        try:
+            result = subprocess.run([
+                ffmpeg_cmd, "-y", "-i", str(temp_audio_path),
+                "-ar", "16000", "-ac", "1",
+                str(wav_path)
+            ], check=True, capture_output=True, text=True)
+            print(f"[Transcribe] FFmpeg success, WAV created: {wav_path}")
+        except subprocess.CalledProcessError as e:
+            print(f"[Transcribe] FFmpeg error: {e.stderr}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to convert audio format: {e.stderr}"
             )
         
         # Transcribe using speech analyzer
@@ -136,14 +161,20 @@ async def transcribe_audio(
                 detail="AI modules not available. Speech analysis requires full deployment."
             )
         
+        print(f"[Transcribe] Starting speech analysis...")
         result = speech_analyzer.analyze_audio(str(wav_path))
+        print(f"[Transcribe] Transcription result: {result.get('transcription', '')[:100]}")
         
         return {
             "transcription": result.get("transcription", ""),
             "duration": result.get("duration", 0)
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Transcription failed: {str(e)}"

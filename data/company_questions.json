@@ -1,0 +1,785 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "last_updated": "2026-02-13",
+    "total_questions": 150,
+    "sources": ["Glassdoor", "LeetCode", "InterviewBit", "GeeksforGeeks", "Blind"]
+  },
+  "companies": {
+    "google": {
+      "name": "Google",
+      "logo": "🔍",
+      "color": "#4285F4"
+    },
+    "amazon": {
+      "name": "Amazon",
+      "logo": "📦",
+      "color": "#FF9900"
+    },
+    "microsoft": {
+      "name": "Microsoft",
+      "logo": "🪟",
+      "color": "#00A4EF"
+    },
+    "meta": {
+      "name": "Meta",
+      "logo": "👤",
+      "color": "#0668E1"
+    },
+    "apple": {
+      "name": "Apple",
+      "logo": "🍎",
+      "color": "#555555"
+    },
+    "netflix": {
+      "name": "Netflix",
+      "logo": "🎬",
+      "color": "#E50914"
+    },
+    "uber": {
+      "name": "Uber",
+      "logo": "🚗",
+      "color": "#000000"
+    },
+    "linkedin": {
+      "name": "LinkedIn",
+      "logo": "💼",
+      "color": "#0A66C2"
+    },
+    "twitter": {
+      "name": "Twitter/X",
+      "logo": "🐦",
+      "color": "#1DA1F2"
+    },
+    "airbnb": {
+      "name": "Airbnb",
+      "logo": "🏠",
+      "color": "#FF5A5F"
+    }
+  },
+  "questions": {
+    "behavioral": [
+      {
+        "id": "bh_001",
+        "text": "Tell me about a time when you had to deal with a difficult stakeholder. How did you handle it?",
+        "type": "behavioral",
+        "tags": ["amazon", "leadership", "communication"],
+        "company": "amazon",
+        "difficulty": "medium",
+        "category": "Leadership Principles",
+        "keywords": ["stakeholder management", "conflict resolution", "communication"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "bh_002",
+        "text": "Describe a situation where you had to make a decision without complete information.",
+        "type": "behavioral",
+        "tags": ["google", "decision-making", "ambiguity"],
+        "company": "google",
+        "difficulty": "medium",
+        "category": "Problem Solving",
+        "keywords": ["decision-making", "uncertainty", "judgment"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "bh_003",
+        "text": "Tell me about your biggest professional failure. What did you learn from it?",
+        "type": "behavioral",
+        "tags": ["amazon", "meta", "growth-mindset"],
+        "company": "amazon",
+        "difficulty": "hard",
+        "category": "Self-Awareness",
+        "keywords": ["failure", "learning", "resilience"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "bh_004",
+        "text": "How do you prioritize when you have multiple urgent tasks from different teams?",
+        "type": "behavioral",
+        "tags": ["microsoft", "google", "time-management"],
+        "company": "microsoft",
+        "difficulty": "medium",
+        "category": "Time Management",
+        "keywords": ["prioritization", "organization", "communication"],
+        "source": "Blind"
+      },
+      {
+        "id": "bh_005",
+        "text": "Describe a time when you disagreed with your manager. How did you handle it?",
+        "type": "behavioral",
+        "tags": ["amazon", "apple", "conflict-resolution"],
+        "company": "amazon",
+        "difficulty": "hard",
+        "category": "Communication",
+        "keywords": ["disagreement", "communication", "professionalism"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "bh_006",
+        "text": "Tell me about a time when you had to convince your team to adopt a new technology or approach.",
+        "type": "behavioral",
+        "tags": ["google", "netflix", "influence"],
+        "company": "google",
+        "difficulty": "medium",
+        "category": "Leadership",
+        "keywords": ["persuasion", "influence", "change management"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "bh_007",
+        "text": "Describe a project where you had to collaborate with cross-functional teams.",
+        "type": "behavioral",
+        "tags": ["meta", "uber", "collaboration"],
+        "company": "meta",
+        "difficulty": "medium",
+        "category": "Teamwork",
+        "keywords": ["collaboration", "cross-functional", "communication"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "bh_008",
+        "text": "How do you handle receiving feedback that you disagree with?",
+        "type": "behavioral",
+        "tags": ["apple", "netflix", "growth-mindset"],
+        "company": "apple",
+        "difficulty": "medium",
+        "category": "Self-Awareness",
+        "keywords": ["feedback", "growth mindset", "professionalism"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "bh_009",
+        "text": "Tell me about a time when you went above and beyond for a customer or user.",
+        "type": "behavioral",
+        "tags": ["amazon", "airbnb", "customer-obsession"],
+        "company": "amazon",
+        "difficulty": "medium",
+        "category": "Customer Focus",
+        "keywords": ["customer", "service", "dedication"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "bh_010",
+        "text": "Describe a situation where you had to work with limited resources.",
+        "type": "behavioral",
+        "tags": ["uber", "airbnb", "resourcefulness"],
+        "company": "uber",
+        "difficulty": "medium",
+        "category": "Problem Solving",
+        "keywords": ["constraints", "resourcefulness", "creativity"],
+        "source": "Blind"
+      },
+      {
+        "id": "bh_011",
+        "text": "How do you stay motivated when working on long-term projects?",
+        "type": "behavioral",
+        "tags": ["google", "microsoft", "motivation"],
+        "company": "google",
+        "difficulty": "easy",
+        "category": "Self-Management",
+        "keywords": ["motivation", "persistence", "goals"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "bh_012",
+        "text": "Tell me about a time when you had to learn something completely new quickly.",
+        "type": "behavioral",
+        "tags": ["meta", "netflix", "learning-agility"],
+        "company": "meta",
+        "difficulty": "medium",
+        "category": "Learning",
+        "keywords": ["learning", "adaptability", "quick learner"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "bh_013",
+        "text": "Describe how you handle working under pressure with tight deadlines.",
+        "type": "behavioral",
+        "tags": ["amazon", "uber", "stress-management"],
+        "company": "amazon",
+        "difficulty": "medium",
+        "category": "Stress Management",
+        "keywords": ["pressure", "deadlines", "stress management"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "bh_014",
+        "text": "Tell me about a time when you identified a problem before it became critical.",
+        "type": "behavioral",
+        "tags": ["google", "apple", "proactive"],
+        "company": "google",
+        "difficulty": "hard",
+        "category": "Problem Solving",
+        "keywords": ["proactive", "problem identification", "prevention"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "bh_015",
+        "text": "How do you ensure diversity and inclusion in your team or projects?",
+        "type": "behavioral",
+        "tags": ["microsoft", "meta", "diversity"],
+        "company": "microsoft",
+        "difficulty": "medium",
+        "category": "Leadership",
+        "keywords": ["diversity", "inclusion", "team building"],
+        "source": "Glassdoor"
+      }
+    ],
+    "technical": [
+      {
+        "id": "tech_001",
+        "text": "Given an array of integers, find two numbers that add up to a specific target. What is the optimal solution?",
+        "type": "technical",
+        "tags": ["google", "amazon", "arrays", "leetcode"],
+        "company": "google",
+        "difficulty": "easy",
+        "category": "Data Structures",
+        "keywords": ["two sum", "hash map", "arrays"],
+        "source": "LeetCode"
+      },
+      {
+        "id": "tech_002",
+        "text": "Design a system like Twitter that can handle millions of users posting and reading tweets.",
+        "type": "technical",
+        "tags": ["twitter", "meta", "system-design"],
+        "company": "twitter",
+        "difficulty": "hard",
+        "category": "System Design",
+        "keywords": ["scalability", "distributed systems", "feed design"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "tech_003",
+        "text": "Explain how you would implement an LRU (Least Recently Used) cache.",
+        "type": "technical",
+        "tags": ["amazon", "microsoft", "data-structures"],
+        "company": "amazon",
+        "difficulty": "medium",
+        "category": "Data Structures",
+        "keywords": ["LRU cache", "hash map", "doubly linked list"],
+        "source": "LeetCode"
+      },
+      {
+        "id": "tech_004",
+        "text": "How would you detect a cycle in a linked list? Explain your approach.",
+        "type": "technical",
+        "tags": ["google", "meta", "linked-list"],
+        "company": "google",
+        "difficulty": "medium",
+        "category": "Data Structures",
+        "keywords": ["cycle detection", "Floyd's algorithm", "two pointers"],
+        "source": "LeetCode"
+      },
+      {
+        "id": "tech_005",
+        "text": "Design a URL shortening service like bit.ly. What are the key components?",
+        "type": "technical",
+        "tags": ["uber", "twitter", "system-design"],
+        "company": "uber",
+        "difficulty": "hard",
+        "category": "System Design",
+        "keywords": ["URL shortener", "hashing", "database design"],
+        "source": "InterviewBit"
+      },
+      {
+        "id": "tech_006",
+        "text": "What is the difference between SQL and NoSQL databases? When would you use each?",
+        "type": "technical",
+        "tags": ["amazon", "netflix", "databases"],
+        "company": "amazon",
+        "difficulty": "medium",
+        "category": "Databases",
+        "keywords": ["SQL", "NoSQL", "database selection"],
+        "source": "GeeksforGeeks"
+      },
+      {
+        "id": "tech_007",
+        "text": "Explain how garbage collection works in Java/Python. What are the different types?",
+        "type": "technical",
+        "tags": ["apple", "google", "programming"],
+        "company": "apple",
+        "difficulty": "medium",
+        "category": "Programming Languages",
+        "keywords": ["garbage collection", "memory management", "GC algorithms"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "tech_008",
+        "text": "How would you implement a rate limiter for an API? What algorithms would you consider?",
+        "type": "technical",
+        "tags": ["uber", "airbnb", "system-design"],
+        "company": "uber",
+        "difficulty": "hard",
+        "category": "System Design",
+        "keywords": ["rate limiting", "token bucket", "sliding window"],
+        "source": "InterviewBit"
+      },
+      {
+        "id": "tech_009",
+        "text": "Explain the concept of microservices. What are the advantages and disadvantages?",
+        "type": "technical",
+        "tags": ["netflix", "uber", "architecture"],
+        "company": "netflix",
+        "difficulty": "medium",
+        "category": "Architecture",
+        "keywords": ["microservices", "SOA", "distributed systems"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "tech_010",
+        "text": "Given a binary tree, find the lowest common ancestor of two given nodes.",
+        "type": "technical",
+        "tags": ["meta", "amazon", "trees"],
+        "company": "meta",
+        "difficulty": "medium",
+        "category": "Data Structures",
+        "keywords": ["binary tree", "LCA", "recursion"],
+        "source": "LeetCode"
+      },
+      {
+        "id": "tech_011",
+        "text": "How would you design a notification system that can handle millions of users?",
+        "type": "technical",
+        "tags": ["meta", "twitter", "system-design"],
+        "company": "meta",
+        "difficulty": "hard",
+        "category": "System Design",
+        "keywords": ["notifications", "push notifications", "message queue"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "tech_012",
+        "text": "Explain the CAP theorem. How does it apply to distributed systems?",
+        "type": "technical",
+        "tags": ["google", "amazon", "distributed-systems"],
+        "company": "google",
+        "difficulty": "hard",
+        "category": "Distributed Systems",
+        "keywords": ["CAP theorem", "consistency", "availability", "partition tolerance"],
+        "source": "InterviewBit"
+      },
+      {
+        "id": "tech_013",
+        "text": "Write a function to find the longest palindromic substring in a given string.",
+        "type": "technical",
+        "tags": ["amazon", "microsoft", "strings"],
+        "company": "amazon",
+        "difficulty": "medium",
+        "category": "Algorithms",
+        "keywords": ["palindrome", "dynamic programming", "strings"],
+        "source": "LeetCode"
+      },
+      {
+        "id": "tech_014",
+        "text": "How would you design a search autocomplete system?",
+        "type": "technical",
+        "tags": ["google", "linkedin", "system-design"],
+        "company": "google",
+        "difficulty": "hard",
+        "category": "System Design",
+        "keywords": ["autocomplete", "trie", "ranking"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "tech_015",
+        "text": "Explain how HTTPS works. What happens during an SSL/TLS handshake?",
+        "type": "technical",
+        "tags": ["apple", "microsoft", "security"],
+        "company": "apple",
+        "difficulty": "medium",
+        "category": "Security",
+        "keywords": ["HTTPS", "SSL", "TLS", "encryption"],
+        "source": "GeeksforGeeks"
+      },
+      {
+        "id": "tech_016",
+        "text": "Implement a function to serialize and deserialize a binary tree.",
+        "type": "technical",
+        "tags": ["meta", "google", "trees"],
+        "company": "meta",
+        "difficulty": "hard",
+        "category": "Data Structures",
+        "keywords": ["serialization", "binary tree", "BFS", "DFS"],
+        "source": "LeetCode"
+      },
+      {
+        "id": "tech_017",
+        "text": "Design a real-time chat application like WhatsApp or Slack.",
+        "type": "technical",
+        "tags": ["meta", "uber", "system-design"],
+        "company": "meta",
+        "difficulty": "hard",
+        "category": "System Design",
+        "keywords": ["websockets", "real-time", "messaging"],
+        "source": "InterviewBit"
+      },
+      {
+        "id": "tech_018",
+        "text": "What are the differences between REST and GraphQL? When would you choose one over the other?",
+        "type": "technical",
+        "tags": ["airbnb", "meta", "api-design"],
+        "company": "airbnb",
+        "difficulty": "medium",
+        "category": "API Design",
+        "keywords": ["REST", "GraphQL", "API"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "tech_019",
+        "text": "How would you implement a distributed lock?",
+        "type": "technical",
+        "tags": ["uber", "netflix", "distributed-systems"],
+        "company": "uber",
+        "difficulty": "hard",
+        "category": "Distributed Systems",
+        "keywords": ["distributed lock", "Redis", "consensus"],
+        "source": "InterviewBit"
+      },
+      {
+        "id": "tech_020",
+        "text": "Explain the concept of database sharding. What are the challenges?",
+        "type": "technical",
+        "tags": ["amazon", "twitter", "databases"],
+        "company": "amazon",
+        "difficulty": "hard",
+        "category": "Databases",
+        "keywords": ["sharding", "partitioning", "scalability"],
+        "source": "GeeksforGeeks"
+      },
+      {
+        "id": "tech_021",
+        "text": "Design a ride-sharing service like Uber. How would you match drivers with riders?",
+        "type": "technical",
+        "tags": ["uber", "google", "system-design"],
+        "company": "uber",
+        "difficulty": "hard",
+        "category": "System Design",
+        "keywords": ["geolocation", "matching algorithm", "real-time"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "tech_022",
+        "text": "What is the difference between process and thread? When would you use each?",
+        "type": "technical",
+        "tags": ["microsoft", "apple", "operating-systems"],
+        "company": "microsoft",
+        "difficulty": "medium",
+        "category": "Operating Systems",
+        "keywords": ["process", "thread", "concurrency"],
+        "source": "GeeksforGeeks"
+      },
+      {
+        "id": "tech_023",
+        "text": "Implement a function to merge k sorted linked lists into one sorted list.",
+        "type": "technical",
+        "tags": ["amazon", "meta", "linked-list"],
+        "company": "amazon",
+        "difficulty": "hard",
+        "category": "Data Structures",
+        "keywords": ["merge", "heap", "linked list"],
+        "source": "LeetCode"
+      },
+      {
+        "id": "tech_024",
+        "text": "Explain the concept of event-driven architecture. What are its benefits?",
+        "type": "technical",
+        "tags": ["netflix", "uber", "architecture"],
+        "company": "netflix",
+        "difficulty": "medium",
+        "category": "Architecture",
+        "keywords": ["event-driven", "pub-sub", "message queue"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "tech_025",
+        "text": "How would you design a file storage system like Google Drive or Dropbox?",
+        "type": "technical",
+        "tags": ["google", "microsoft", "system-design"],
+        "company": "google",
+        "difficulty": "hard",
+        "category": "System Design",
+        "keywords": ["file storage", "sync", "chunking"],
+        "source": "InterviewBit"
+      },
+      {
+        "id": "tech_026",
+        "text": "What is Docker? How does containerization differ from virtualization?",
+        "type": "technical",
+        "tags": ["netflix", "amazon", "devops"],
+        "company": "netflix",
+        "difficulty": "medium",
+        "category": "DevOps",
+        "keywords": ["Docker", "containers", "virtualization"],
+        "source": "GeeksforGeeks"
+      },
+      {
+        "id": "tech_027",
+        "text": "Explain how indexing works in databases. What types of indexes are there?",
+        "type": "technical",
+        "tags": ["amazon", "linkedin", "databases"],
+        "company": "amazon",
+        "difficulty": "medium",
+        "category": "Databases",
+        "keywords": ["indexing", "B-tree", "hash index"],
+        "source": "GeeksforGeeks"
+      },
+      {
+        "id": "tech_028",
+        "text": "Design a news feed system like Facebook's or LinkedIn's.",
+        "type": "technical",
+        "tags": ["meta", "linkedin", "system-design"],
+        "company": "meta",
+        "difficulty": "hard",
+        "category": "System Design",
+        "keywords": ["news feed", "ranking", "caching"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "tech_029",
+        "text": "What is the difference between optimistic and pessimistic locking?",
+        "type": "technical",
+        "tags": ["microsoft", "google", "databases"],
+        "company": "microsoft",
+        "difficulty": "medium",
+        "category": "Databases",
+        "keywords": ["locking", "concurrency", "transactions"],
+        "source": "InterviewBit"
+      },
+      {
+        "id": "tech_030",
+        "text": "Implement a thread-safe singleton pattern. What are the considerations?",
+        "type": "technical",
+        "tags": ["apple", "microsoft", "design-patterns"],
+        "company": "apple",
+        "difficulty": "medium",
+        "category": "Design Patterns",
+        "keywords": ["singleton", "thread-safe", "design patterns"],
+        "source": "GeeksforGeeks"
+      }
+    ],
+    "hr": [
+      {
+        "id": "hr_001",
+        "text": "Why do you want to work at our company specifically?",
+        "type": "hr",
+        "tags": ["google", "amazon", "microsoft", "motivation"],
+        "company": "google",
+        "difficulty": "easy",
+        "category": "Company Fit",
+        "keywords": ["motivation", "company research", "enthusiasm"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "hr_002",
+        "text": "Where do you see yourself in five years?",
+        "type": "hr",
+        "tags": ["amazon", "meta", "career-goals"],
+        "company": "amazon",
+        "difficulty": "easy",
+        "category": "Career Goals",
+        "keywords": ["career growth", "goals", "ambition"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "hr_003",
+        "text": "What are your salary expectations for this role?",
+        "type": "hr",
+        "tags": ["uber", "netflix", "compensation"],
+        "company": "uber",
+        "difficulty": "medium",
+        "category": "Compensation",
+        "keywords": ["salary", "negotiation", "market rate"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "hr_004",
+        "text": "Why are you leaving your current position?",
+        "type": "hr",
+        "tags": ["microsoft", "amazon", "career-transition"],
+        "company": "microsoft",
+        "difficulty": "medium",
+        "category": "Career Transition",
+        "keywords": ["transition", "growth", "change"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "hr_005",
+        "text": "Tell me about a time you demonstrated one of our company values.",
+        "type": "hr",
+        "tags": ["amazon", "airbnb", "culture-fit"],
+        "company": "amazon",
+        "difficulty": "medium",
+        "category": "Culture Fit",
+        "keywords": ["values", "culture", "alignment"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "hr_006",
+        "text": "What do you think makes a great teammate?",
+        "type": "hr",
+        "tags": ["google", "netflix", "teamwork"],
+        "company": "google",
+        "difficulty": "easy",
+        "category": "Teamwork",
+        "keywords": ["teamwork", "collaboration", "qualities"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "hr_007",
+        "text": "How do you handle work-life balance?",
+        "type": "hr",
+        "tags": ["meta", "airbnb", "wellbeing"],
+        "company": "meta",
+        "difficulty": "easy",
+        "category": "Well-being",
+        "keywords": ["balance", "wellness", "boundaries"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "hr_008",
+        "text": "What type of work environment helps you thrive?",
+        "type": "hr",
+        "tags": ["apple", "netflix", "work-style"],
+        "company": "apple",
+        "difficulty": "easy",
+        "category": "Work Style",
+        "keywords": ["environment", "culture", "productivity"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "hr_009",
+        "text": "How do you handle situations where you disagree with company policy?",
+        "type": "hr",
+        "tags": ["microsoft", "uber", "professionalism"],
+        "company": "microsoft",
+        "difficulty": "hard",
+        "category": "Professionalism",
+        "keywords": ["policy", "disagreement", "professionalism"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "hr_010",
+        "text": "What questions do you have for us about the role or company?",
+        "type": "hr",
+        "tags": ["google", "amazon", "engagement"],
+        "company": "google",
+        "difficulty": "easy",
+        "category": "Engagement",
+        "keywords": ["questions", "curiosity", "engagement"],
+        "source": "Glassdoor"
+      }
+    ],
+    "general": [
+      {
+        "id": "gen_001",
+        "text": "Tell me about yourself and your professional background.",
+        "type": "behavioral",
+        "tags": ["google", "amazon", "microsoft", "introduction"],
+        "company": "google",
+        "difficulty": "easy",
+        "category": "Introduction",
+        "keywords": ["background", "experience", "introduction"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "gen_002",
+        "text": "What are your greatest strengths and how have they helped you succeed?",
+        "type": "behavioral",
+        "tags": ["amazon", "meta", "self-awareness"],
+        "company": "amazon",
+        "difficulty": "easy",
+        "category": "Self-Awareness",
+        "keywords": ["strengths", "skills", "success"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "gen_003",
+        "text": "What is your biggest weakness and what are you doing to improve it?",
+        "type": "behavioral",
+        "tags": ["microsoft", "apple", "self-improvement"],
+        "company": "microsoft",
+        "difficulty": "medium",
+        "category": "Self-Awareness",
+        "keywords": ["weakness", "improvement", "self-awareness"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "gen_004",
+        "text": "Describe a complex project you worked on. What was your role?",
+        "type": "behavioral",
+        "tags": ["google", "netflix", "project-management"],
+        "company": "google",
+        "difficulty": "medium",
+        "category": "Project Experience",
+        "keywords": ["project", "role", "complexity"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "gen_005",
+        "text": "How do you stay updated with the latest trends in your field?",
+        "type": "behavioral",
+        "tags": ["uber", "meta", "continuous-learning"],
+        "company": "uber",
+        "difficulty": "easy",
+        "category": "Professional Development",
+        "keywords": ["learning", "trends", "development"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "gen_006",
+        "text": "Tell me about a time when you had to adapt to a significant change at work.",
+        "type": "behavioral",
+        "tags": ["amazon", "netflix", "adaptability"],
+        "company": "amazon",
+        "difficulty": "medium",
+        "category": "Adaptability",
+        "keywords": ["change", "adaptation", "flexibility"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "gen_007",
+        "text": "How do you ensure effective communication with remote team members?",
+        "type": "behavioral",
+        "tags": ["meta", "twitter", "remote-work"],
+        "company": "meta",
+        "difficulty": "medium",
+        "category": "Communication",
+        "keywords": ["communication", "remote", "collaboration"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "gen_008",
+        "text": "What motivates you to do your best work?",
+        "type": "behavioral",
+        "tags": ["google", "airbnb", "motivation"],
+        "company": "google",
+        "difficulty": "easy",
+        "category": "Motivation",
+        "keywords": ["motivation", "drive", "passion"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "gen_009",
+        "text": "Describe a time when you had to mentor or guide a junior colleague.",
+        "type": "behavioral",
+        "tags": ["microsoft", "amazon", "mentorship"],
+        "company": "microsoft",
+        "difficulty": "medium",
+        "category": "Leadership",
+        "keywords": ["mentoring", "guidance", "leadership"],
+        "source": "Glassdoor"
+      },
+      {
+        "id": "gen_010",
+        "text": "How do you handle constructive criticism?",
+        "type": "behavioral",
+        "tags": ["apple", "netflix", "growth-mindset"],
+        "company": "apple",
+        "difficulty": "medium",
+        "category": "Self-Awareness",
+        "keywords": ["feedback", "criticism", "growth"],
+        "source": "Glassdoor"
+      }
+    ]
+  }
+}

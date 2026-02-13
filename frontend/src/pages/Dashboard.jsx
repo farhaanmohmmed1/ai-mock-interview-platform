@@ -328,10 +328,49 @@ const Dashboard = () => {
           }}>
             <CardContent sx={{ flexGrow: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 600, color: '#FFFFFF', mb: 1 }}>
+                Full Interview
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#888888', lineHeight: 1.6 }}>
+                Complete mock: General, Technical & HR rounds combined.
+              </Typography>
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="caption" sx={{ color: '#555555' }}>
+                  Duration: ~45 minutes
+                </Typography>
+              </Box>
+            </CardContent>
+            <CardActions sx={{ p: 2, pt: 0 }}>
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<Gavel />}
+                onClick={() => startNewInterview('full')}
+                sx={{ 
+                  bgcolor: '#A855F7', 
+                  '&:hover': { bgcolor: '#9333EA' },
+                }}
+              >
+                Start Full Interview
+              </Button>
+            </CardActions>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            bgcolor: '#1A1A1A', 
+            border: '1px solid #262626',
+            borderTop: '2px solid #EC4899',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+            <CardContent sx={{ flexGrow: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#FFFFFF', mb: 1 }}>
                 UPSC Interview
               </Typography>
               <Typography variant="body2" sx={{ color: '#888888', lineHeight: 1.6 }}>
-                Civil Services style: current affairs, ethics, and personality assessment.
+                Civil Services style: current affairs, ethics & personality.
               </Typography>
               <Box sx={{ mt: 2 }}>
                 <Typography variant="caption" sx={{ color: '#555555' }}>
@@ -343,11 +382,11 @@ const Dashboard = () => {
               <Button
                 size="small"
                 variant="contained"
-                startIcon={<Gavel />}
+                startIcon={<School />}
                 onClick={() => startNewInterview('upsc')}
                 sx={{ 
-                  bgcolor: '#A855F7', 
-                  '&:hover': { bgcolor: '#9333EA' },
+                  bgcolor: '#EC4899', 
+                  '&:hover': { bgcolor: '#DB2777' },
                 }}
               >
                 Start UPSC Mock

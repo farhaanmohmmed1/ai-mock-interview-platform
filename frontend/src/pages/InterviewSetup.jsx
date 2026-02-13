@@ -176,20 +176,45 @@ const InterviewSetup = () => {
   };
 
   const handleDeleteResume = async (resumeId) => {
+    // Confirm deletion
+    if (!window.confirm('Are you sure you want to delete this resume?')) {
+      return;
+    }
+    
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${API_URL}/api/resume/${resumeId}`, {
+      const response = await fetch(`${API_URL}/api/resume/${resumeId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      await fetchResumes();
-      if (selectedResume?.id === resumeId) {
-        setSelectedResume(null);
+      
+      // 204 No Content is success for DELETE
+      if (response.status === 204 || response.ok) {
+        // Refresh the resumes list
+        await fetchResumes();
+        
+        // Clear selection if deleted resume was selected
+        if (selectedResume?.id === resumeId) {
+          setSelectedResume(null);
+        }
+        return;
       }
+      
+      // Handle error response
+      const errorText = await response.text();
+      let errorMessage = `Delete failed: ${response.status}`;
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.detail || errorMessage;
+      } catch (e) {
+        // ignore parse error
+      }
+      throw new Error(errorMessage);
     } catch (err) {
       console.error('Error deleting resume:', err);
+      setError(err.message || 'Failed to delete resume');
     }
   };
 
@@ -238,8 +263,8 @@ const InterviewSetup = () => {
   };
 
   const handleNext = () => {
-    if (activeStep === 0 && type === 'technical' && !selectedResume) {
-      setError('Please select or upload a resume for technical interview');
+    if (activeStep === 0 && (type === 'technical' || type === 'full') && !selectedResume) {
+      setError('Please select or upload a resume for this interview type');
       return;
     }
     setError('');
@@ -252,8 +277,8 @@ const InterviewSetup = () => {
 
   const canProceed = () => {
     if (activeStep === 0) {
-      // For technical interview, resume is required
-      if (type === 'technical') {
+      // For technical and full interview, resume is required
+      if (type === 'technical' || type === 'full') {
         return selectedResume !== null;
       }
       return true; // For other types, resume is optional
@@ -372,7 +397,7 @@ const InterviewSetup = () => {
                 Select Your Resume
               </Typography>
               <Typography sx={{ color: '#888888', mb: 3 }}>
-                {type === 'technical'
+                {(type === 'technical' || type === 'full')
                   ? 'Your resume will be used to generate personalized technical questions based on your skills.'
                   : 'Upload a resume to get personalized questions (optional for this interview type).'}
               </Typography>
@@ -530,7 +555,7 @@ const InterviewSetup = () => {
                 </Grid>
               )}
 
-              {type !== 'technical' && (
+              {type !== 'technical' && type !== 'full' && (
                 <Box sx={{ mt: 3 }}>
                   <Button
                     variant="text"
@@ -554,61 +579,6 @@ const InterviewSetup = () => {
                 <Psychology sx={{ color: '#A855F7' }} />
                 Choose Interview Settings
               </Typography>
-
-              {/* Interview Mode - only show for non-UPSC */}
-              {!isUPSC && (
-                <>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: '#FFFFFF', mb: 2 }}>
-                    Interview Mode
-                  </Typography>
-                  <Grid container spacing={2} sx={{ mb: 4 }}>
-                    {['standard', 'upsc'].map((mode) => {
-                      const modeInfo = getModeDescription(mode);
-                      return (
-                        <Grid item xs={12} md={6} key={mode}>
-                          <Card
-                            sx={{
-                              cursor: 'pointer',
-                              height: '100%',
-                              bgcolor: interviewMode === mode ? 'rgba(14, 165, 233, 0.1)' : '#0B0B0B',
-                              border: interviewMode === mode ? '1px solid rgba(14, 165, 233, 0.5)' : '1px solid #262626',
-                              transition: 'all 0.15s ease',
-                              '&:hover': { borderColor: '#333333' },
-                            }}
-                            onClick={() => setInterviewMode(mode)}
-                          >
-                            <CardContent>
-                              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                <Radio 
-                                  checked={interviewMode === mode} 
-                                  sx={{ color: '#555555', '&.Mui-checked': { color: '#0EA5E9' } }}
-                                />
-                                <Box sx={{ color: '#0EA5E9' }}>{modeInfo.icon}</Box>
-                                <Typography variant="h6" sx={{ ml: 1, fontWeight: 600, color: '#FFFFFF' }}>
-                                  {modeInfo.title}
-                                </Typography>
-                              </Box>
-                              <Typography variant="body2" sx={{ color: '#888888', mb: 2 }}>
-                                {modeInfo.description}
-                              </Typography>
-                              <Box>
-                                {modeInfo.features.map((feature, idx) => (
-                                  <Chip
-                                    key={idx}
-                                    label={feature}
-                                    size="small"
-                                    sx={{ mr: 0.5, mb: 0.5, bgcolor: 'transparent', color: '#888888', border: '1px solid #333333' }}
-                                  />
-                                ))}
-                              </Box>
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                      );
-                    })}
-                  </Grid>
-                </>
-              )}
 
               {/* For UPSC, show description */}
               {isUPSC && (
@@ -817,18 +787,6 @@ const InterviewSetup = () => {
                     Experience
                   </Typography>
                   <Typography sx={{ color: '#FFFFFF' }}>{previewResume.experience_years} years</Typography>
-                </Grid>
-              )}
-              {previewResume.education && (
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" sx={{ color: '#888888' }}>
-                    Education
-                  </Typography>
-                  <Typography sx={{ color: '#FFFFFF' }}>
-                    {typeof previewResume.education === 'object'
-                      ? JSON.stringify(previewResume.education, null, 2)
-                      : previewResume.education}
-                  </Typography>
                 </Grid>
               )}
             </Grid>

@@ -53,6 +53,12 @@ class QuestionResponse(BaseModel):
     category: Optional[str]
     difficulty: str
     order_number: int
+    # New fields for company questions and tags
+    tags: Optional[List[str]] = []
+    company: Optional[str] = None
+    company_name: Optional[str] = None
+    source: Optional[str] = None
+    from_dataset: Optional[bool] = False
     
     class Config:
         from_attributes = True
@@ -120,22 +126,18 @@ async def create_interview(
 ):
     """Create and start a new interview using the Interview Agent"""
     # Validate interview type
-    valid_types = ["general", "technical", "hr", "upsc"]
+    valid_types = ["general", "technical", "hr", "full", "upsc"]
     if interview_data.interview_type not in valid_types:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid interview type. Must be one of: {', '.join(valid_types)}"
         )
     
-    # For UPSC type, automatically set mode to upsc
-    if interview_data.interview_type == "upsc":
-        interview_data.interview_mode = "upsc"
-    
-    # Get resume if technical interview
+    # Get resume if technical or full interview
     resume = None
     resume_data = None
     user_skills = None
-    if interview_data.interview_type == "technical":
+    if interview_data.interview_type in ["technical", "full"]:
         if not interview_data.resume_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -257,7 +259,13 @@ async def create_interview(
             category=q_data.get("category"),
             difficulty=q_data.get("difficulty", difficulty),
             expected_keywords=q_data.get("keywords", []),
-            order_number=idx + 1
+            order_number=idx + 1,
+            # New fields for company questions and tags
+            tags=q_data.get("tags", []),
+            company=q_data.get("company", ""),
+            company_name=q_data.get("company_name", ""),
+            source=q_data.get("source", "AI Generated"),
+            from_dataset=q_data.get("from_dataset", False)
         )
         db.add(question)
         questions.append(question)

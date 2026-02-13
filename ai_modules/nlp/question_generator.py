@@ -1,15 +1,36 @@
 import random
+import logging
 from typing import Dict, List, Optional
 from sqlalchemy.orm import Session
 from backend.models import Interview, Response
+from .company_questions_loader import get_questions_loader, CompanyQuestionsLoader
+
+logger = logging.getLogger(__name__)
 
 
 class QuestionGenerator:
-    """Generate interview questions based on type and context"""
+    """Generate interview questions based on type and context
+    
+    This generator combines:
+    1. Company-sourced questions from top tech companies (Google, Amazon, Meta, etc.)
+    2. AI-generated questions based on resume and skills
+    3. Adaptive questions based on user's past performance
+    
+    Questions include tags showing company source and category.
+    """
     
     def __init__(self):
         self.question_bank = self._initialize_question_bank()
         self.upsc_question_bank = self._initialize_upsc_questions()
+        # Load company questions dataset
+        try:
+            self.company_loader = get_questions_loader()
+            self.company_questions_available = True
+            logger.info(f"Loaded {self.company_loader.metadata.get('total_questions', 0)} company questions")
+        except Exception as e:
+            logger.warning(f"Could not load company questions: {e}")
+            self.company_questions_available = False
+            self.company_loader = None
     
     def _initialize_upsc_questions(self) -> Dict:
         """Initialize UPSC/Civil Services style questions"""
@@ -185,24 +206,156 @@ class QuestionGenerator:
         resume_data: Optional[Dict] = None,
         skills: Optional[List[str]] = None,
         user_id: int = None,
-        db: Session = None
+        db: Session = None,
+        company_question_ratio: float = 0.6
     ) -> List[Dict]:
-        """Generate questions for interview"""
-        questions = []
+        """Generate questions for interview with company questions mixed in
         
-        # UPSC mode has different question generation
-        if interview_mode == "upsc":
-            questions = self._generate_upsc_questions(difficulty)
-        elif interview_type == "general":
-            questions = self._generate_general_questions(difficulty)
+        Args:
+            interview_type: Type of interview (general, technical, hr)
+            difficulty: Difficulty level (easy, medium, hard)
+            interview_mode: Mode (standard, upsc)
+            resume_data: Parsed resume data
+            skills: User's skills
+            user_id: User ID for adaptive questions
+            db: Database session
+            company_question_ratio: Ratio of questions from company dataset (0.0 to 1.0)
+        
+        Returns:
+            List of questions with tags and company information
+        """
+        questions = []
+        generated_questions = []
+        company_questions = []
+        
+        # Determine total question count
+        if interview_type == "full":
+            total_questions = 12  # 4 general + 4 technical + 4 hr
+        elif interview_type == "upsc":
+            total_questions = 10
         elif interview_type == "technical":
-            questions = self._generate_technical_questions(difficulty, skills, resume_data)
+            total_questions = 8
+        else:
+            total_questions = 5
+        
+        # Calculate how many from each source
+        company_count = int(total_questions * company_question_ratio)
+        generated_count = total_questions - company_count
+        
+        # Try to get company questions if available
+        if self.company_questions_available:
+            try:
+                if interview_type == "full":
+                    # For full interview, get company questions from all three types
+                    per_type_count = max(1, company_count // 3)
+                    all_company_qs = []
+                    round_map = {
+                        "behavioral": "General Round",
+                        "technical": "Technical Round", 
+                        "hr": "HR Round"
+                    }
+                    for q_type in ["behavioral", "technical", "hr"]:
+                        type_qs = self.company_loader.get_formatted_questions(
+                            count=per_type_count,
+                            question_type=q_type,
+                            difficulty=difficulty
+                        )
+                        # Tag with round info
+                        for q in type_qs:
+                            q['round'] = round_map.get(q_type, 'General Round')
+                        all_company_qs.extend(type_qs)
+                    company_questions = all_company_qs
+                else:
+                    # Map interview type to question type for the dataset
+                    question_type_map = {
+                        "general": "behavioral",
+                        "technical": "technical",
+                        "hr": "hr"
+                    }
+                    mapped_type = question_type_map.get(interview_type, "behavioral")
+                    
+                    # Get company questions
+                    company_questions = self.company_loader.get_formatted_questions(
+                        count=company_count,
+                        question_type=mapped_type,
+                        difficulty=difficulty
+                    )
+                
+                # Ensure tags are properly set
+                for q in company_questions:
+                    if 'tags' not in q or not q['tags']:
+                        q['tags'] = []
+                    # Add company as a tag if present
+                    if q.get('company') and q['company'] not in q['tags']:
+                        q['tags'].insert(0, q['company'])
+                    # Add difficulty as a tag
+                    if q.get('difficulty') and q['difficulty'] not in q['tags']:
+                        q['tags'].append(q['difficulty'])
+                
+                logger.info(f"Loaded {len(company_questions)} company questions for {interview_type} interview")
+                
+            except Exception as e:
+                logger.warning(f"Could not load company questions: {e}")
+                company_questions = []
+                generated_count = total_questions  # Fall back to all generated
+        
+        # Generate remaining questions
+        if interview_type == "full":
+            # Full interview: combine questions from all three types
+            full_gen_count = max(1, generated_count // 3)
+            general_qs = self._generate_general_questions(difficulty)[:full_gen_count]
+            technical_qs = self._generate_technical_questions(difficulty, skills, resume_data)[:full_gen_count]
+            hr_qs = self._generate_hr_questions(difficulty)[:full_gen_count]
+            # Tag each question with its round type
+            for q in general_qs:
+                q['round'] = 'General Round'
+            for q in technical_qs:
+                q['round'] = 'Technical Round'
+            for q in hr_qs:
+                q['round'] = 'HR Round'
+            generated_questions = general_qs + technical_qs + hr_qs
+        elif interview_type == "general":
+            generated_questions = self._generate_general_questions(difficulty)[:generated_count]
+        elif interview_type == "technical":
+            generated_questions = self._generate_technical_questions(difficulty, skills, resume_data)[:generated_count]
         elif interview_type == "hr":
-            questions = self._generate_hr_questions(difficulty)
+            generated_questions = self._generate_hr_questions(difficulty)[:generated_count]
+        elif interview_type == "upsc":
+            generated_questions = self._generate_upsc_questions(difficulty)
+            for q in generated_questions:
+                q['round'] = 'UPSC Round'
+        
+        # Add default tags to generated questions
+        for q in generated_questions:
+            if 'tags' not in q:
+                q['tags'] = []
+            if 'from_dataset' not in q:
+                q['from_dataset'] = False
+                q['tags'].append('ai-generated')
+            # Add source info
+            if not q.get('source'):
+                q['source'] = 'AI Generated'
+            if not q.get('company'):
+                q['company'] = ''
+            if not q.get('company_name'):
+                q['company_name'] = ''
+        
+        # Combine questions
+        questions = company_questions + generated_questions
+        
+        # For full interview, sort by round order instead of shuffling
+        if interview_type == "full":
+            round_order = {'General Round': 0, 'Technical Round': 1, 'HR Round': 2}
+            questions.sort(key=lambda q: round_order.get(q.get('round', 'General Round'), 0))
+        else:
+            random.shuffle(questions)
         
         # Add adaptive questions based on past performance if available
         if user_id and db and interview_mode != "upsc":
             adaptive_questions = self._get_adaptive_questions(user_id, interview_type, db)
+            for q in adaptive_questions:
+                q['tags'] = q.get('tags', []) + ['adaptive', 'personalized']
+                q['from_dataset'] = False
             questions.extend(adaptive_questions)
         
         # Apply rule-based difficulty classification

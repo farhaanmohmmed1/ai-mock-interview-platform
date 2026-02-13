@@ -41,6 +41,8 @@ import {
   Stop,
   FiberManualRecord,
   SkipNext,
+  VolumeUp,
+  VolumeOff,
 } from '@mui/icons-material';
 import { useAuth } from '../App';
 import API_URL from '../config';
@@ -89,6 +91,25 @@ const Interview = () => {
   const [exitDialogOpen, setExitDialogOpen] = useState(false);
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
 
+  // Text-to-speech state
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const speechSynthRef = useRef(window.speechSynthesis);
+
+  // Round-based interview state (for full interview mode)
+  const [currentRound, setCurrentRound] = useState(0); // 0: General, 1: Technical, 2: HR
+  const [roundTransitionOpen, setRoundTransitionOpen] = useState(false);
+  const [roundTimeLeft, setRoundTimeLeft] = useState(null);
+  const roundTimerRef = useRef(null);
+  
+  // Round configuration
+  const rounds = [
+    { name: 'General Round', key: 'general', duration: 10 * 60, color: '#10B981' }, // 10 minutes
+    { name: 'Technical Round', key: 'technical', duration: 15 * 60, color: '#3B82F6' }, // 15 minutes
+    { name: 'HR Round', key: 'hr', duration: 10 * 60, color: '#F59E0B' }, // 10 minutes
+  ];
+  
+  const isFullInterview = type === 'full';
+
   // Proctoring state
   const proctoringClientRef = useRef(null);
   const [proctoringActive, setProctoringActive] = useState(false);
@@ -118,6 +139,10 @@ const Interview = () => {
     return () => {
       stopCamera();
       stopProctoring();
+      // Stop any ongoing speech
+      if (speechSynthRef.current) {
+        speechSynthRef.current.cancel();
+      }
     };
   }, [type, setupData.interviewId]);
 
@@ -245,6 +270,89 @@ const Interview = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Round timer for full interview mode
+  useEffect(() => {
+    if (!isFullInterview || roundTransitionOpen) return;
+    
+    // Initialize round time on round change
+    if (roundTimeLeft === null) {
+      setRoundTimeLeft(rounds[currentRound]?.duration || 600);
+    }
+    
+    const roundInterval = setInterval(() => {
+      setRoundTimeLeft((prev) => {
+        if (prev <= 1) {
+          // Time's up for this round, auto-advance
+          handleRoundComplete();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    roundTimerRef.current = roundInterval;
+    return () => clearInterval(roundInterval);
+  }, [isFullInterview, currentRound, roundTransitionOpen]);
+
+  // Get questions for current round
+  const getRoundQuestions = () => {
+    if (!isFullInterview) return questions;
+    
+    const roundKey = rounds[currentRound]?.key;
+    return questions.filter(q => {
+      const qRound = q.round?.toLowerCase() || '';
+      return qRound.includes(roundKey) || qRound.includes(rounds[currentRound]?.name?.toLowerCase().split(' ')[0]);
+    });
+  };
+
+  // Get current question index within the round
+  const getCurrentRoundQuestionIndex = () => {
+    if (!isFullInterview) return currentQuestionIndex;
+    
+    const roundQuestions = getRoundQuestions();
+    const globalQuestion = questions[currentQuestionIndex];
+    return roundQuestions.findIndex(q => q.id === globalQuestion?.id);
+  };
+
+  // Handle round completion
+  const handleRoundComplete = () => {
+    if (currentRound < rounds.length - 1) {
+      // Show transition screen
+      setRoundTransitionOpen(true);
+    } else {
+      // All rounds complete - show completion dialog
+      setCompleteDialogOpen(true);
+    }
+  };
+
+  // Move to next round
+  const startNextRound = () => {
+    const nextRound = currentRound + 1;
+    setCurrentRound(nextRound);
+    setRoundTimeLeft(rounds[nextRound]?.duration || 600);
+    setRoundTransitionOpen(false);
+    
+    // Find the first question of the next round
+    const nextRoundKey = rounds[nextRound]?.key;
+    const nextRoundFirstQuestionIndex = questions.findIndex(q => {
+      const qRound = q.round?.toLowerCase() || '';
+      return qRound.includes(nextRoundKey);
+    });
+    
+    if (nextRoundFirstQuestionIndex !== -1) {
+      setCurrentQuestionIndex(nextRoundFirstQuestionIndex);
+    }
+  };
+
+  // Check if current question is the last in the round
+  const isLastQuestionInRound = () => {
+    if (!isFullInterview) return currentQuestionIndex === questions.length - 1;
+    
+    const roundQuestions = getRoundQuestions();
+    const currentRoundIdx = getCurrentRoundQuestionIndex();
+    return currentRoundIdx === roundQuestions.length - 1;
+  };
+
   useEffect(() => {
     // Reset timer when question changes
     setQuestionStartTime(Date.now());
@@ -255,6 +363,46 @@ const Interview = () => {
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Text-to-speech function to read question aloud
+  const speakQuestion = (text) => {
+    if (isSpeaking) {
+      // Stop speaking
+      speechSynthRef.current.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    // Start speaking
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.9; // Slightly slower for clarity
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    
+    // Try to use a good English voice
+    const voices = speechSynthRef.current.getVoices();
+    const englishVoice = voices.find(voice => 
+      voice.lang.startsWith('en') && voice.name.includes('Google')
+    ) || voices.find(voice => voice.lang.startsWith('en'));
+    
+    if (englishVoice) {
+      utterance.voice = englishVoice;
+    }
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+
+    speechSynthRef.current.speak(utterance);
+  };
+
+  // Stop speaking when question changes
+  useEffect(() => {
+    if (speechSynthRef.current) {
+      speechSynthRef.current.cancel();
+      setIsSpeaking(false);
+    }
+  }, [currentQuestionIndex]);
 
   const startCamera = async () => {
     try {
@@ -314,9 +462,17 @@ const Interview = () => {
         setAudioBlob(audioBlob);
         stream.getTracks().forEach(track => track.stop());
         
-        // Auto-transcribe if no live transcript (e.g., Firefox without Speech API)
-        if (!currentAnswerRef.current.trim()) {
+        // Always use backend Whisper transcription for better accuracy
+        // Web Speech API live transcript is just for preview
+        const liveTranscriptText = accumulatedTranscriptRef.current.trim();
+        
+        // Use backend transcription if we have audio and recording was > 1 second
+        if (audioBlob && audioBlob.size > 1000) {
+          console.log('Transcribing with Whisper backend...');
           await transcribeAudio(audioBlob);
+        } else if (liveTranscriptText) {
+          // Use live transcript if no audio blob but we have text
+          setCurrentAnswer(liveTranscriptText);
         }
       };
 
@@ -366,6 +522,15 @@ const Interview = () => {
           console.error('Speech recognition error:', event.error);
           if (event.error === 'not-allowed') {
             setError('Microphone access denied. Please allow microphone access for speech recognition.');
+          } else if (event.error === 'no-speech') {
+            // No speech detected is not really an error, just continue recording
+            console.log('No speech detected, continuing...');
+          } else if (event.error === 'network') {
+            // Network error - speech recognition might not work, but recording continues
+            console.log('Network error for speech recognition. Your answer is still being recorded.');
+          } else if (event.error === 'aborted') {
+            // User aborted - ignore
+            console.log('Speech recognition aborted');
           }
         };
 
@@ -410,11 +575,14 @@ const Interview = () => {
     }
   };
 
-  // Transcribe audio using backend API
+  // Transcribe audio using backend API (Whisper)
   const transcribeAudio = async (blob) => {
     if (!blob) return;
     
+    console.log('Starting Whisper transcription, audio size:', blob.size, 'bytes');
+    
     setTranscribing(true);
+    setError(null);
     try {
       const token = localStorage.getItem('token');
       const currentQuestion = questions[currentQuestionIndex];
@@ -433,19 +601,33 @@ const Interview = () => {
 
       if (response.ok) {
         const data = await response.json();
-        if (data.transcription) {
+        console.log('Transcription response:', data);
+        if (data.transcription && !data.transcription.startsWith('[')) {
           setCurrentAnswer(data.transcription);
           setLiveTranscript(data.transcription);
         } else {
-          setError('Could not transcribe audio. Please type your answer or try recording again.');
+          // Whisper returned empty or error message
+          console.log('Transcription result:', data.transcription);
+          if (accumulatedTranscriptRef.current.trim()) {
+            // Fall back to live transcript
+            setCurrentAnswer(accumulatedTranscriptRef.current.trim());
+          } else {
+            setError('No speech detected. Please try speaking louder or type your answer.');
+          }
         }
       } else {
         const errData = await response.json();
-        setError(errData.detail || 'Transcription failed. Please type your answer.');
+        console.error('Transcription error:', errData);
+        // Check if it's ffmpeg error
+        if (errData.detail && errData.detail.includes('ffmpeg')) {
+          setError('Audio processing error. Please type your answer below instead.');
+        } else {
+          setError(`Transcription error: ${errData.detail || 'Unknown error'}. Please type your answer.`);
+        }
       }
     } catch (err) {
       console.error('Transcription error:', err);
-      setError('Transcription failed. Please type your answer manually.');
+      setError('Could not transcribe audio. Please type your answer below.');
     } finally {
       setTranscribing(false);
     }
@@ -551,7 +733,12 @@ const Interview = () => {
 
         // Move to next question or complete
         if (currentQuestionIndex < questions.length - 1) {
-          setCurrentQuestionIndex((prev) => prev + 1);
+          // For full interview, check if this is the last question in the round
+          if (isFullInterview && isLastQuestionInRound()) {
+            handleRoundComplete();
+          } else {
+            setCurrentQuestionIndex((prev) => prev + 1);
+          }
           setCurrentAnswer('');
           setAudioBlob(null);
           setRecordingTime(0);
@@ -667,7 +854,34 @@ const Interview = () => {
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1, color: '#FFFFFF' }}>
             {type.charAt(0).toUpperCase() + type.slice(1)} Interview
+            {isFullInterview && (
+              <Chip 
+                label={rounds[currentRound]?.name}
+                size="small"
+                sx={{ 
+                  ml: 2, 
+                  bgcolor: `${rounds[currentRound]?.color}20`,
+                  color: rounds[currentRound]?.color,
+                  border: `1px solid ${rounds[currentRound]?.color}50`,
+                  fontWeight: 600,
+                }}
+              />
+            )}
           </Typography>
+          {/* Round Timer for Full Interview */}
+          {isFullInterview && roundTimeLeft !== null && (
+            <Chip
+              icon={<Timer sx={{ color: roundTimeLeft < 60 ? '#EF4444' : '#FFFFFF' }} />}
+              label={`Round: ${formatTime(roundTimeLeft)}`}
+              sx={{ 
+                mr: 2, 
+                bgcolor: roundTimeLeft < 60 ? 'rgba(239, 68, 68, 0.2)' : '#1A1A1A', 
+                color: roundTimeLeft < 60 ? '#EF4444' : '#FFFFFF', 
+                border: `1px solid ${roundTimeLeft < 60 ? '#EF4444' : '#333333'}`,
+                animation: roundTimeLeft < 60 ? 'pulse 1s infinite' : 'none',
+              }}
+            />
+          )}
           <Chip
             icon={<Timer sx={{ color: '#FFFFFF' }} />}
             label={formatTime(elapsedTime)}
@@ -815,13 +1029,89 @@ const Interview = () => {
                     </Box>
                   </Box>
                   
-                  <Typography variant="h5" sx={{ color: '#FFFFFF', mb: 1 }}>
-                    {currentQuestion.question_text}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1 }}>
+                    <Typography variant="h5" sx={{ color: '#FFFFFF', flex: 1 }}>
+                      {currentQuestion.question_text}
+                    </Typography>
+                    <IconButton
+                      onClick={() => speakQuestion(currentQuestion.question_text)}
+                      sx={{ 
+                        color: isSpeaking ? '#0EA5E9' : '#888888',
+                        '&:hover': { color: '#0EA5E9', bgcolor: 'rgba(14, 165, 233, 0.1)' },
+                        mt: -0.5,
+                      }}
+                      title={isSpeaking ? 'Stop reading' : 'Read question aloud'}
+                    >
+                      {isSpeaking ? <VolumeOff /> : <VolumeUp />}
+                    </IconButton>
+                  </Box>
 
                   {currentQuestion.category && (
-                    <Typography variant="body2" sx={{ color: '#888888' }}>
+                    <Typography variant="body2" sx={{ color: '#888888', mb: 1 }}>
                       Category: {currentQuestion.category}
+                    </Typography>
+                  )}
+
+                  {/* Tags Display Section */}
+                  {currentQuestion.tags && currentQuestion.tags.length > 0 && (
+                    <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {currentQuestion.tags.map((tag, index) => {
+                        // Define colors for different tag types
+                        const getTagStyle = (tagName) => {
+                          const tagLower = tagName.toLowerCase();
+                          // Company colors
+                          const companyColors = {
+                            'google': { bg: 'rgba(66, 133, 244, 0.15)', color: '#4285F4', border: 'rgba(66, 133, 244, 0.3)' },
+                            'amazon': { bg: 'rgba(255, 153, 0, 0.15)', color: '#FF9900', border: 'rgba(255, 153, 0, 0.3)' },
+                            'meta': { bg: 'rgba(6, 104, 225, 0.15)', color: '#0668E1', border: 'rgba(6, 104, 225, 0.3)' },
+                            'microsoft': { bg: 'rgba(0, 164, 239, 0.15)', color: '#00A4EF', border: 'rgba(0, 164, 239, 0.3)' },
+                            'apple': { bg: 'rgba(85, 85, 85, 0.15)', color: '#A2AAAD', border: 'rgba(85, 85, 85, 0.3)' },
+                            'netflix': { bg: 'rgba(229, 9, 20, 0.15)', color: '#E50914', border: 'rgba(229, 9, 20, 0.3)' },
+                            'uber': { bg: 'rgba(0, 0, 0, 0.15)', color: '#EEEEEE', border: 'rgba(255, 255, 255, 0.3)' },
+                            'linkedin': { bg: 'rgba(10, 102, 194, 0.15)', color: '#0A66C2', border: 'rgba(10, 102, 194, 0.3)' },
+                            'twitter': { bg: 'rgba(29, 161, 242, 0.15)', color: '#1DA1F2', border: 'rgba(29, 161, 242, 0.3)' },
+                            'airbnb': { bg: 'rgba(255, 90, 95, 0.15)', color: '#FF5A5F', border: 'rgba(255, 90, 95, 0.3)' },
+                          };
+                          
+                          if (companyColors[tagLower]) {
+                            return companyColors[tagLower];
+                          }
+                          
+                          // Category-based colors
+                          if (tagLower === 'system-design') return { bg: 'rgba(168, 85, 247, 0.15)', color: '#A855F7', border: 'rgba(168, 85, 247, 0.3)' };
+                          if (tagLower === 'leetcode') return { bg: 'rgba(255, 161, 22, 0.15)', color: '#FFA116', border: 'rgba(255, 161, 22, 0.3)' };
+                          if (tagLower === 'ai-generated') return { bg: 'rgba(16, 185, 129, 0.15)', color: '#10B981', border: 'rgba(16, 185, 129, 0.3)' };
+                          if (tagLower === 'adaptive' || tagLower === 'personalized') return { bg: 'rgba(236, 72, 153, 0.15)', color: '#EC4899', border: 'rgba(236, 72, 153, 0.3)' };
+                          
+                          // Default style
+                          return { bg: 'rgba(107, 114, 128, 0.15)', color: '#6B7280', border: 'rgba(107, 114, 128, 0.3)' };
+                        };
+                        
+                        const tagStyle = getTagStyle(tag);
+                        
+                        return (
+                          <Chip
+                            key={index}
+                            label={tag.charAt(0).toUpperCase() + tag.slice(1).replace('-', ' ')}
+                            size="small"
+                            sx={{
+                              bgcolor: tagStyle.bg,
+                              color: tagStyle.color,
+                              border: `1px solid ${tagStyle.border}`,
+                              fontSize: '0.7rem',
+                              height: '22px'
+                            }}
+                          />
+                        );
+                      })}
+                    </Box>
+                  )}
+
+                  {/* Source Display */}
+                  {currentQuestion.source && (
+                    <Typography variant="caption" sx={{ color: '#666666', display: 'block', mt: 1 }}>
+                      Source: {currentQuestion.source}
+                      {currentQuestion.company_name && ` • Asked at ${currentQuestion.company_name}`}
                     </Typography>
                   )}
                 </CardContent>
@@ -972,24 +1262,26 @@ const Interview = () => {
                 </Alert>
               )}
 
-              {/* Optional text input for corrections */}
+              {/* Text input for answer */}
               <Typography variant="body2" sx={{ color: '#888888', mb: 1 }}>
-                Or type your answer (optional):
+                {audioBlob && !currentAnswer.trim() 
+                  ? '⬇️ Type your answer below (transcription unavailable):' 
+                  : 'Or type/edit your answer:'}
               </Typography>
               <TextField
                 fullWidth
                 multiline
                 rows={4}
-                placeholder="You can also type your answer here if you prefer..."
+                placeholder="Type your answer here..."
                 value={currentAnswer}
                 onChange={(e) => setCurrentAnswer(e.target.value)}
                 disabled={submitting}
                 sx={{ 
                   mb: 2,
                   '& .MuiOutlinedInput-root': {
-                    bgcolor: '#111111',
+                    bgcolor: audioBlob && !currentAnswer.trim() ? '#1a1a2e' : '#111111',
                     color: '#E0E0E0',
-                    '& fieldset': { borderColor: '#333333' },
+                    '& fieldset': { borderColor: audioBlob && !currentAnswer.trim() ? '#0EA5E9' : '#333333' },
                     '&:hover fieldset': { borderColor: '#444444' },
                     '&.Mui-focused fieldset': { borderColor: '#0EA5E9' },
                   },
@@ -1128,6 +1420,63 @@ const Interview = () => {
             sx={{ bgcolor: '#0EA5E9', '&:hover': { bgcolor: '#0284C7' } }}
           >
             {submitting ? <CircularProgress size={20} sx={{ color: '#FFFFFF' }} /> : 'Complete Interview'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Round Transition Dialog (for Full Interview mode) */}
+      <Dialog 
+        open={roundTransitionOpen} 
+        onClose={() => {}}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { bgcolor: '#0A0A0A', border: '1px solid #262626', textAlign: 'center' } }}
+      >
+        <DialogTitle sx={{ color: '#FFFFFF', pt: 4 }}>
+          <CheckCircle sx={{ fontSize: 64, color: '#10B981', mb: 2 }} />
+          <Typography variant="h4" sx={{ fontWeight: 700 }}>
+            {rounds[currentRound]?.name} Complete!
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ color: '#888888', mb: 3 }}>
+            Great job! You've completed the {rounds[currentRound]?.name}.
+          </Typography>
+          
+          {currentRound < rounds.length - 1 && (
+            <Box sx={{ 
+              p: 3, 
+              bgcolor: 'rgba(14, 165, 233, 0.1)', 
+              border: '1px solid rgba(14, 165, 233, 0.3)', 
+              borderRadius: 2,
+              mb: 2 
+            }}>
+              <Typography variant="h6" sx={{ color: '#FFFFFF', mb: 1 }}>
+                Next: {rounds[currentRound + 1]?.name}
+              </Typography>
+              <Typography sx={{ color: '#888888' }}>
+                Time Limit: {Math.floor(rounds[currentRound + 1]?.duration / 60)} minutes
+              </Typography>
+              <Typography sx={{ color: '#888888', mt: 1 }}>
+                {currentRound + 1 === 1 && 'Get ready for technical questions based on your resume and skills.'}
+                {currentRound + 1 === 2 && 'Final round - questions about culture fit and soft skills.'}
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 4 }}>
+          <Button
+            onClick={startNextRound}
+            variant="contained"
+            size="large"
+            sx={{ 
+              bgcolor: rounds[currentRound + 1]?.color || '#0EA5E9', 
+              '&:hover': { filter: 'brightness(0.9)' },
+              px: 4,
+              py: 1.5,
+            }}
+          >
+            Start {rounds[currentRound + 1]?.name || 'Next Round'}
           </Button>
         </DialogActions>
       </Dialog>
