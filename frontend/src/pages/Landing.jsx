@@ -282,37 +282,26 @@ const Landing = () => {
               Sign In
             </Button>
           </Box>
-          <Box sx={{ mt: 4, display: 'flex', gap: 4, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Typography variant="body2" sx={{ color: '#555555', display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CheckCircle sx={{ fontSize: 16, color: '#10B981' }} /> No credit card required
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#555555', display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CheckCircle sx={{ fontSize: 16, color: '#10B981' }} /> Free demo available
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#555555', display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CheckCircle sx={{ fontSize: 16, color: '#10B981' }} /> Instant feedback
-            </Typography>
-          </Box>
         </Container>
       </Box>
 
       {/* About Section */}
       <Container maxWidth="lg" sx={{ py: 10 }}>
         <Grid container spacing={6} alignItems="center">
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} sx={{ textAlign: 'center' }}>
             <Typography variant="overline" sx={{ color: '#0EA5E9', fontWeight: 600, letterSpacing: '0.1em' }}>
               ABOUT THE PLATFORM
             </Typography>
             <Typography variant="h3" gutterBottom sx={{ fontWeight: 700, color: '#FFFFFF', mt: 1 }}>
               What is AI Mock Interview Platform?
             </Typography>
-            <Typography variant="body1" paragraph sx={{ fontSize: '1rem', lineHeight: 1.8, color: '#888888' }}>
+            <Typography variant="body1" paragraph sx={{ fontSize: '1rem', lineHeight: 1.8, color: '#888888', maxWidth: 800, mx: 'auto', }}>
               Our platform is a comprehensive interview preparation tool that uses cutting-edge 
               artificial intelligence to simulate real interview experiences. Whether you're preparing 
               for a software engineering role, civil services exam, or any professional interview, 
               we've got you covered.
             </Typography>
-            <List sx={{ mt: 3 }}>
+            <List sx={{ mt: 3, maxWidth: 600, mx: 'auto' }}>
               {[
                 'Personalized questions based on your resume and skills',
                 'Real-time speech and emotion analysis',
@@ -320,7 +309,7 @@ const Landing = () => {
                 'Adaptive difficulty that grows with you',
                 'Detailed analytics to track your progress',
               ].map((item, index) => (
-                <ListItem key={index} sx={{ py: 0.5, px: 0 }}>
+                <ListItem key={index} sx={{ py: 0.5, px: 0, justifyContent: 'center' }}>
                   <ListItemIcon sx={{ minWidth: 32 }}>
                     <CheckCircle sx={{ color: '#10B981', fontSize: 20 }} />
                   </ListItemIcon>
@@ -328,54 +317,6 @@ const Landing = () => {
                 </ListItem>
               ))}
             </List>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Paper 
-              elevation={0} 
-              sx={{ 
-                p: 4, 
-                bgcolor: '#0B0B0B', 
-                border: '1px solid #262626',
-              }}
-            >
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#FFFFFF', textAlign: 'center', mb: 4 }}>
-                Why Practice Matters
-              </Typography>
-              <Grid container spacing={3}>
-                <Grid item xs={6}>
-                  <Box textAlign="center">
-                    <Typography variant="h3" sx={{ color: '#0EA5E9', fontWeight: 700 }}>85%</Typography>
-                    <Typography variant="body2" sx={{ color: '#888888', mt: 1 }}>
-                      of candidates feel more confident after practice
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={6}>
-                  <Box textAlign="center">
-                    <Typography variant="h3" sx={{ color: '#10B981', fontWeight: 700 }}>3x</Typography>
-                    <Typography variant="body2" sx={{ color: '#888888', mt: 1 }}>
-                      higher success rate with mock interviews
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={6}>
-                  <Box textAlign="center">
-                    <Typography variant="h3" sx={{ color: '#A855F7', fontWeight: 700 }}>40%</Typography>
-                    <Typography variant="body2" sx={{ color: '#888888', mt: 1 }}>
-                      improvement in communication clarity
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={6}>
-                  <Box textAlign="center">
-                    <Typography variant="h3" sx={{ color: '#F59E0B', fontWeight: 700 }}>24/7</Typography>
-                    <Typography variant="body2" sx={{ color: '#888888', mt: 1 }}>
-                      practice anytime, anywhere
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Paper>
           </Grid>
         </Grid>
       </Container>
@@ -557,8 +498,7 @@ const Landing = () => {
             Ready to Ace Your Next Interview?
           </Typography>
           <Typography variant="body1" sx={{ color: '#888888', mb: 5, maxWidth: 600, mx: 'auto', lineHeight: 1.8 }}>
-            Join thousands of candidates who have improved their interview skills with our AI-powered platform. 
-            Start practicing today and land your dream job.
+             Practice realistic interviews with AI-powered feedback designed to improve your communication, confidence, and technical clarity. Start preparing today and move closer to your career goals.
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Button
@@ -625,10 +565,7 @@ const Landing = () => {
               <Typography variant="body2" sx={{ color: '#555555' }}>UPSC Interview</Typography>
             </Grid>
           </Grid>
-          <Divider sx={{ my: 4, borderColor: '#262626' }} />
-          <Typography variant="body2" align="center" sx={{ color: '#555555' }}>
-            2025 AI Mock Interview Platform. All rights reserved.
-          </Typography>
+          
         </Container>
       </Box>
     </Box>
