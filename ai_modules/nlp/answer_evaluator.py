@@ -91,34 +91,49 @@ class AnswerEvaluator:
         score = 0
         
         # Length scoring (0-40 points)
-        if word_count < 20:
-            score += (word_count / 20) * 20  # Proportional up to 20 words
-        elif word_count < 50:
-            score += 20 + ((word_count - 20) / 30) * 10  # 20-30 points
-        elif word_count < 100:
-            score += 30 + ((word_count - 50) / 50) * 10  # 30-40 points
+        if word_count < 10:
+            score += (word_count / 10) * 15  # Very short
+        elif word_count < 30:
+            score += 15 + ((word_count - 10) / 20) * 10  # 15-25
+        elif word_count < 60:
+            score += 25 + ((word_count - 30) / 30) * 10  # 25-35
+        elif word_count < 120:
+            score += 35 + ((word_count - 60) / 60) * 5  # 35-40
         else:
             score += 40
         
-        # Structure scoring (0-30 points)
-        if sentence_count >= 3:
-            score += 15
+        # Structure scoring (0-25 points)
+        if sentence_count >= 4:
+            score += 25
+        elif sentence_count >= 3:
+            score += 20
         elif sentence_count >= 2:
+            score += 15
+        else:
+            score += 8
+        
+        # Check for examples/specifics (0-20 points)
+        example_indicators = ['for example', 'for instance', 'such as', 'like', 'specifically',
+                              'in my experience', 'i have', 'i worked', 'i used', 'we implemented',
+                              'the result', 'this led to', 'because', 'which means']
+        matches = sum(1 for indicator in example_indicators if indicator in answer.lower())
+        if matches >= 3:
+            score += 20
+        elif matches >= 2:
+            score += 15
+        elif matches >= 1:
             score += 10
         else:
-            score += 5
+            score += 3
         
-        # Check for examples/specifics (0-15 points)
-        example_indicators = ['for example', 'for instance', 'such as', 'like', 'specifically']
-        if any(indicator in answer.lower() for indicator in example_indicators):
-            score += 15
-        
-        # Complexity (0-15 points)
+        # Complexity & vocabulary (0-15 points)
         avg_word_length = sum(len(word) for word in answer.split()) / len(answer.split()) if answer.split() else 0
-        if avg_word_length > 5:
+        if avg_word_length > 5.5:
             score += 15
-        elif avg_word_length > 4:
-            score += 10
+        elif avg_word_length > 4.5:
+            score += 12
+        elif avg_word_length > 3.5:
+            score += 8
         else:
             score += 5
         
@@ -147,13 +162,22 @@ class AnswerEvaluator:
             score += overlap * 50
         
         # Expected keywords (0-50 points)
-        if expected_keywords:
+        if expected_keywords and len(expected_keywords) > 0:
             keywords_lower = [k.lower() for k in expected_keywords]
             answer_lower = answer.lower()
             found_count = sum(1 for keyword in keywords_lower if keyword in answer_lower)
             score += (found_count / len(expected_keywords)) * 50
         else:
-            score += 25  # Give partial credit if no expected keywords
+            # No expected keywords defined — score based on answer substance
+            answer_tokens = answer_keywords  # already computed above (stopwords removed)
+            if len(answer_tokens) >= 15:
+                score += 45
+            elif len(answer_tokens) >= 8:
+                score += 38
+            elif len(answer_tokens) >= 4:
+                score += 30
+            else:
+                score += 20
         
         return min(score, 100)
     

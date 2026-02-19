@@ -55,9 +55,9 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setStats({
-          total_interviews: data.total_interviews || 0,
-          average_score: data.average_score || 0,
-          improvement_rate: data.improvement_rate || 0,
+          total_interviews: data.stats?.completed_interviews || 0,
+          average_score: data.stats?.average_score || 0,
+          improvement_rate: data.stats?.improvement_rate || 0,
         });
       }
     } catch (err) {

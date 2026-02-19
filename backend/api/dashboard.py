@@ -20,6 +20,8 @@ class DashboardStats(BaseModel):
     general_avg: float
     technical_avg: float
     hr_avg: float
+    total_practice_time: float
+    current_streak: int
 
 
 class PerformanceHistory(BaseModel):
@@ -74,6 +76,26 @@ async def get_dashboard_stats(
     ).all())
     
     # Calculate averages
+    total_practice_time = sum(i.duration_minutes or 0 for i in completed_interviews)
+    
+    # Calculate day streak from completed_at dates
+    current_streak = 0
+    if completed_interviews:
+        interview_dates = sorted(set(
+            i.completed_at.date() for i in completed_interviews if i.completed_at
+        ), reverse=True)
+        if interview_dates:
+            from datetime import date
+            today = date.today()
+            # Allow streak if latest interview is today or yesterday
+            if interview_dates[0] >= today - timedelta(days=1):
+                current_streak = 1
+                for j in range(1, len(interview_dates)):
+                    if (interview_dates[j - 1] - interview_dates[j]).days <= 1:
+                        current_streak += 1
+                    else:
+                        break
+    
     if completed_interviews:
         avg_score = sum(i.overall_score or 0 for i in completed_interviews) / len(completed_interviews)
         
@@ -108,7 +130,9 @@ async def get_dashboard_stats(
         improvement_rate=round(improvement_rate, 2),
         general_avg=round(general_avg, 2),
         technical_avg=round(technical_avg, 2),
-        hr_avg=round(hr_avg, 2)
+        hr_avg=round(hr_avg, 2),
+        total_practice_time=round(total_practice_time, 1),
+        current_streak=current_streak
     )
     
     # Performance history
@@ -122,34 +146,67 @@ async def get_dashboard_stats(
         for i in completed_interviews[-10:]  # Last 10 interviews
     ]
     
-    # Skill analysis (aggregate from weak/strong areas)
+    # Skill analysis - always include core interview metrics
+    core_skills = {}
+    if completed_interviews:
+        content_scores = [i.content_score for i in completed_interviews if i.content_score is not None]
+        clarity_scores = [i.clarity_score for i in completed_interviews if i.clarity_score is not None]
+        fluency_scores = [i.fluency_score for i in completed_interviews if i.fluency_score is not None]
+        confidence_scores = [i.confidence_score for i in completed_interviews if i.confidence_score is not None]
+        emotion_scores = [i.emotion_score for i in completed_interviews if i.emotion_score is not None]
+        
+        if content_scores:
+            core_skills["Content Quality"] = sum(content_scores) / len(content_scores)
+        if clarity_scores:
+            core_skills["Clarity"] = sum(clarity_scores) / len(clarity_scores)
+        if fluency_scores:
+            core_skills["Fluency"] = sum(fluency_scores) / len(fluency_scores)
+        if confidence_scores:
+            core_skills["Confidence"] = sum(confidence_scores) / len(confidence_scores)
+        if emotion_scores:
+            core_skills["Expression"] = sum(emotion_scores) / len(emotion_scores)
+    
+    # Also aggregate from weak/strong areas for additional skills
     skill_scores = {}
     for interview in completed_interviews:
         if interview.weak_areas:
             for area in interview.weak_areas:
                 skill = area.get("area", "Unknown")
                 score = area.get("score", 0)
-                if skill not in skill_scores:
+                if skill not in skill_scores and skill not in core_skills:
                     skill_scores[skill] = []
-                skill_scores[skill].append(score)
+                if skill not in core_skills:
+                    skill_scores[skill].append(score)
         
         if interview.strong_areas:
             for area in interview.strong_areas:
                 skill = area.get("area", "Unknown")
                 score = area.get("score", 0)
-                if skill not in skill_scores:
+                if skill not in skill_scores and skill not in core_skills:
                     skill_scores[skill] = []
-                skill_scores[skill].append(score)
+                if skill not in core_skills:
+                    skill_scores[skill].append(score)
     
+    # Build skill_analysis: core skills first, then additional
     skill_analysis = [
         SkillAnalysis(
             skill_name=skill,
-            current_level=round(sum(scores) / len(scores), 2),
+            current_level=round(avg, 2),
             target_level=85.0,
-            progress=round((sum(scores) / len(scores)) / 85.0 * 100, 2)
+            progress=round(avg / 85.0 * 100, 2)
         )
-        for skill, scores in list(skill_scores.items())[:5]
+        for skill, avg in core_skills.items()
     ]
+    
+    for skill, scores in list(skill_scores.items())[:3]:
+        if scores:
+            avg = sum(scores) / len(scores)
+            skill_analysis.append(SkillAnalysis(
+                skill_name=skill,
+                current_level=round(avg, 2),
+                target_level=85.0,
+                progress=round(avg / 85.0 * 100, 2)
+            ))
     
     # Recent interviews
     recent_interviews = db.query(Interview).filter(

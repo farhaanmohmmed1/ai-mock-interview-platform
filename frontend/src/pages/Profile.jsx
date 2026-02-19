@@ -27,19 +27,77 @@ import {
   WorkspacePremium as BadgeIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../App';
+import API_URL from '../config';
 
 const Profile = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState({
-    totalInterviews: 4,
-    averageScore: 79,
-    totalPracticeTime: 79,
-    bestCategory: 'HR',
-    improvementRate: 12.5,
-    currentStreak: 3,
-    longestStreak: 7,
-    rank: 'Intermediate',
+    totalInterviews: 0,
+    averageScore: 0,
+    totalPracticeTime: 0,
+    bestCategory: '-',
+    improvementRate: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    rank: 'Beginner',
   });
+  const [skills, setSkills] = useState([]);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/api/dashboard/stats`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const s = data.stats || {};
+
+          // Determine best category
+          const categories = [
+            { name: 'General', avg: s.general_avg || 0 },
+            { name: 'Technical', avg: s.technical_avg || 0 },
+            { name: 'HR', avg: s.hr_avg || 0 },
+          ];
+          const best = categories.reduce((a, b) => (b.avg > a.avg ? b : a), categories[0]);
+          const bestCategory = best.avg > 0 ? best.name : '-';
+
+          // Determine rank based on average score
+          const avg = s.average_score || 0;
+          let rank = 'Beginner';
+          if (avg >= 90) rank = 'Master';
+          else if (avg >= 80) rank = 'Expert';
+          else if (avg >= 65) rank = 'Advanced';
+          else if (avg >= 40) rank = 'Intermediate';
+
+          setStats(prev => ({
+            ...prev,
+            totalInterviews: s.completed_interviews || 0,
+            averageScore: s.average_score || 0,
+            improvementRate: s.improvement_rate || 0,
+            totalPracticeTime: Math.round(s.total_practice_time || 0),
+            currentStreak: s.current_streak || 0,
+            bestCategory,
+            rank,
+          }));
+
+          // Populate skills from skill_analysis
+          const skillColors = ['#0EA5E9', '#10B981', '#F59E0B', '#A855F7', '#EF4444', '#EC4899'];
+          if (data.skill_analysis && data.skill_analysis.length > 0) {
+            setSkills(data.skill_analysis.map((sk, idx) => ({
+              name: sk.skill_name,
+              score: Math.round(sk.current_level),
+              color: skillColors[idx % skillColors.length],
+            })));
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch profile stats:', err);
+      }
+    };
+    fetchStats();
+  }, []);
 
   // Achievement badges - using Material Icons instead of emojis for consistency
   const achievements = [
@@ -51,14 +109,7 @@ const Profile = () => {
     { name: 'Perfect Score', description: 'Score 100% in any category', earned: false, icon: 'perfect' },
   ];
 
-  // Skill breakdown
-  const skills = [
-    { name: 'Technical Knowledge', score: 82, color: '#0EA5E9' },
-    { name: 'Communication', score: 78, color: '#10B981' },
-    { name: 'Problem Solving', score: 85, color: '#F59E0B' },
-    { name: 'Confidence', score: 75, color: '#A855F7' },
-    { name: 'Body Language', score: 70, color: '#EF4444' },
-  ];
+
 
   const getInitials = (name) => {
     if (!name) return 'U';
@@ -179,7 +230,11 @@ const Profile = () => {
                 <TrendingUpIcon sx={{ color: '#0EA5E9' }} /> Skills Breakdown
               </Typography>
               <Divider sx={{ mb: 3, borderColor: '#262626' }} />
-              {skills.map((skill) => (
+              {skills.length === 0 ? (
+                <Typography variant="body2" sx={{ color: '#888888', textAlign: 'center', py: 2 }}>
+                  Complete interviews to see your skills breakdown
+                </Typography>
+              ) : skills.map((skill) => (
                 <Box key={skill.name} sx={{ mb: 2.5 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                     <Typography variant="body2" sx={{ color: '#E0E0E0' }}>{skill.name}</Typography>

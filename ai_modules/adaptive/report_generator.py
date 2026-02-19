@@ -305,14 +305,14 @@ class ReportGenerator:
             speech_combined = (avg_clarity + avg_fluency) / 2
         else:
             # Estimate speech quality based on content quality when no audio data
-            speech_combined = content_combined * 0.9  # Slight reduction as estimate
-            # Also set individual scores to estimated values
-            avg_clarity = content_combined * 0.9
-            avg_fluency = content_combined * 0.9
+            # Text-only submissions shouldn't be penalised heavily for missing audio
+            speech_combined = content_combined * 0.95
+            avg_clarity = content_combined * 0.95
+            avg_fluency = content_combined * 0.95
         
         # Use content-based estimate for confidence if not available
         if not has_confidence_data:
-            avg_confidence = content_combined * 0.85  # Estimate based on content
+            avg_confidence = content_combined * 0.92  # Estimate based on content
         
         # Overall score (weighted average)
         overall = (
