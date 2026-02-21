@@ -105,6 +105,7 @@ class Question(Base):
     company_name = Column(String(100), nullable=True)  # Display name (e.g., "Google", "Amazon")
     source = Column(String(100), nullable=True)  # Source (e.g., "Glassdoor", "LeetCode", "AI Generated")
     from_dataset = Column(Boolean, default=False)  # True if from company questions dataset
+    round = Column(String(50), nullable=True)  # Round info for full interviews (e.g., "General Round", "Technical Round", "HR Round")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships

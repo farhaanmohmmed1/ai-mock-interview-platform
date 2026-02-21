@@ -299,9 +299,25 @@ const Interview = () => {
     if (!isFullInterview) return questions;
     
     const roundKey = rounds[currentRound]?.key;
+    const roundName = rounds[currentRound]?.name?.toLowerCase();
+    
     return questions.filter(q => {
-      const qRound = q.round?.toLowerCase() || '';
-      return qRound.includes(roundKey) || qRound.includes(rounds[currentRound]?.name?.toLowerCase().split(' ')[0]);
+      // Check the round property first (from backend)
+      const qRound = (q.round || '').toLowerCase();
+      if (qRound && (qRound.includes(roundKey) || qRound.includes(roundName?.split(' ')[0]))) {
+        return true;
+      }
+      
+      // Fallback: infer round from question_type
+      const qType = (q.question_type || '').toLowerCase();
+      if (roundKey === 'general') {
+        return qType === 'behavioral' || qType === 'general' || qType === 'situational';
+      } else if (roundKey === 'technical') {
+        return qType === 'technical';
+      } else if (roundKey === 'hr') {
+        return qType === 'hr';
+      }
+      return false;
     });
   };
 
@@ -334,13 +350,31 @@ const Interview = () => {
     
     // Find the first question of the next round
     const nextRoundKey = rounds[nextRound]?.key;
+    const nextRoundName = rounds[nextRound]?.name?.toLowerCase();
+    
     const nextRoundFirstQuestionIndex = questions.findIndex(q => {
-      const qRound = q.round?.toLowerCase() || '';
-      return qRound.includes(nextRoundKey);
+      // Check the round property first
+      const qRound = (q.round || '').toLowerCase();
+      if (qRound && (qRound.includes(nextRoundKey) || qRound.includes(nextRoundName?.split(' ')[0]))) {
+        return true;
+      }
+      // Fallback: infer from question_type
+      const qType = (q.question_type || '').toLowerCase();
+      if (nextRoundKey === 'general') {
+        return qType === 'behavioral' || qType === 'general' || qType === 'situational';
+      } else if (nextRoundKey === 'technical') {
+        return qType === 'technical';
+      } else if (nextRoundKey === 'hr') {
+        return qType === 'hr';
+      }
+      return false;
     });
     
     if (nextRoundFirstQuestionIndex !== -1) {
       setCurrentQuestionIndex(nextRoundFirstQuestionIndex);
+    } else {
+      // If no questions found for this round, advance sequentially
+      setCurrentQuestionIndex((prev) => Math.min(prev + 1, questions.length - 1));
     }
   };
 
@@ -636,7 +670,12 @@ const Interview = () => {
   // Skip question function
   const skipQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex((prev) => prev + 1);
+      // For full interview, check if this is the last question in the round
+      if (isFullInterview && isLastQuestionInRound()) {
+        handleRoundComplete();
+      } else {
+        setCurrentQuestionIndex((prev) => prev + 1);
+      }
       setCurrentAnswer('');
       setAudioBlob(null);
       setRecordingTime(0);

@@ -90,15 +90,15 @@ class AnswerEvaluator:
         """Calculate content quality score"""
         score = 0
         
-        # Length scoring (0-40 points)
+        # Length scoring (0-40 points) - more generous for typical spoken answers
         if word_count < 10:
-            score += (word_count / 10) * 15  # Very short
-        elif word_count < 30:
-            score += 15 + ((word_count - 10) / 20) * 10  # 15-25
-        elif word_count < 60:
-            score += 25 + ((word_count - 30) / 30) * 10  # 25-35
-        elif word_count < 120:
-            score += 35 + ((word_count - 60) / 60) * 5  # 35-40
+            score += (word_count / 10) * 20  # Very short
+        elif word_count < 20:
+            score += 20 + ((word_count - 10) / 10) * 8  # 20-28
+        elif word_count < 40:
+            score += 28 + ((word_count - 20) / 20) * 7  # 28-35
+        elif word_count < 80:
+            score += 35 + ((word_count - 40) / 40) * 5  # 35-40
         else:
             score += 40
         
@@ -106,36 +106,38 @@ class AnswerEvaluator:
         if sentence_count >= 4:
             score += 25
         elif sentence_count >= 3:
-            score += 20
+            score += 22
         elif sentence_count >= 2:
-            score += 15
+            score += 18
         else:
-            score += 8
+            score += 12
         
         # Check for examples/specifics (0-20 points)
         example_indicators = ['for example', 'for instance', 'such as', 'like', 'specifically',
                               'in my experience', 'i have', 'i worked', 'i used', 'we implemented',
-                              'the result', 'this led to', 'because', 'which means']
+                              'the result', 'this led to', 'because', 'which means', 'i think',
+                              'i believe', 'my approach', 'the way', 'in this case', 'when i',
+                              'i would', 'to ensure', 'by using', 'through']
         matches = sum(1 for indicator in example_indicators if indicator in answer.lower())
         if matches >= 3:
             score += 20
         elif matches >= 2:
-            score += 15
+            score += 17
         elif matches >= 1:
-            score += 10
+            score += 13
         else:
-            score += 3
+            score += 7
         
         # Complexity & vocabulary (0-15 points)
         avg_word_length = sum(len(word) for word in answer.split()) / len(answer.split()) if answer.split() else 0
         if avg_word_length > 5.5:
             score += 15
         elif avg_word_length > 4.5:
-            score += 12
+            score += 13
         elif avg_word_length > 3.5:
-            score += 8
+            score += 10
         else:
-            score += 5
+            score += 7
         
         return min(score, 100)
     
@@ -166,18 +168,25 @@ class AnswerEvaluator:
             keywords_lower = [k.lower() for k in expected_keywords]
             answer_lower = answer.lower()
             found_count = sum(1 for keyword in keywords_lower if keyword in answer_lower)
-            score += (found_count / len(expected_keywords)) * 50
+            keyword_ratio = found_count / len(expected_keywords)
+            # Give partial credit more generously - even covering some keywords shows understanding
+            if keyword_ratio >= 0.7:
+                score += 50
+            elif keyword_ratio >= 0.4:
+                score += 35 + (keyword_ratio - 0.4) * 50
+            else:
+                score += 20 + keyword_ratio * 37.5
         else:
             # No expected keywords defined — score based on answer substance
             answer_tokens = answer_keywords  # already computed above (stopwords removed)
-            if len(answer_tokens) >= 15:
-                score += 45
+            if len(answer_tokens) >= 12:
+                score += 48
             elif len(answer_tokens) >= 8:
-                score += 38
+                score += 42
             elif len(answer_tokens) >= 4:
-                score += 30
+                score += 35
             else:
-                score += 20
+                score += 25
         
         return min(score, 100)
     
@@ -224,24 +233,27 @@ class AnswerEvaluator:
     
     def _calculate_coherence(self, answer: str) -> float:
         """Calculate answer coherence"""
-        score = 70  # Base score
+        score = 75  # Base score
         
         sentences = self.sent_tokenize(answer)
         
         if len(sentences) < 2:
-            return 60
+            return 68
         
         # Check for transition words
         transitions = ['however', 'therefore', 'furthermore', 'moreover', 'additionally',
                       'consequently', 'nevertheless', 'meanwhile', 'subsequently', 'thus',
-                      'first', 'second', 'finally', 'also', 'because', 'since']
+                      'first', 'second', 'finally', 'also', 'because', 'since',
+                      'so', 'then', 'next', 'after', 'before', 'while', 'although']
         
         answer_lower = answer.lower()
         transition_count = sum(1 for trans in transitions if trans in answer_lower)
         
-        if transition_count >= 2:
+        if transition_count >= 3:
             score += 20
-        elif transition_count == 1:
+        elif transition_count >= 2:
+            score += 15
+        elif transition_count >= 1:
             score += 10
         
         # Check for logical flow (sentences of similar length indicate good structure)
@@ -250,7 +262,7 @@ class AnswerEvaluator:
             avg_length = sum(sentence_lengths) / len(sentence_lengths)
             variance = sum((l - avg_length) ** 2 for l in sentence_lengths) / len(sentence_lengths)
             if variance < 100:  # Low variance = good structure
-                score += 10
+                score += 5
         
         return min(score, 100)
     
@@ -268,10 +280,12 @@ class AnswerEvaluator:
         # Overall assessment
         overall_score = (content_score + relevance_score + coherence_score) / 3
         
-        if overall_score >= 80:
+        if overall_score >= 75:
             feedback_parts.append("Excellent answer!")
         elif overall_score >= 60:
             feedback_parts.append("Good answer with room for improvement.")
+        elif overall_score >= 45:
+            feedback_parts.append("Decent answer. Adding more details would strengthen it.")
         else:
             feedback_parts.append("Your answer needs significant improvement.")
         

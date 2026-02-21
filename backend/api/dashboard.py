@@ -65,11 +65,11 @@ async def get_dashboard_stats(
 ):
     """Get comprehensive dashboard statistics"""
     
-    # Get all completed interviews
+    # Get all completed interviews ordered by completion time
     completed_interviews = db.query(Interview).filter(
         Interview.user_id == current_user.id,
         Interview.status == "completed"
-    ).all()
+    ).order_by(Interview.completed_at.asc()).all()
     
     total_interviews = len(db.query(Interview).filter(
         Interview.user_id == current_user.id
@@ -97,21 +97,27 @@ async def get_dashboard_stats(
                         break
     
     if completed_interviews:
-        avg_score = sum(i.overall_score or 0 for i in completed_interviews) / len(completed_interviews)
+        # Only include interviews that have actual scores (exclude broken ones with 0 or null)
+        scored_interviews = [i for i in completed_interviews if i.overall_score and i.overall_score > 0]
         
-        # Calculate by type
-        general_interviews = [i for i in completed_interviews if i.interview_type == "general"]
-        technical_interviews = [i for i in completed_interviews if i.interview_type == "technical"]
-        hr_interviews = [i for i in completed_interviews if i.interview_type == "hr"]
+        avg_score = sum(i.overall_score for i in scored_interviews) / len(scored_interviews) if scored_interviews else 0
+        
+        # Calculate by type (include 'full' interviews in all categories)
+        general_interviews = [i for i in scored_interviews if i.interview_type in ("general", "full")]
+        technical_interviews = [i for i in scored_interviews if i.interview_type in ("technical", "full")]
+        hr_interviews = [i for i in scored_interviews if i.interview_type in ("hr", "full")]
         
         general_avg = sum(i.overall_score or 0 for i in general_interviews) / len(general_interviews) if general_interviews else 0
         technical_avg = sum(i.overall_score or 0 for i in technical_interviews) / len(technical_interviews) if technical_interviews else 0
         hr_avg = sum(i.overall_score or 0 for i in hr_interviews) / len(hr_interviews) if hr_interviews else 0
         
-        # Calculate improvement rate
-        if len(completed_interviews) >= 2:
-            recent_avg = sum(i.overall_score or 0 for i in completed_interviews[-3:]) / min(3, len(completed_interviews))
-            older_avg = sum(i.overall_score or 0 for i in completed_interviews[:3]) / min(3, len(completed_interviews))
+        # Calculate improvement rate by comparing recent half vs older half
+        if len(scored_interviews) >= 2:
+            mid = len(scored_interviews) // 2
+            older_half = scored_interviews[:mid]
+            recent_half = scored_interviews[mid:]
+            older_avg = sum(i.overall_score or 0 for i in older_half) / len(older_half)
+            recent_avg = sum(i.overall_score or 0 for i in recent_half) / len(recent_half)
             improvement_rate = ((recent_avg - older_avg) / older_avg * 100) if older_avg > 0 else 0
         else:
             improvement_rate = 0

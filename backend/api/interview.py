@@ -59,6 +59,7 @@ class QuestionResponse(BaseModel):
     company_name: Optional[str] = None
     source: Optional[str] = None
     from_dataset: Optional[bool] = False
+    round: Optional[str] = None  # Round info for full interviews
     
     class Config:
         from_attributes = True
@@ -265,7 +266,8 @@ async def create_interview(
             company=q_data.get("company", ""),
             company_name=q_data.get("company_name", ""),
             source=q_data.get("source", "AI Generated"),
-            from_dataset=q_data.get("from_dataset", False)
+            from_dataset=q_data.get("from_dataset", False),
+            round=q_data.get("round")  # Save round info for full interviews
         )
         db.add(question)
         questions.append(question)
@@ -442,21 +444,29 @@ async def complete_interview(
                 db=db
             )
             
-            report = {
-                "overall_score": agent_report.get("scores", {}).get("overall_score", 50),
-                "content_score": agent_report.get("scores", {}).get("content_score", 50),
-                "clarity_score": agent_report.get("scores", {}).get("clarity_score", 50),
-                "fluency_score": agent_report.get("scores", {}).get("fluency_score", 50),
-                "confidence_score": agent_report.get("scores", {}).get("confidence_score", 50),
-                "emotion_score": agent_report.get("scores", {}).get("confidence_score", 50),
-                "weak_areas": agent_report.get("weak_areas", []),
-                "strong_areas": agent_report.get("strong_areas", []),
-                "feedback": agent_report.get("feedback", "Interview completed."),
-                "recommendations": agent_report.get("suggestions", []),
-                "skill_gaps": agent_report.get("skill_gaps", []),
-                "learning_path": agent_report.get("learning_path", {}),
-                "agent_insights": agent_report.get("agent_insights", {})
-            }
+            agent_overall = agent_report.get("scores", {}).get("overall_score", 0)
+            
+            # Only use agent report if it produced valid scores (not 0)
+            # Agent may return 0 if its in-memory context was lost
+            if agent_overall and agent_overall > 0:
+                report = {
+                    "overall_score": agent_overall,
+                    "content_score": agent_report.get("scores", {}).get("content_score", 50),
+                    "clarity_score": agent_report.get("scores", {}).get("clarity_score", 50),
+                    "fluency_score": agent_report.get("scores", {}).get("fluency_score", 50),
+                    "confidence_score": agent_report.get("scores", {}).get("confidence_score", 50),
+                    "emotion_score": agent_report.get("scores", {}).get("confidence_score", 50),
+                    "weak_areas": agent_report.get("weak_areas", []),
+                    "strong_areas": agent_report.get("strong_areas", []),
+                    "feedback": agent_report.get("feedback", "Interview completed."),
+                    "recommendations": agent_report.get("suggestions", []),
+                    "skill_gaps": agent_report.get("skill_gaps", []),
+                    "learning_path": agent_report.get("learning_path", {}),
+                    "agent_insights": agent_report.get("agent_insights", {})
+                }
+            else:
+                print(f"Agent returned 0 scores for interview {interview_id}, falling back to ReportGenerator")
+                report = None
         except Exception as e:
             # Fall back to direct report generation
             print(f"Agent complete_interview failed: {e}")
