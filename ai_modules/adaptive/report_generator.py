@@ -246,15 +246,15 @@ class ReportGenerator:
     def _generate_empty_report(self) -> Dict:
         """Generate report when no responses available"""
         return {
-            "overall_score": 70,
-            "content_score": 70,
-            "clarity_score": 70,
-            "fluency_score": 70,
-            "confidence_score": 70,
-            "emotion_score": 70,
-            "weak_areas": [],
+            "overall_score": 0,
+            "content_score": 0,
+            "clarity_score": 0,
+            "fluency_score": 0,
+            "confidence_score": 0,
+            "emotion_score": 0,
+            "weak_areas": [{"area": "All Areas", "score": 0, "suggestion": "No questions were answered. Please attempt the interview again."}],
             "strong_areas": [],
-            "feedback": "No responses were recorded for this interview. This may be due to a technical issue.",
+            "feedback": "No responses were recorded for this interview. Please attempt answering the questions to receive a proper evaluation.",
             "recommendations": [
                 {"type": "general", "text": "Please try completing the interview again to receive personalized feedback"}
             ],
@@ -337,10 +337,48 @@ class ReportGenerator:
             }
         }
     
-    def _identify_weak_areas(self, responses: List[Response], db: Session) -> List[Dict]:
-        """Identify weak performance areas"""
+    def _get_suggestion_for_area(self, area: str, score: float) -> str:
+        """Get a specific improvement suggestion based on area and score"""
+        suggestions = {
+            "Speech Clarity": {
+                "high": "Practice speaking slowly and enunciating each word. Record yourself and listen back to identify unclear parts.",
+                "medium": "Work on articulation and pacing. Try tongue twisters and reading aloud daily.",
+                "low": "Your clarity is good but can be polished further. Focus on complex technical terms pronunciation."
+            },
+            "Speech Fluency": {
+                "high": "Reduce filler words (um, uh, like). Practice structured responses using the STAR method.",
+                "medium": "Work on smoother transitions between ideas. Practice answering without long pauses.",
+                "low": "Your fluency is solid. Try to maintain this consistency even with unexpected questions."
+            },
+            "Confidence": {
+                "high": "Build confidence by practicing more interviews. Start with easier questions and gradually increase difficulty.",
+                "medium": "Practice power posing and positive self-talk before interviews. Prepare thoroughly to boost confidence.",
+                "low": "Your confidence level is decent. Work on maintaining steady eye contact and a firm voice throughout."
+            }
+        }
         
-        weak_areas = []
+        if area in suggestions:
+            if score < 50:
+                return suggestions[area]["high"]
+            elif score < 75:
+                return suggestions[area]["medium"]
+            else:
+                return suggestions[area]["low"]
+        
+        # Generic suggestions for content categories
+        if score < 50:
+            return f"Focus on studying {area} topics thoroughly. Practice with sample questions and review model answers."
+        elif score < 65:
+            return f"Review key concepts in {area}. Try to include more specific examples and data points in your answers."
+        elif score < 80:
+            return f"Good foundation in {area}. To improve further, add more depth and real-world examples to your responses."
+        else:
+            return f"Strong performance in {area}. To reach excellence, focus on providing unique insights and structured frameworks."
+
+    def _identify_weak_areas(self, responses: List[Response], db: Session) -> List[Dict]:
+        """Identify areas for improvement — always provides feedback regardless of score level"""
+        
+        all_areas = []
         
         # Analyze by question type/category
         category_scores = {}
@@ -358,128 +396,140 @@ class ReportGenerator:
                 category_scores[category] = []
             category_scores[category].append(score)
         
-        # Identify categories with low scores
+        # Collect ALL areas with their scores, sorted lowest first
         for category, scores in category_scores.items():
             avg_score = sum(scores) / len(scores)
-            if avg_score < 65:  # Threshold for weak area
-                weak_areas.append({
+            severity = "high" if avg_score < 50 else ("medium" if avg_score < 75 else "low")
+            all_areas.append({
+                "area": category,
+                "score": round(avg_score, 2),
+                "responses_count": len(scores),
+                "severity": severity,
+                "suggestion": self._get_suggestion_for_area(category, avg_score)
+            })
+        
+        # Check specific skills
+        # Speech clarity
+        clarity_scores = [r.clarity_score for r in responses if r.clarity_score is not None]
+        if clarity_scores:
+            avg_clarity = sum(clarity_scores) / len(clarity_scores)
+            all_areas.append({
+                "area": "Speech Clarity",
+                "score": round(avg_clarity, 2),
+                "responses_count": len(clarity_scores),
+                "severity": "high" if avg_clarity < 50 else ("medium" if avg_clarity < 75 else "low"),
+                "suggestion": self._get_suggestion_for_area("Speech Clarity", avg_clarity)
+            })
+        
+        # Speech fluency
+        fluency_scores = [r.fluency_score for r in responses if r.fluency_score is not None]
+        if fluency_scores:
+            avg_fluency = sum(fluency_scores) / len(fluency_scores)
+            all_areas.append({
+                "area": "Speech Fluency",
+                "score": round(avg_fluency, 2),
+                "responses_count": len(fluency_scores),
+                "severity": "high" if avg_fluency < 50 else ("medium" if avg_fluency < 75 else "low"),
+                "suggestion": self._get_suggestion_for_area("Speech Fluency", avg_fluency)
+            })
+        
+        # Confidence
+        confidence_scores = [r.confidence_score for r in responses if r.confidence_score is not None]
+        if confidence_scores:
+            avg_confidence = sum(confidence_scores) / len(confidence_scores)
+            all_areas.append({
+                "area": "Confidence",
+                "score": round(avg_confidence, 2),
+                "responses_count": len(confidence_scores),
+                "severity": "high" if avg_confidence < 50 else ("medium" if avg_confidence < 75 else "low"),
+                "suggestion": self._get_suggestion_for_area("Confidence", avg_confidence)
+            })
+        
+        # Sort: lowest scores first (most room for improvement)
+        all_areas.sort(key=lambda x: x["score"])
+        
+        return all_areas[:5]  # Top 5 areas for improvement
+    
+    def _identify_strong_areas(self, responses: List[Response], db: Session) -> List[Dict]:
+        """Identify strong performance areas — always provides feedback"""
+        
+        all_areas = []
+        
+        # Analyze by question type/category
+        category_scores = {}
+        
+        for response in responses:
+            question = db.query(Question).filter(Question.id == response.question_id).first()
+            
+            if not question:
+                continue
+            
+            category = question.category or question.question_type or "General"
+            score = response.content_score or 0
+            
+            if category not in category_scores:
+                category_scores[category] = []
+            category_scores[category].append(score)
+        
+        # Collect ALL areas sorted by score (highest first)
+        for category, scores in category_scores.items():
+            avg_score = sum(scores) / len(scores)
+            if avg_score >= 60:  # Lower threshold — show areas above average
+                description = ""
+                if avg_score >= 90:
+                    description = f"Exceptional performance! You demonstrated mastery in {category}."
+                elif avg_score >= 80:
+                    description = f"Great job! Your {category} answers were well-structured and detailed."
+                elif avg_score >= 70:
+                    description = f"Good performance in {category}. You showed solid understanding."
+                elif avg_score >= 60:
+                    description = f"Decent showing in {category}. Keep building on this foundation."
+                
+                all_areas.append({
                     "area": category,
                     "score": round(avg_score, 2),
                     "responses_count": len(scores),
-                    "severity": "high" if avg_score < 50 else "medium"
+                    "description": description
                 })
         
         # Check specific skills
-        # Speech clarity
         clarity_scores = [r.clarity_score for r in responses if r.clarity_score is not None]
         if clarity_scores:
             avg_clarity = sum(clarity_scores) / len(clarity_scores)
-            if avg_clarity < 65:
-                weak_areas.append({
+            if avg_clarity >= 60:
+                all_areas.append({
                     "area": "Speech Clarity",
                     "score": round(avg_clarity, 2),
                     "responses_count": len(clarity_scores),
-                    "severity": "high" if avg_clarity < 50 else "medium"
+                    "description": "Your speech was clear and easy to understand." if avg_clarity >= 75 else "Your clarity was reasonable. Enunciate more for complex terms."
                 })
         
-        # Speech fluency
         fluency_scores = [r.fluency_score for r in responses if r.fluency_score is not None]
         if fluency_scores:
             avg_fluency = sum(fluency_scores) / len(fluency_scores)
-            if avg_fluency < 65:
-                weak_areas.append({
+            if avg_fluency >= 60:
+                all_areas.append({
                     "area": "Speech Fluency",
                     "score": round(avg_fluency, 2),
                     "responses_count": len(fluency_scores),
-                    "severity": "high" if avg_fluency < 50 else "medium"
+                    "description": "You spoke fluently with minimal hesitation." if avg_fluency >= 75 else "Decent flow. Work on reducing pauses between thoughts."
                 })
         
-        # Confidence
         confidence_scores = [r.confidence_score for r in responses if r.confidence_score is not None]
         if confidence_scores:
             avg_confidence = sum(confidence_scores) / len(confidence_scores)
-            if avg_confidence < 65:
-                weak_areas.append({
+            if avg_confidence >= 60:
+                all_areas.append({
                     "area": "Confidence",
                     "score": round(avg_confidence, 2),
                     "responses_count": len(confidence_scores),
-                    "severity": "high" if avg_confidence < 50 else "medium"
-                })
-        
-        # Sort by severity and score
-        weak_areas.sort(key=lambda x: (x["severity"] == "high", -x["score"]), reverse=True)
-        
-        return weak_areas[:5]  # Top 5 weak areas
-    
-    def _identify_strong_areas(self, responses: List[Response], db: Session) -> List[Dict]:
-        """Identify strong performance areas"""
-        
-        strong_areas = []
-        
-        # Analyze by question type/category
-        category_scores = {}
-        
-        for response in responses:
-            question = db.query(Question).filter(Question.id == response.question_id).first()
-            
-            if not question:
-                continue
-            
-            category = question.category or question.question_type or "General"
-            score = response.content_score or 0
-            
-            if category not in category_scores:
-                category_scores[category] = []
-            category_scores[category].append(score)
-        
-        # Identify categories with high scores
-        for category, scores in category_scores.items():
-            avg_score = sum(scores) / len(scores)
-            if avg_score >= 75:  # Threshold for strong area
-                strong_areas.append({
-                    "area": category,
-                    "score": round(avg_score, 2),
-                    "responses_count": len(scores)
-                })
-        
-        # Check specific skills
-        # Speech clarity
-        clarity_scores = [r.clarity_score for r in responses if r.clarity_score is not None]
-        if clarity_scores:
-            avg_clarity = sum(clarity_scores) / len(clarity_scores)
-            if avg_clarity >= 75:
-                strong_areas.append({
-                    "area": "Speech Clarity",
-                    "score": round(avg_clarity, 2),
-                    "responses_count": len(clarity_scores)
-                })
-        
-        # Speech fluency
-        fluency_scores = [r.fluency_score for r in responses if r.fluency_score is not None]
-        if fluency_scores:
-            avg_fluency = sum(fluency_scores) / len(fluency_scores)
-            if avg_fluency >= 75:
-                strong_areas.append({
-                    "area": "Speech Fluency",
-                    "score": round(avg_fluency, 2),
-                    "responses_count": len(fluency_scores)
-                })
-        
-        # Confidence
-        confidence_scores = [r.confidence_score for r in responses if r.confidence_score is not None]
-        if confidence_scores:
-            avg_confidence = sum(confidence_scores) / len(confidence_scores)
-            if avg_confidence >= 75:
-                strong_areas.append({
-                    "area": "Confidence",
-                    "score": round(avg_confidence, 2),
-                    "responses_count": len(confidence_scores)
+                    "description": "You presented yourself confidently and assertively." if avg_confidence >= 75 else "You showed reasonable confidence. Practice will help you appear more self-assured."
                 })
         
         # Sort by score (highest first)
-        strong_areas.sort(key=lambda x: x["score"], reverse=True)
+        all_areas.sort(key=lambda x: x["score"], reverse=True)
         
-        return strong_areas[:5]  # Top 5 strong areas
+        return all_areas[:5]  # Top 5 strong areas
     
     def _generate_comprehensive_feedback(
         self,
@@ -487,40 +537,67 @@ class ReportGenerator:
         weak_areas: List[Dict],
         strong_areas: List[Dict]
     ) -> str:
-        """Generate comprehensive feedback"""
+        """Generate comprehensive feedback for all score levels"""
         
         feedback_parts = []
         
         # Overall performance
         overall = scores["overall"]
-        if overall >= 80:
-            feedback_parts.append("Excellent overall performance! You demonstrated strong skills across multiple areas.")
+        if overall >= 90:
+            feedback_parts.append("Outstanding performance! You demonstrated exceptional skills and composure throughout the interview. You are well-prepared for real interviews.")
+        elif overall >= 80:
+            feedback_parts.append("Excellent performance! You showed strong skills across multiple areas. With minor refinements, you'll be very well-positioned for interviews.")
+        elif overall >= 70:
+            feedback_parts.append("Good performance! You demonstrated solid understanding and communication. There are some areas where targeted practice can elevate your responses further.")
         elif overall >= 60:
-            feedback_parts.append("Good performance with room for improvement in several areas.")
+            feedback_parts.append("Decent performance with clear room for growth. You have a good foundation — focus on the improvement areas below to strengthen your interview skills.")
         elif overall >= 40:
-            feedback_parts.append("Fair performance. Focus on improving key skills to enhance your interview readiness.")
+            feedback_parts.append("Fair performance. Focus on improving key skills to enhance your interview readiness. Review the suggestions below for specific guidance.")
         else:
-            feedback_parts.append("Your performance needs significant improvement. Practice and preparation will help you succeed.")
+            feedback_parts.append("Your performance needs significant improvement. Don't be discouraged — consistent practice and preparation will help you succeed.")
         
         # Strong areas
         if strong_areas:
             areas_text = ", ".join([area["area"] for area in strong_areas[:3]])
-            feedback_parts.append(f"Your strengths include: {areas_text}.")
+            if overall >= 80:
+                feedback_parts.append(f"You excelled in: {areas_text}. Keep leveraging these strengths in your interviews.")
+            else:
+                feedback_parts.append(f"Your strengths include: {areas_text}. Build on these while working on weaker areas.")
         
-        # Weak areas
+        # Areas for improvement (always shown)
         if weak_areas:
             areas_text = ", ".join([area["area"] for area in weak_areas[:3]])
-            feedback_parts.append(f"Areas needing improvement: {areas_text}.")
+            if overall >= 80:
+                feedback_parts.append(f"To go from great to exceptional, focus on refining: {areas_text}.")
+            elif overall >= 60:
+                feedback_parts.append(f"Key areas to improve: {areas_text}. Targeted practice here will make a big difference.")
+            else:
+                feedback_parts.append(f"Priority areas needing attention: {areas_text}. Start with these for the most impact.")
         
-        # Specific skill feedback
-        if scores["content"] < 60:
+        # Specific skill feedback based on scores
+        content = scores["content"]
+        if content >= 80:
+            feedback_parts.append("Your answer content was strong — detailed, relevant, and well-structured.")
+        elif content >= 60:
+            feedback_parts.append("Your answers had good substance but could benefit from more specific examples and structured frameworks like STAR.")
+        else:
             feedback_parts.append("Work on providing more detailed and relevant answers with concrete examples.")
         
-        if scores["clarity"] < 60:
+        clarity = scores["clarity"]
+        if clarity >= 80:
+            feedback_parts.append("Your speech clarity was excellent — you communicated ideas effectively.")
+        elif clarity >= 60:
+            feedback_parts.append("Your clarity was decent. Practice enunciating clearly, especially for technical terminology.")
+        else:
             feedback_parts.append("Practice speaking more clearly and at a moderate pace.")
         
-        if scores["confidence"] < 60:
-            feedback_parts.append("Build confidence through regular practice and preparation.")
+        confidence = scores["confidence"]
+        if confidence >= 80:
+            feedback_parts.append("You projected strong confidence throughout the interview.")
+        elif confidence >= 60:
+            feedback_parts.append("Your confidence level was reasonable. Regular mock interviews will help you feel more self-assured.")
+        else:
+            feedback_parts.append("Build confidence through regular practice and thorough preparation.")
         
         return " ".join(feedback_parts)
     
@@ -534,8 +611,37 @@ class ReportGenerator:
         
         recommendations = []
         
-        # Based on overall score
-        if scores["overall"] < 60:
+        # Based on overall score — provide recommendations at ALL levels
+        overall = scores["overall"]
+        if overall >= 90:
+            recommendations.append({
+                "type": "general",
+                "priority": "low",
+                "text": "Challenge yourself with harder difficulty levels or try different interview types to broaden your skills",
+                "action": "increase_difficulty"
+            })
+        elif overall >= 80:
+            recommendations.append({
+                "type": "general",
+                "priority": "low",
+                "text": "Practice with time constraints to simulate real interview pressure and refine your responses further",
+                "action": "timed_practice"
+            })
+        elif overall >= 70:
+            recommendations.append({
+                "type": "general",
+                "priority": "medium",
+                "text": "Focus on adding specific examples and metrics to your answers to make them more impactful",
+                "action": "enhance_answers"
+            })
+        elif overall >= 60:
+            recommendations.append({
+                "type": "general",
+                "priority": "medium",
+                "text": "Practice the STAR method (Situation, Task, Action, Result) to structure your answers better",
+                "action": "star_method"
+            })
+        else:
             recommendations.append({
                 "type": "general",
                 "priority": "high",

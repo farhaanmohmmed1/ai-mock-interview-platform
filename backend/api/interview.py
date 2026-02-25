@@ -429,8 +429,37 @@ async def complete_interview(
             detail="Interview already completed"
         )
     
+    # Check if any questions were actually answered
+    answered_responses = db.query(Response).filter(
+        Response.interview_id == interview_id
+    ).all()
+    answered_count = len(answered_responses)
+    total_questions = interview.total_questions or 1
+    
+    # If no questions were answered (all skipped), return 0 scores
+    if answered_count == 0:
+        report = {
+            "overall_score": 0,
+            "content_score": 0,
+            "clarity_score": 0,
+            "fluency_score": 0,
+            "confidence_score": 0,
+            "emotion_score": 0,
+            "weak_areas": [{"area": "All Areas", "score": 0, "suggestion": "You skipped all questions. Please attempt answering to get meaningful feedback."}],
+            "strong_areas": [],
+            "feedback": "No questions were answered. Please attempt the interview again and try answering the questions to receive a proper evaluation.",
+            "recommendations": [{"text": "Practice answering interview questions out loud to build confidence."}],
+            "course_recommendations": []
+        }
+    # If some but not all questions answered, penalize score proportionally
+    elif answered_count < total_questions:
+        answer_ratio = answered_count / total_questions
+        report = None  # Will be generated below, then adjusted
+    else:
+        report = None  # Full evaluation
+    
     # Use Interview Agent for comprehensive analysis if available
-    if AGENT_AVAILABLE and interview_agent is not None:
+    if report is None and AGENT_AVAILABLE and interview_agent is not None:
         try:
             # Complete interview via agent - agent handles:
             # - Weak area identification
@@ -471,7 +500,7 @@ async def complete_interview(
             # Fall back to direct report generation
             print(f"Agent complete_interview failed: {e}")
             report = None
-    else:
+    elif report is None:
         report = None
     
     # Fallback: Use direct report generator if agent failed or unavailable
@@ -490,18 +519,18 @@ async def complete_interview(
             else:
                 raise Exception("Report generator not available")
         except Exception as e:
-            # Generate default report if error - use reasonable default scores
+            # Generate default report if error - give 0 scores instead of inflated defaults
             print(f"ReportGenerator failed: {e}")
             report = {
-                "overall_score": 70,
-                "content_score": 70,
-                "clarity_score": 70,
-                "fluency_score": 70,
-                "confidence_score": 70,
-                "emotion_score": 70,
+                "overall_score": 0,
+                "content_score": 0,
+                "clarity_score": 0,
+                "fluency_score": 0,
+                "confidence_score": 0,
+                "emotion_score": 0,
                 "weak_areas": [],
                 "strong_areas": [],
-                "feedback": "Interview completed. Thank you for practicing!",
+                "feedback": "Could not generate detailed evaluation. Please try the interview again.",
                 "recommendations": [{"text": "Keep practicing to improve your interview skills!"}],
                 "course_recommendations": [
                     {
@@ -517,18 +546,25 @@ async def complete_interview(
                 ]
             }
     
+    # If partially answered, scale down scores proportionally
+    if answered_count > 0 and answered_count < total_questions:
+        answer_ratio = answered_count / total_questions
+        for key in ["overall_score", "content_score", "clarity_score", "fluency_score", "confidence_score", "emotion_score"]:
+            if key in report and report[key]:
+                report[key] = round(report[key] * answer_ratio, 1)
+    
     # Update interview with scores
     interview.status = "completed"
     interview.completed_at = datetime.utcnow()
     interview.duration_minutes = (
         interview.completed_at - interview.started_at
     ).total_seconds() / 60 if interview.started_at else 0
-    interview.overall_score = report.get("overall_score", 50)
-    interview.content_score = report.get("content_score", 50)
-    interview.clarity_score = report.get("clarity_score", 50)
-    interview.fluency_score = report.get("fluency_score", 50)
-    interview.confidence_score = report.get("confidence_score", 50)
-    interview.emotion_score = report.get("emotion_score", 50)
+    interview.overall_score = report.get("overall_score", 0)
+    interview.content_score = report.get("content_score", 0)
+    interview.clarity_score = report.get("clarity_score", 0)
+    interview.fluency_score = report.get("fluency_score", 0)
+    interview.confidence_score = report.get("confidence_score", 0)
+    interview.emotion_score = report.get("emotion_score", 0)
     interview.weak_areas = report.get("weak_areas", [])
     interview.strong_areas = report.get("strong_areas", [])
     interview.feedback = report.get("feedback", "Thank you for completing the interview!")

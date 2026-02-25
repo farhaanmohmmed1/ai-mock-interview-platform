@@ -140,7 +140,9 @@ const Results = () => {
     if (score >= 80) return { grade: 'A', label: 'Great' };
     if (score >= 70) return { grade: 'B', label: 'Good' };
     if (score >= 60) return { grade: 'C', label: 'Fair' };
-    return { grade: 'D', label: 'Needs Improvement' };
+    if (score >= 40) return { grade: 'D', label: 'Needs Improvement' };
+    if (score > 0) return { grade: 'E', label: 'Poor' };
+    return { grade: 'F', label: 'No Answers Submitted' };
   };
 
   if (loading) {
