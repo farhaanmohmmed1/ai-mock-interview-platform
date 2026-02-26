@@ -249,14 +249,34 @@ The question generation system creates contextually relevant interview questions
 
 #### 1. Question Bank Architecture
 
-Questions are organized by **type** and **difficulty**:
+The platform maintains **350+ curated questions** across two primary datasets:
 
-| Category | What It Covers | Difficulty Levels |
-|----------|----------------|-------------------|
-| **General/Behavioral** | "Tell me about yourself", strengths, teamwork stories | Easy → Medium → Hard |
-| **Technical** | Coding, algorithms, system design, databases | Easy → Medium → Hard |
-| **HR/Cultural** | Motivation, salary, career goals, work-life balance | Easy → Medium → Hard |
-| **Domain-Specific** | Industry questions (e.g., UPSC: ethics, current affairs) | Easy → Medium → Hard |
+**Company Interview Questions (150 total):**
+
+| Category | Count | What It Covers |
+|----------|-------|----------------|
+| **Behavioral** | 35 | Leadership, teamwork, conflict resolution, STAR method |
+| **Technical** | 60 | System design, algorithms, coding, databases, architecture |
+| **HR** | 25 | Salary expectations, career goals, availability, culture fit |
+| **General** | 30 | Strengths, weaknesses, motivation, self-introduction |
+
+**UPSC Civil Services Questions (200 total):**
+
+| Category | Count | Topics Covered |
+|----------|-------|----------------|
+| **Current Affairs** | 20 | National/international events, government policies |
+| **Indian Polity** | 20 | Constitution, governance, federalism |
+| **Ethics & Integrity** | 20 | Moral dilemmas, public service values |
+| **Economy** | 18 | Fiscal policy, development, budgeting |
+| **Environment** | 18 | Climate change, sustainability, conservation |
+| **Science & Technology** | 18 | Innovation, digital governance, space |
+| **International Relations** | 16 | Diplomacy, foreign policy, treaties |
+| **Social Issues** | 20 | Education, healthcare, poverty, gender |
+| **Personality** | 20 | Self-assessment, leadership, aspirations |
+| **Opinion-Based** | 15 | Critical thinking, analysis, reasoning |
+| **Administrative** | 15 | Governance, public policy, administration |
+
+Questions are organized by **type** and **difficulty**:
 
 **How difficulty works:**
 
@@ -265,6 +285,17 @@ EASY          →        MEDIUM           →         HARD
 "What is X?"      "Explain how X works"     "Design X for scale"
 Simple recall     Apply knowledge           Complex scenarios
 ```
+
+**Company-Specific Questions:**
+
+The platform includes targeted questions for major tech companies:
+- **Google** - Technical depth, system design, leadership
+- **Amazon** - Leadership principles, customer obsession
+- **Microsoft** - Problem-solving, collaboration
+- **Meta** - Move fast, culture fit, scale
+- **Apple** - Innovation, user experience
+- **Netflix** - Culture, freedom & responsibility
+- **Goldman Sachs** - Analytical thinking, case-based
 
 #### 2. Context-Aware Selection
 
@@ -396,6 +427,16 @@ The speech analysis system processes audio recordings to evaluate verbal communi
 
 #### 1. Speech-to-Text Conversion
 
+The platform uses **OpenAI Whisper** for high-accuracy speech recognition:
+
+| Model | Size | Accuracy | Speed | Use Case |
+|-------|------|----------|-------|-----------|
+| tiny | 75MB | 72% | 32x realtime | Testing/development |
+| base | 142MB | 82% | 16x realtime | Basic usage |
+| **small** | **466MB** | **90%** | **6x realtime** | **Production (Active)** |
+| medium | 1.5GB | 95% | 2x realtime | High accuracy needs |
+| large | 2.9GB | 97% | 1x realtime | Maximum accuracy |
+
 **Audio Processing Flow:**
 ```
 Audio Recording
@@ -412,7 +453,7 @@ Audio Recording
          │
          ▼
 ┌─────────────────┐
-│  Transcription  │  ← Convert speech to text
+│ Whisper (small) │  ← 90% accuracy transcription
 └────────┬────────┘
          │
          ▼
@@ -475,14 +516,32 @@ Base Score: 100
 
 ### How Facial Expressions Are Analyzed
 
-The emotion detection system processes video to assess non-verbal communication.
+The emotion detection system uses **FER (Facial Expression Recognition)** with **MTCNN** backend to process video and assess non-verbal communication.
+
+**Technology Stack:**
+| Component | Purpose |
+|-----------|---------|
+| **FER** | Facial Expression Recognition library |
+| **MTCNN** | Multi-task Cascaded Convolutional Networks for face detection |
+| **TensorFlow** | Deep learning backend |
+| **OpenCV** | Video frame processing |
+
+**7-Class Emotion Classification:**
+- 😊 Happy (positive engagement)
+- 😢 Sad (low engagement)
+- 😠 Angry (negative reaction)
+- 😮 Surprised (unexpected response)
+- 😨 Fearful (anxiety indicator)
+- 🤢 Disgusted (negative reaction)
+- 😐 Neutral (baseline state)
 
 #### 1. Face Detection
 
 **Detection Process:**
-- Scans video frames at regular intervals (e.g., every 2 seconds)
-- Identifies human faces using facial landmark detection
+- Scans video frames at regular intervals (every 2 seconds by default)
+- Uses MTCNN for accurate face detection with landmark points
 - Tracks face visibility throughout the interview
+- Handles multiple faces (proctoring violation detection)
 
 #### 2. Facial Landmark Analysis
 
