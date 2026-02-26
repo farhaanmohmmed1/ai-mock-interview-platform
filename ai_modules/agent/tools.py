@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 
 # Import existing AI modules
-from ai_modules.nlp.question_generator import QuestionGenerator
+from ai_modules.nlp.question_generator import QuestionGenerator, _normalize_skills
 from ai_modules.nlp.answer_evaluator import AnswerEvaluator
 from ai_modules.adaptive.adaptive_system import AdaptiveSystem
 from ai_modules.adaptive.report_generator import ReportGenerator
@@ -68,23 +68,31 @@ class AgentTools:
         start_time = datetime.utcnow()
         
         try:
+            # Normalize skills to handle different input types (strings, dicts, etc.)
+            normalized_skills = _normalize_skills(user_skills) if user_skills else None
+            
             # Generate questions using the question generator
             questions = self.question_generator.generate_questions(
                 interview_type=interview_type,
                 difficulty=difficulty,
                 interview_mode=interview_mode,
                 resume_data=resume_data,
-                skills=user_skills,
+                skills=normalized_skills,
                 user_id=user_id,
                 db=db
             )
             
             # Post-process: filter based on focus areas and avoid topics
+            # Normalize focus_areas and avoid_topics (they might contain dicts)
             if focus_areas:
-                questions = self._prioritize_focus_areas(questions, focus_areas)
+                normalized_focus = _normalize_skills(focus_areas)
+                if normalized_focus:
+                    questions = self._prioritize_focus_areas(questions, normalized_focus)
             
             if avoid_topics:
-                questions = self._filter_avoid_topics(questions, avoid_topics)
+                normalized_avoid = _normalize_skills(avoid_topics)
+                if normalized_avoid:
+                    questions = self._filter_avoid_topics(questions, normalized_avoid)
             
             # Limit to requested number
             questions = questions[:num_questions]

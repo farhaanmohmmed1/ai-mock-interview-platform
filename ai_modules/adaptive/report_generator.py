@@ -293,8 +293,14 @@ class ReportGenerator:
         avg_fluency = sum(fluency_scores) / len(fluency_scores) if fluency_scores else 0
         avg_confidence = sum(confidence_scores) / len(confidence_scores) if confidence_scores else 0
         
-        # Combined scores
-        content_combined = (avg_content * 0.6 + avg_relevance * 0.4) if (content_scores or relevance_scores) else 0
+        # Combined scores - weight content heavily (keyword matching can be strict with synonyms)
+        # If content is strong but relevance is weak, boost relevance (likely using synonyms)
+        adjusted_relevance = avg_relevance
+        if avg_content >= 75 and avg_relevance < 50:
+            # Strong content but low keyword match - boost relevance
+            adjusted_relevance = max(avg_relevance, avg_content * 0.6)
+        
+        content_combined = (avg_content * 0.70 + adjusted_relevance * 0.30) if (content_scores or relevance_scores) else 0
         
         # Check if we have speech/emotion data
         has_speech_data = bool(clarity_scores or fluency_scores)
@@ -304,15 +310,15 @@ class ReportGenerator:
         if has_speech_data:
             speech_combined = (avg_clarity + avg_fluency) / 2
         else:
-            # Estimate speech quality based on content quality when no audio data
-            # Text-only submissions shouldn't be penalised heavily for missing audio
-            speech_combined = content_combined * 0.95
-            avg_clarity = content_combined * 0.95
-            avg_fluency = content_combined * 0.95
+            # Text-only submissions should not be penalized for missing audio
+            # Use the same content score as speech estimate
+            speech_combined = content_combined
+            avg_clarity = content_combined
+            avg_fluency = content_combined
         
         # Use content-based estimate for confidence if not available
         if not has_confidence_data:
-            avg_confidence = content_combined * 0.92  # Estimate based on content
+            avg_confidence = content_combined  # No penalty for text-only
         
         # Overall score (weighted average)
         overall = (

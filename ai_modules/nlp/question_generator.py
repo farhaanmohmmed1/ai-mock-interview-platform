@@ -1,11 +1,38 @@
 import random
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 from sqlalchemy.orm import Session
-from backend.models import Interview, Response
+from backend.models import Interview, Response, Question
 from .company_questions_loader import get_questions_loader, CompanyQuestionsLoader
+from .upsc_questions_loader import get_upsc_questions_loader, UPSCQuestionsLoader
 
 logger = logging.getLogger(__name__)
+
+# Cache for user question history to avoid database hits
+_user_question_cache: Dict[int, Set[str]] = {}
+
+
+def _normalize_skills(skills: Optional[List]) -> List[str]:
+    """Normalize skills to a list of lowercase strings.
+    
+    Handles cases where skills might be dicts, strings, or mixed.
+    """
+    if not skills:
+        return []
+    
+    normalized = []
+    for skill in skills:
+        if isinstance(skill, str):
+            normalized.append(skill.lower().strip())
+        elif isinstance(skill, dict):
+            # Extract skill name from dict (common keys: name, skill, value)
+            for key in ['name', 'skill', 'value', 'text']:
+                if key in skill and isinstance(skill[key], str):
+                    normalized.append(skill[key].lower().strip())
+                    break
+        # Skip non-string, non-dict items
+    
+    return [s for s in normalized if s]  # Filter empty strings
 
 
 class QuestionGenerator:
@@ -21,7 +48,8 @@ class QuestionGenerator:
     
     def __init__(self):
         self.question_bank = self._initialize_question_bank()
-        self.upsc_question_bank = self._initialize_upsc_questions()
+        self.upsc_question_bank = self._initialize_upsc_questions()  # Fallback
+        
         # Load company questions dataset
         try:
             self.company_loader = get_questions_loader()
@@ -31,6 +59,16 @@ class QuestionGenerator:
             logger.warning(f"Could not load company questions: {e}")
             self.company_questions_available = False
             self.company_loader = None
+        
+        # Load UPSC questions dataset
+        try:
+            self.upsc_loader = get_upsc_questions_loader()
+            self.upsc_questions_available = True
+            logger.info(f"Loaded {len(self.upsc_loader.questions)} UPSC questions")
+        except Exception as e:
+            logger.warning(f"Could not load UPSC questions: {e}")
+            self.upsc_questions_available = False
+            self.upsc_loader = None
     
     def _initialize_upsc_questions(self) -> Dict:
         """Initialize UPSC/Civil Services style questions"""
@@ -125,6 +163,11 @@ class QuestionGenerator:
                     {"text": "Why do you want to work here?", "type": "behavioral", "keywords": ["motivation", "company", "interest"]},
                     {"text": "Where do you see yourself in 5 years?", "type": "behavioral", "keywords": ["goals", "career", "future"]},
                     {"text": "What makes you a good fit for this role?", "type": "behavioral", "keywords": ["fit", "qualifications", "skills"]},
+                    {"text": "What motivates you in your work?", "type": "behavioral", "keywords": ["motivation", "drive", "passion"]},
+                    {"text": "How did you hear about this position?", "type": "behavioral", "keywords": ["source", "interest", "research"]},
+                    {"text": "What do you know about our company?", "type": "behavioral", "keywords": ["research", "company", "knowledge"]},
+                    {"text": "Why are you interested in this industry?", "type": "behavioral", "keywords": ["industry", "passion", "interest"]},
+                    {"text": "What are your short-term career goals?", "type": "behavioral", "keywords": ["goals", "planning", "ambition"]},
                 ],
                 "medium": [
                     {"text": "Describe a challenging situation you faced and how you handled it.", "type": "situational", "keywords": ["challenge", "problem-solving", "resolution"]},
@@ -132,11 +175,23 @@ class QuestionGenerator:
                     {"text": "Describe a time when you had to work with a difficult team member.", "type": "situational", "keywords": ["teamwork", "conflict", "resolution"]},
                     {"text": "What is your biggest weakness and how are you working on it?", "type": "behavioral", "keywords": ["weakness", "improvement", "self-awareness"]},
                     {"text": "Tell me about a time you failed and what you learned from it.", "type": "situational", "keywords": ["failure", "learning", "growth"]},
+                    {"text": "Describe how you handle working under pressure with tight deadlines.", "type": "situational", "keywords": ["pressure", "deadlines", "stress"]},
+                    {"text": "Tell me about a project you're particularly proud of.", "type": "behavioral", "keywords": ["achievement", "pride", "success"]},
+                    {"text": "How do you approach learning new technologies or skills?", "type": "behavioral", "keywords": ["learning", "growth", "adaptability"]},
+                    {"text": "Describe your typical approach to problem-solving.", "type": "behavioral", "keywords": ["problem-solving", "methodology", "thinking"]},
+                    {"text": "How do you ensure diversity and inclusion in your team or projects?", "type": "situational", "keywords": ["diversity", "inclusion", "teamwork"]},
+                    {"text": "Describe a situation where you had to work with limited resources.", "type": "situational", "keywords": ["resourcefulness", "constraints", "creativity"]},
+                    {"text": "What would you do if you disagreed with your manager's decision?", "type": "situational", "keywords": ["conflict", "communication", "professionalism"]},
                 ],
                 "hard": [
                     {"text": "Describe a situation where you had to make a decision with incomplete information.", "type": "situational", "keywords": ["decision-making", "uncertainty", "judgment"]},
                     {"text": "How do you prioritize when you have multiple urgent tasks?", "type": "behavioral", "keywords": ["prioritization", "time management", "organization"]},
                     {"text": "Tell me about a time you had to convince someone to see things your way.", "type": "situational", "keywords": ["persuasion", "communication", "influence"]},
+                    {"text": "Describe a time when you had to lead a team through a crisis.", "type": "situational", "keywords": ["leadership", "crisis", "management"]},
+                    {"text": "How would you handle a situation where you identified a major flaw in your team's approach?", "type": "situational", "keywords": ["critical thinking", "communication", "courage"]},
+                    {"text": "Tell me about a time you had to balance competing stakeholder interests.", "type": "situational", "keywords": ["stakeholders", "negotiation", "balance"]},
+                    {"text": "Describe how you've driven innovation in your previous role.", "type": "behavioral", "keywords": ["innovation", "creativity", "impact"]},
+                    {"text": "What's the most difficult feedback you've received and how did you respond?", "type": "situational", "keywords": ["feedback", "growth", "resilience"]},
                 ]
             },
             "technical": {
@@ -182,6 +237,10 @@ class QuestionGenerator:
                     {"text": "How would your colleagues describe you?", "type": "hr", "keywords": ["personality", "teamwork", "perception"]},
                     {"text": "What do you know about our company?", "type": "hr", "keywords": ["research", "company", "knowledge"]},
                     {"text": "What are your salary expectations?", "type": "hr", "keywords": ["salary", "compensation", "expectations"]},
+                    {"text": "When can you start if selected?", "type": "hr", "keywords": ["availability", "start date", "transition"]},
+                    {"text": "Are you comfortable with the work location?", "type": "hr", "keywords": ["location", "commute", "relocation"]},
+                    {"text": "Do you have any questions for us?", "type": "hr", "keywords": ["curiosity", "engagement", "research"]},
+                    {"text": "What type of work environment do you prefer?", "type": "hr", "keywords": ["environment", "culture", "fit"]},
                 ],
                 "medium": [
                     {"text": "Why are you leaving your current job?", "type": "hr", "keywords": ["career change", "motivation", "growth"]},
@@ -189,11 +248,20 @@ class QuestionGenerator:
                     {"text": "Describe your ideal work environment.", "type": "hr", "keywords": ["environment", "culture", "preferences"]},
                     {"text": "What are your long-term career goals?", "type": "hr", "keywords": ["career", "goals", "ambition"]},
                     {"text": "How do you maintain work-life balance?", "type": "hr", "keywords": ["balance", "well-being", "management"]},
+                    {"text": "What would you do in your first 90 days in this role?", "type": "hr", "keywords": ["planning", "onboarding", "impact"]},
+                    {"text": "How do you handle working with people from different backgrounds?", "type": "hr", "keywords": ["diversity", "inclusion", "collaboration"]},
+                    {"text": "What makes you unique compared to other candidates?", "type": "hr", "keywords": ["differentiation", "value", "skills"]},
+                    {"text": "How do you stay updated with industry trends?", "type": "hr", "keywords": ["learning", "industry", "growth"]},
+                    {"text": "Describe a time when you went above and beyond your job duties.", "type": "hr", "keywords": ["initiative", "dedication", "impact"]},
                 ],
                 "hard": [
                     {"text": "Tell me about a time you disagreed with management and how you handled it.", "type": "hr", "keywords": ["conflict", "management", "communication"]},
                     {"text": "How would you handle an ethical dilemma at work?", "type": "hr", "keywords": ["ethics", "integrity", "decision-making"]},
                     {"text": "What would you do if you were asked to work on something outside your job description?", "type": "hr", "keywords": ["flexibility", "boundaries", "adaptation"]},
+                    {"text": "How would you handle a situation where a colleague is taking credit for your work?", "type": "hr", "keywords": ["conflict", "assertion", "professionalism"]},
+                    {"text": "What would you do if you discovered your company was doing something unethical?", "type": "hr", "keywords": ["ethics", "integrity", "courage"]},
+                    {"text": "How would you handle a major failure that impacted your team?", "type": "hr", "keywords": ["accountability", "resilience", "leadership"]},
+                    {"text": "Describe a situation where you had to make an unpopular decision.", "type": "hr", "keywords": ["decision-making", "courage", "leadership"]},
                 ]
             }
         }
@@ -228,6 +296,15 @@ class QuestionGenerator:
         generated_questions = []
         company_questions = []
         
+        # Normalize skills to handle different input types
+        normalized_skills = _normalize_skills(skills)
+        
+        # Get user's past questions to avoid repetition
+        exclude_texts = set()
+        if user_id and db:
+            exclude_texts = self._get_user_question_history(user_id, db)
+            logger.info(f"Excluding {len(exclude_texts)} previously asked questions for user {user_id}")
+        
         # Determine total question count
         if interview_type == "full":
             total_questions = 12  # 4 general + 4 technical + 4 hr
@@ -239,11 +316,16 @@ class QuestionGenerator:
             total_questions = 5
         
         # Calculate how many from each source
-        company_count = int(total_questions * company_question_ratio)
-        generated_count = total_questions - company_count
+        # UPSC should NOT use company questions (they're tech companies, not civil services)
+        if interview_type == "upsc":
+            company_count = 0
+            generated_count = total_questions
+        else:
+            company_count = int(total_questions * company_question_ratio)
+            generated_count = total_questions - company_count
         
-        # Try to get company questions if available
-        if self.company_questions_available:
+        # Try to get company questions if available (not for UPSC)
+        if self.company_questions_available and interview_type != "upsc":
             try:
                 if interview_type == "full":
                     # For full interview, get company questions from all three types
@@ -304,7 +386,7 @@ class QuestionGenerator:
             # Full interview: combine questions from all three types
             full_gen_count = max(1, generated_count // 3)
             general_qs = self._generate_general_questions(difficulty)[:full_gen_count]
-            technical_qs = self._generate_technical_questions(difficulty, skills, resume_data)[:full_gen_count]
+            technical_qs = self._generate_technical_questions(difficulty, normalized_skills, resume_data)[:full_gen_count]
             hr_qs = self._generate_hr_questions(difficulty)[:full_gen_count]
             # Tag each question with its round type
             for q in general_qs:
@@ -317,7 +399,7 @@ class QuestionGenerator:
         elif interview_type == "general":
             generated_questions = self._generate_general_questions(difficulty)[:generated_count]
         elif interview_type == "technical":
-            generated_questions = self._generate_technical_questions(difficulty, skills, resume_data)[:generated_count]
+            generated_questions = self._generate_technical_questions(difficulty, normalized_skills, resume_data)[:generated_count]
         elif interview_type == "hr":
             generated_questions = self._generate_hr_questions(difficulty)[:generated_count]
         elif interview_type == "upsc":
@@ -361,7 +443,51 @@ class QuestionGenerator:
         # Apply rule-based difficulty classification
         questions = self._classify_difficulty(questions)
         
+        # Filter out questions the user has already seen
+        if exclude_texts:
+            original_count = len(questions)
+            questions = [q for q in questions if q['text'].lower().strip() not in exclude_texts]
+            filtered_count = original_count - len(questions)
+            if filtered_count > 0:
+                logger.info(f"Filtered out {filtered_count} repeated questions")
+        
         return questions
+    
+    def _get_user_question_history(self, user_id: int, db: Session) -> Set[str]:
+        """Get set of question texts the user has already been asked.
+        
+        Uses caching to avoid repeated database queries.
+        """
+        global _user_question_cache
+        
+        # Check cache first
+        if user_id in _user_question_cache:
+            return _user_question_cache[user_id]
+        
+        try:
+            # Get all questions from user's past interviews (completed or in-progress)
+            # Include in-progress to avoid repetition if user abandons and restarts
+            past_questions = db.query(Question.question_text).join(Interview).filter(
+                Interview.user_id == user_id,
+                Interview.status.in_(["completed", "in_progress"])
+            ).all()
+            
+            # Normalize and cache
+            question_texts = {q[0].lower().strip() for q in past_questions if q[0]}
+            _user_question_cache[user_id] = question_texts
+            
+            return question_texts
+        except Exception as e:
+            logger.warning(f"Could not fetch user question history: {e}")
+            return set()
+    
+    def clear_user_cache(self, user_id: int = None):
+        """Clear the question history cache for a user or all users."""
+        global _user_question_cache
+        if user_id:
+            _user_question_cache.pop(user_id, None)
+        else:
+            _user_question_cache.clear()
     
     def _classify_difficulty(self, questions: List[Dict]) -> List[Dict]:
         """Rule-based difficulty classification"""
@@ -392,7 +518,47 @@ class QuestionGenerator:
         return questions
     
     def _generate_upsc_questions(self, difficulty: str) -> List[Dict]:
-        """Generate UPSC style interview questions"""
+        """Generate UPSC style interview questions from the dedicated dataset.
+        
+        Uses the 200-question UPSC bank covering:
+        - Current Affairs
+        - Indian Polity & Governance  
+        - Ethics & Integrity
+        - Economy
+        - Environment
+        - Science & Technology
+        - International Relations
+        - Social Issues
+        - Personality
+        - Opinion-based
+        - Administrative
+        """
+        # Try to use the UPSC loader first (200 questions)
+        if self.upsc_questions_available and self.upsc_loader:
+            try:
+                # Get a balanced mix from different categories
+                questions = self.upsc_loader.get_mixed_difficulty_questions(
+                    total_count=10,
+                    categories=[
+                        "current_affairs",
+                        "indian_polity", 
+                        "ethics_integrity",
+                        "personality",
+                        "opinion_based",
+                        "administrative",
+                        "economy",
+                        "international_relations"
+                    ]
+                )
+                
+                if questions:
+                    logger.info(f"Generated {len(questions)} UPSC questions from dataset")
+                    return questions
+            except Exception as e:
+                logger.warning(f"Error loading UPSC questions from dataset: {e}")
+        
+        # Fallback to hardcoded questions
+        logger.info("Using fallback UPSC question bank")
         questions = []
         categories = ["current_affairs", "ethics_integrity", "personality", "administrative", "opinion"]
         
@@ -400,13 +566,11 @@ class QuestionGenerator:
             bank = self.upsc_question_bank.get(category, {})
             
             if difficulty == "easy":
-                # More easy questions
                 if "easy" in bank:
                     questions.extend(random.sample(bank["easy"], min(2, len(bank["easy"]))))
                 if "medium" in bank:
                     questions.extend(random.sample(bank["medium"], min(1, len(bank["medium"]))))
             elif difficulty == "medium":
-                # Balanced mix
                 if "easy" in bank:
                     questions.extend(random.sample(bank["easy"], min(1, len(bank["easy"]))))
                 if "medium" in bank:
@@ -414,15 +578,13 @@ class QuestionGenerator:
                 if "hard" in bank:
                     questions.extend(random.sample(bank["hard"], min(1, len(bank["hard"]))))
             else:  # hard
-                # More challenging questions
                 if "medium" in bank:
                     questions.extend(random.sample(bank["medium"], min(1, len(bank["medium"]))))
                 if "hard" in bank:
                     questions.extend(random.sample(bank["hard"], min(2, len(bank["hard"]))))
         
-        # Shuffle and limit
         random.shuffle(questions)
-        return questions[:10]  # Return max 10 questions for UPSC
+        return questions[:10]
     
     def _generate_general_questions(self, difficulty: str) -> List[Dict]:
         """Generate general interview questions"""
@@ -461,7 +623,8 @@ class QuestionGenerator:
         relevant_categories = []
         
         if skills:
-            skills_lower = [s.lower() for s in skills]
+            # Normalize skills to handle both strings and dicts
+            skills_lower = _normalize_skills(skills)
             
             # Programming languages
             for lang in ["python", "java", "javascript"]:

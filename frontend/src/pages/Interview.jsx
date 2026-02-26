@@ -238,24 +238,27 @@ const Interview = () => {
     }
   };
 
-  const handleProctoringViolation = (violations) => {
-    console.log('Proctoring violations detected:', violations);
-    setProctoringViolations(prev => [...prev, ...violations]);
+  const handleProctoringViolation = (violation) => {
+    // Handle single violation object (not array)
+    console.log('Proctoring violation detected:', violation);
+    setProctoringViolations(prev => [...prev, violation]);
     
-    violations.forEach(v => {
-      if (v.type === 'tab_switch') {
-        setTabSwitchCount(prev => prev + 1);
-        setProctoringAlert('⚠️ Tab switch detected! Please stay on this page.');
-      } else if (v.type === 'multiple_faces') {
-        setProctoringAlert('🚨 Multiple faces detected! Only the candidate should be visible.');
-      } else if (v.type === 'no_face') {
-        setProctoringAlert('⚠️ Face not visible. Please stay in front of the camera.');
-      } else if (v.type === 'looking_away') {
-        setProctoringAlert('👀 Please look at the screen during the interview.');
-      } else if (v.type === 'different_person') {
-        setProctoringAlert('🚨 ALERT: Face does not match registered user!');
-      }
-    });
+    if (violation.type === 'tab_switch') {
+      setTabSwitchCount(prev => prev + 1);
+      setProctoringAlert('⚠️ Tab switch detected! Please stay on this page.');
+    } else if (violation.type === 'multiple_faces') {
+      setProctoringAlert('🚨 Multiple faces detected! Only the candidate should be visible.');
+    } else if (violation.type === 'no_face') {
+      setProctoringAlert('⚠️ Face not visible. Please stay in front of the camera.');
+    } else if (violation.type === 'looking_away') {
+      setProctoringAlert('👀 Please look at the screen during the interview.');
+    } else if (violation.type === 'different_person') {
+      setProctoringAlert('🚨 ALERT: Face does not match registered user!');
+    } else if (violation.type === 'copy_attempt' || violation.type === 'paste_attempt') {
+      setProctoringAlert('⚠️ Copy/paste detected during interview.');
+    } else if (violation.type === 'devtools_attempt') {
+      setProctoringAlert('⚠️ DevTools access detected.');
+    }
   };
 
   const handleProctoringAlert = (message) => {
@@ -269,6 +272,60 @@ const Interview = () => {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Handle visibility change to resume video when returning to tab
+  useEffect(() => {
+    const resumeVideoStream = async () => {
+      if (!cameraEnabled) return;
+      
+      // Check if stream is still active
+      if (streamRef.current) {
+        const tracks = streamRef.current.getVideoTracks();
+        const isStreamActive = tracks.length > 0 && tracks[0].readyState === 'live';
+        
+        if (isStreamActive && videoRef.current) {
+          // Stream is active, just resume playback
+          try {
+            await videoRef.current.play();
+          } catch (err) {
+            console.log('Video resume failed, restarting camera:', err);
+            await startCamera();
+          }
+        } else {
+          // Stream is dead, restart camera
+          console.log('Stream inactive, restarting camera');
+          await startCamera();
+        }
+      } else if (cameraEnabled) {
+        // No stream but camera should be enabled, restart it
+        await startCamera();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Small delay to let browser settle after becoming visible
+        setTimeout(() => {
+          resumeVideoStream();
+        }, 100);
+      }
+    };
+
+    const handleWindowFocus = () => {
+      // Delay to avoid race conditions with visibility change
+      setTimeout(() => {
+        resumeVideoStream();
+      }, 100);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
+    };
+  }, [cameraEnabled]);
 
   // Round timer for full interview mode
   useEffect(() => {

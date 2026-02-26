@@ -14,33 +14,52 @@ from backend.models import User, Interview, Question, Response
 from backend.api.auth import get_current_user
 
 # Conditional imports for AI modules (may not be available on Vercel)
+# Import each module independently so partial loading works
+AI_MODULES_AVAILABLE = False
+AnswerEvaluator = None
+SpeechAnalyzer = None
+EmotionAnalyzer = None
+
 try:
     from ai_modules.nlp.answer_evaluator import AnswerEvaluator
-    from ai_modules.speech.speech_analyzer import SpeechAnalyzer
-    from ai_modules.emotion.emotion_analyzer import EmotionAnalyzer
-    AI_MODULES_AVAILABLE = True
-    print("[Evaluation] AI Modules imported successfully")
+    AI_MODULES_AVAILABLE = True  # Answer evaluator is the core requirement
+    print("[Evaluation] AnswerEvaluator imported successfully")
 except ImportError as e:
-    AI_MODULES_AVAILABLE = False
-    AnswerEvaluator = None
-    SpeechAnalyzer = None
-    EmotionAnalyzer = None
-    print(f"[Evaluation] AI Modules import failed: {e}")
+    print(f"[Evaluation] AnswerEvaluator import failed: {e}")
+
+try:
+    from ai_modules.speech.speech_analyzer import SpeechAnalyzer
+    print("[Evaluation] SpeechAnalyzer imported successfully")
+except ImportError as e:
+    print(f"[Evaluation] SpeechAnalyzer import failed (optional): {e}")
+
+try:
+    from ai_modules.emotion.emotion_analyzer import EmotionAnalyzer
+    print("[Evaluation] EmotionAnalyzer imported successfully")
+except ImportError as e:
+    print(f"[Evaluation] EmotionAnalyzer import failed (optional): {e}")
 
 router = APIRouter()
 
 # Initialize AI modules only if available
-if AI_MODULES_AVAILABLE:
-    print("[Evaluation] Initializing AI modules...")
+answer_evaluator = None
+speech_analyzer = None
+emotion_analyzer = None
+
+if AnswerEvaluator:
     answer_evaluator = AnswerEvaluator()
+    print("[Evaluation] AnswerEvaluator initialized")
+if SpeechAnalyzer:
     speech_analyzer = SpeechAnalyzer()
-    emotion_analyzer = EmotionAnalyzer()
     print(f"[Evaluation] SpeechAnalyzer initialized: whisper={speech_analyzer.whisper_model is not None}")
+if EmotionAnalyzer:
+    emotion_analyzer = EmotionAnalyzer()
+    print("[Evaluation] EmotionAnalyzer initialized")
+
+if not AI_MODULES_AVAILABLE:
+    print("[Evaluation] Core AI modules not available")
 else:
-    answer_evaluator = None
-    speech_analyzer = None
-    emotion_analyzer = None
-    print("[Evaluation] AI modules not available")
+    print("[Evaluation] Core AI modules ready")
 
 
 class ResponseCreate(BaseModel):

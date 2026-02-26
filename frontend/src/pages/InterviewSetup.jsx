@@ -238,25 +238,39 @@ const InterviewSetup = () => {
         }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        // Navigate to interview with interview data
-        navigate(`/interview/${type}`, {
-          state: {
-            interviewId: data.interview_id,
-            questions: data.questions,
-            difficulty: difficulty,
-            mode: interviewMode,
-            resumeSkills: selectedResume?.skills || [],
-          },
-        });
-      } else {
-        setError(data.detail || 'Failed to start interview');
+      // Handle non-OK responses
+      if (!response.ok) {
+        let errorMsg = `Server error (${response.status})`;
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.detail || errorMsg;
+        } catch {
+          // Response wasn't JSON
+        }
+        setError(errorMsg);
+        return;
       }
+
+      const data = await response.json();
+      
+      // Navigate to interview with interview data
+      navigate(`/interview/${type}`, {
+        state: {
+          interviewId: data.interview_id,
+          questions: data.questions,
+          difficulty: difficulty,
+          mode: interviewMode,
+          resumeSkills: selectedResume?.skills || [],
+        },
+      });
     } catch (err) {
       console.error('Error starting interview:', err);
-      setError('Failed to connect to server');
+      // Check if it's a network error vs parsing error
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        setError('Failed to connect to server. Check your connection.');
+      } else {
+        setError(`Error: ${err.message || 'Something went wrong'}`);
+      }
     } finally {
       setStarting(false);
     }

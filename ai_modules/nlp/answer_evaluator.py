@@ -90,43 +90,48 @@ class AnswerEvaluator:
         """Calculate content quality score"""
         score = 0
         
-        # Length scoring (0-40 points) - more generous for typical spoken answers
+# First, check for gibberish/non-English content
+        english_ratio = self._check_english_content(answer)
+        if english_ratio < 0.3:
+            # Severe penalty for gibberish (like Lorem Ipsum)
+            return max(10, 20 * english_ratio)  # Max 10 points for mostly non-English
+        
+        # Length scoring (0-40 points) - more generous thresholds
         if word_count < 10:
-            score += (word_count / 10) * 20  # Very short
-        elif word_count < 20:
-            score += 20 + ((word_count - 10) / 10) * 8  # 20-28
-        elif word_count < 40:
-            score += 28 + ((word_count - 20) / 20) * 7  # 28-35
-        elif word_count < 80:
-            score += 35 + ((word_count - 40) / 40) * 5  # 35-40
+            score += (word_count / 10) * 20  # Even short answers get some credit
+        elif word_count < 25:
+            score += 20 + ((word_count - 10) / 15) * 10  # 20-30
+        elif word_count < 50:
+            score += 30 + ((word_count - 25) / 25) * 5  # 30-35
+        elif word_count < 100:
+            score += 35 + ((word_count - 50) / 50) * 5  # 35-40
         else:
             score += 40
         
-        # Structure scoring (0-25 points)
+        # Structure scoring (0-25 points) - more generous
         if sentence_count >= 4:
             score += 25
         elif sentence_count >= 3:
-            score += 22
+            score += 23
         elif sentence_count >= 2:
-            score += 18
+            score += 20
         else:
-            score += 12
+            score += 15  # Single sentence still gets decent credit
         
         # Check for examples/specifics (0-20 points)
         example_indicators = ['for example', 'for instance', 'such as', 'like', 'specifically',
                               'in my experience', 'i have', 'i worked', 'i used', 'we implemented',
-                              'the result', 'this led to', 'because', 'which means', 'i think',
-                              'i believe', 'my approach', 'the way', 'in this case', 'when i',
-                              'i would', 'to ensure', 'by using', 'through']
+                              'the result', 'this led to', 'because', 'which means', 'therefore',
+                              'my approach', 'i believe', 'in particular', 'one example']
         matches = sum(1 for indicator in example_indicators if indicator in answer.lower())
         if matches >= 3:
             score += 20
         elif matches >= 2:
             score += 17
         elif matches >= 1:
-            score += 13
+            score += 14
         else:
-            score += 7
+            score += 8  # Base credit even without explicit examples
         
         # Complexity & vocabulary (0-15 points)
         avg_word_length = sum(len(word) for word in answer.split()) / len(answer.split()) if answer.split() else 0
@@ -135,11 +140,71 @@ class AnswerEvaluator:
         elif avg_word_length > 4.5:
             score += 13
         elif avg_word_length > 3.5:
-            score += 10
+            score += 11
         else:
-            score += 7
+            score += 8
+        
+        # STAR method bonus (0-15 points) - reward well-structured responses
+        answer_lower = answer.lower()
+        star_indicators = {
+            'situation': ['situation', 'context', 'when i', 'at my', 'in my previous', 'there was'],
+            'task': ['task', 'challenge', 'needed to', 'had to', 'responsible for', 'goal was'],
+            'action': ['i decided', 'i implemented', 'i coordinated', 'my approach', 'i took', 'i created', 'i developed'],
+            'result': ['result', 'outcome', 'as a result', 'this led to', 'we achieved', 'improved by', 'reduced', 'increased']
+        }
+        star_count = 0
+        for category, indicators in star_indicators.items():
+            if any(ind in answer_lower for ind in indicators):
+                star_count += 1
+        
+        if star_count >= 4:
+            score += 15  # Full STAR method
+        elif star_count >= 3:
+            score += 12
+        elif star_count >= 2:
+            score += 8
+        elif star_count >= 1:
+            score += 4
+        
+        # Apply English content ratio as multiplier (penalize gibberish)
+        score *= (0.3 + 0.7 * english_ratio)
         
         return min(score, 100)
+    
+    def _check_english_content(self, answer: str) -> float:
+        """
+        Check if the answer contains real English words.
+        Returns ratio of recognized English words (0.0 to 1.0).
+        """
+        # Common English words that should appear in any real English answer
+        common_english = {
+            'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i',
+            'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at',
+            'this', 'but', 'his', 'by', 'from', 'they', 'we', 'say', 'her', 'she',
+            'or', 'an', 'will', 'my', 'one', 'all', 'would', 'there', 'their', 'what',
+            'so', 'up', 'out', 'if', 'about', 'who', 'get', 'which', 'go', 'me',
+            'when', 'make', 'can', 'time', 'no', 'just', 'him', 'know', 'take', 'people',
+            'into', 'year', 'your', 'good', 'some', 'could', 'them', 'see', 'other', 'than',
+            'then', 'now', 'look', 'only', 'come', 'its', 'over', 'think', 'also', 'back',
+            'after', 'use', 'two', 'how', 'our', 'work', 'first', 'well', 'way', 'even',
+            'new', 'want', 'because', 'any', 'these', 'give', 'day', 'most', 'us', 'is',
+            'was', 'are', 'were', 'been', 'being', 'had', 'has', 'did', 'does', 'done',
+            'am', 'here', 'where', 'why', 'very', 'much', 'more', 'before', 'should', 'need',
+            'like', 'used', 'using', 'working', 'worked', 'experience', 'team', 'project',
+            'approach', 'example', 'situation', 'result', 'problem', 'solution', 'task',
+            'believe', 'help', 'ensure', 'important', 'able', 'through', 'while', 'during'
+        }
+        
+        words = answer.lower().split()
+        if not words:
+            return 0.0
+        
+        # Count how many words are recognized English
+        english_word_count = sum(1 for word in words if word.strip('.,!?;:()[]"\'') in common_english)
+        
+        # Calculate ratio
+        ratio = english_word_count / len(words)
+        return ratio
     
     def _calculate_relevance_score(
         self,
@@ -158,33 +223,49 @@ class AnswerEvaluator:
         question_keywords = question_words - self.stopwords
         answer_keywords = answer_words - self.stopwords
         
-        # Calculate overlap (0-50 points)
+        # Calculate overlap (0-35 points) - reduced weight, exact matching is too strict
         if question_keywords:
             overlap = len(question_keywords & answer_keywords) / len(question_keywords)
-            score += overlap * 50
+            score += overlap * 35
         
-        # Expected keywords (0-50 points)
+        # Base score for having substantial answer (0-25 points)
+        # This rewards thoughtful answers even when they use different vocabulary
+        if len(answer_keywords) >= 20:
+            score += 25
+        elif len(answer_keywords) >= 15:
+            score += 22
+        elif len(answer_keywords) >= 10:
+            score += 18
+        elif len(answer_keywords) >= 5:
+            score += 12
+        else:
+            score += 5
+        
+        # Expected keywords (0-40 points) - with partial/stem matching
         if expected_keywords and len(expected_keywords) > 0:
             keywords_lower = [k.lower() for k in expected_keywords]
             answer_lower = answer.lower()
-            found_count = sum(1 for keyword in keywords_lower if keyword in answer_lower)
-            keyword_ratio = found_count / len(expected_keywords)
-            # Give partial credit more generously - even covering some keywords shows understanding
-            if keyword_ratio >= 0.7:
-                score += 50
-            elif keyword_ratio >= 0.4:
-                score += 35 + (keyword_ratio - 0.4) * 50
-            else:
-                score += 20 + keyword_ratio * 37.5
+            found_count = 0
+            for keyword in keywords_lower:
+                # Check exact match or if keyword stem appears (e.g., "strength" matches "strengths")
+                if keyword in answer_lower:
+                    found_count += 1
+                elif len(keyword) > 4:
+                    # Check if the stem (first 4+ chars) appears
+                    stem = keyword[:min(len(keyword)-1, 6)]
+                    if stem in answer_lower:
+                        found_count += 0.5  # Partial credit for stem match
+            
+            keyword_ratio = min(found_count / len(expected_keywords), 1.0)
+            score += keyword_ratio * 30 + 10  # Minimum 10 points, max 40
         else:
-            # No expected keywords defined — score based on answer substance
-            answer_tokens = answer_keywords  # already computed above (stopwords removed)
-            if len(answer_tokens) >= 12:
-                score += 48
-            elif len(answer_tokens) >= 8:
-                score += 42
-            elif len(answer_tokens) >= 4:
+            # No expected keywords — generous scoring based on answer substance
+            if len(answer_keywords) >= 12:
+                score += 40
+            elif len(answer_keywords) >= 8:
                 score += 35
+            elif len(answer_keywords) >= 5:
+                score += 30
             else:
                 score += 25
         

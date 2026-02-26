@@ -277,7 +277,7 @@ class InterviewAgent:
         # Transition to analysis phase
         context.current_phase = AgentPhase.ANALYSIS
         
-        # Collect all evaluations
+        # Collect all evaluations from agent context
         evaluations = []
         questions_context = []
         for q in context.questions:
@@ -288,6 +288,32 @@ class InterviewAgent:
                     "category": q.category,
                     "type": q.question_type
                 })
+        
+        # FALLBACK: If no evaluations in context, query from database
+        # This handles the case where answers were submitted via /api/evaluation/submit-text
+        if not evaluations and db is not None:
+            logger.info(f"No evaluations in agent context, querying database for interview {interview_id}")
+            try:
+                from backend.models import Response, Question
+                responses = db.query(Response).filter(Response.interview_id == interview_id).all()
+                for r in responses:
+                    q = db.query(Question).filter(Question.id == r.question_id).first()
+                    evaluations.append({
+                        "content_score": r.content_score or 0,
+                        "relevance_score": r.relevance_score or 0,
+                        "clarity_score": r.clarity_score or 0,
+                        "fluency_score": r.fluency_score or 0,
+                        "confidence_score": r.confidence_score or 0,
+                    })
+                    if q:
+                        questions_context.append({
+                            "text": q.question_text,
+                            "category": q.category,
+                            "type": q.question_type
+                        })
+                logger.info(f"Loaded {len(evaluations)} evaluations from database")
+            except Exception as e:
+                logger.error(f"Failed to load evaluations from database: {e}")
         
         # Identify weak areas
         context.record_observation("Analyzing weak areas", {"evaluations_count": len(evaluations)})
@@ -535,21 +561,29 @@ class InterviewAgent:
         avg_content = sum(content_scores) / len(content_scores)
         avg_relevance = sum(relevance_scores) / len(relevance_scores)
         
-        # Combined content score
-        combined_content = (avg_content * 0.6 + avg_relevance * 0.4)
+        # Apply synonym boost: if content is strong but relevance is low, boost relevance
+        # (User might use synonyms/paraphrasing instead of exact keywords)
+        adjusted_relevance = avg_relevance
+        if avg_content >= 75 and avg_relevance < 50:
+            adjusted_relevance = max(avg_relevance, avg_content * 0.6)
+        
+        # Combined content score - weight content heavily (good answers shouldn't be penalized
+        # for not matching exact keywords)
+        combined_content = (avg_content * 0.70 + adjusted_relevance * 0.30)
         
         # Get speech/emotion scores from context, estimate from content if not available
         avg_clarity = context.get_average_score("clarity")
         avg_fluency = context.get_average_score("fluency")
         avg_confidence = context.get_average_score("confidence")
         
-        # If speech/emotion data not available, estimate based on content performance
+        # If speech/emotion data not available, DO NOT penalize text-only submissions
+        # Use the same combined content score (no 0.9/0.85 penalties)
         if avg_clarity == 0:
-            avg_clarity = combined_content * 0.9  # Slight reduction as estimate
+            avg_clarity = combined_content  # No penalty for text-only
         if avg_fluency == 0:
-            avg_fluency = combined_content * 0.9
+            avg_fluency = combined_content  # No penalty for text-only
         if avg_confidence == 0:
-            avg_confidence = combined_content * 0.85
+            avg_confidence = combined_content  # No penalty for text-only
         
         # Overall score (weighted)
         overall = (
@@ -561,7 +595,7 @@ class InterviewAgent:
         return {
             "overall_score": round(overall, 2),
             "content_score": round(combined_content, 2),
-            "relevance_score": round(avg_relevance, 2),
+            "relevance_score": round(adjusted_relevance, 2),
             "clarity_score": round(avg_clarity, 2),
             "fluency_score": round(avg_fluency, 2),
             "confidence_score": round(avg_confidence, 2)

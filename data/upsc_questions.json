@@ -1,0 +1,1631 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "name": "UPSC Civil Services Interview Question Bank",
+    "description": "Comprehensive question bank for UPSC/IAS interview preparation covering all major categories",
+    "total_questions": 200,
+    "categories": [
+      "current_affairs",
+      "indian_polity",
+      "ethics_integrity",
+      "economy",
+      "environment",
+      "science_technology",
+      "international_relations",
+      "social_issues",
+      "personality",
+      "opinion_based",
+      "administrative"
+    ],
+    "difficulty_levels": ["easy", "medium", "hard"],
+    "sources": [
+      "Previous UPSC interviews",
+      "Laxmikanth reference",
+      "Current affairs compilations",
+      "Ethics case studies"
+    ],
+    "last_updated": "2026-02-26"
+  },
+  "questions": [
+    {
+      "id": "upsc_001",
+      "text": "What do you understand by sustainable development? How can India balance economic growth with environmental protection?",
+      "category": "environment",
+      "difficulty": "medium",
+      "keywords": ["sustainable development", "environment", "economic growth", "balance"],
+      "follow_up": "Give an example of a successful sustainable development initiative in India."
+    },
+    {
+      "id": "upsc_002",
+      "text": "Explain the concept of cooperative federalism in India. How does NITI Aayog promote it?",
+      "category": "indian_polity",
+      "difficulty": "medium",
+      "keywords": ["cooperative federalism", "NITI Aayog", "centre-state relations"],
+      "follow_up": "What are the challenges in implementing cooperative federalism?"
+    },
+    {
+      "id": "upsc_003",
+      "text": "What are your views on the Right to Privacy as a fundamental right?",
+      "category": "indian_polity",
+      "difficulty": "medium",
+      "keywords": ["privacy", "fundamental rights", "Puttaswamy judgment", "Article 21"],
+      "follow_up": "How do you balance privacy with national security concerns?"
+    },
+    {
+      "id": "upsc_004",
+      "text": "Define integrity. Why is it considered the most important quality for a civil servant?",
+      "category": "ethics_integrity",
+      "difficulty": "easy",
+      "keywords": ["integrity", "civil servant", "ethics", "public service"],
+      "follow_up": "Can you share an instance from your life where you demonstrated integrity?"
+    },
+    {
+      "id": "upsc_005",
+      "text": "What motivated you to choose civil services as a career?",
+      "category": "personality",
+      "difficulty": "easy",
+      "keywords": ["motivation", "career choice", "civil services", "aspiration"],
+      "follow_up": "How have you prepared yourself for the challenges of this role?"
+    },
+    {
+      "id": "upsc_006",
+      "text": "Discuss the impact of Artificial Intelligence on governance and public service delivery in India.",
+      "category": "science_technology",
+      "difficulty": "medium",
+      "keywords": ["AI", "governance", "digital India", "technology"],
+      "follow_up": "What ethical concerns arise from using AI in government decisions?"
+    },
+    {
+      "id": "upsc_007",
+      "text": "What are the major challenges in India's neighborhood policy? Suggest ways to improve relations with neighboring countries.",
+      "category": "international_relations",
+      "difficulty": "hard",
+      "keywords": ["neighborhood policy", "foreign relations", "diplomacy", "regional cooperation"],
+      "follow_up": "How should India handle the China-Pakistan nexus?"
+    },
+    {
+      "id": "upsc_008",
+      "text": "Explain the concept of One Nation One Election. What are its merits and demerits?",
+      "category": "indian_polity",
+      "difficulty": "medium",
+      "keywords": ["simultaneous elections", "electoral reform", "federalism"],
+      "follow_up": "Is it practically feasible in India's diverse political landscape?"
+    },
+    {
+      "id": "upsc_009",
+      "text": "What do you understand by emotional intelligence? Why is it important for administrators?",
+      "category": "ethics_integrity",
+      "difficulty": "medium",
+      "keywords": ["emotional intelligence", "administration", "leadership", "empathy"],
+      "follow_up": "How would you handle a situation where your emotions conflict with your duty?"
+    },
+    {
+      "id": "upsc_010",
+      "text": "Discuss the significance of the 73rd and 74th Constitutional Amendments for local self-governance.",
+      "category": "indian_polity",
+      "difficulty": "medium",
+      "keywords": ["Panchayati Raj", "urban local bodies", "decentralization", "grassroots democracy"],
+      "follow_up": "Why have Panchayati Raj institutions not been fully successful?"
+    },
+    {
+      "id": "upsc_011",
+      "text": "What are your hobbies and how have they contributed to your personality development?",
+      "category": "personality",
+      "difficulty": "easy",
+      "keywords": ["hobbies", "personality", "self-development"],
+      "follow_up": "How will you continue these interests while serving as an officer?"
+    },
+    {
+      "id": "upsc_012",
+      "text": "Explain India's Act East Policy. How does it differ from the Look East Policy?",
+      "category": "international_relations",
+      "difficulty": "medium",
+      "keywords": ["Act East", "Look East", "ASEAN", "Indo-Pacific"],
+      "follow_up": "What role can Northeast India play in this policy?"
+    },
+    {
+      "id": "upsc_013",
+      "text": "You are a District Collector. A powerful MLA pressures you to grant illegal mining permission. How will you handle this?",
+      "category": "ethics_integrity",
+      "difficulty": "hard",
+      "keywords": ["ethics", "pressure", "mining", "decision-making"],
+      "follow_up": "What if the MLA threatens to get you transferred?"
+    },
+    {
+      "id": "upsc_014",
+      "text": "What is the significance of the National Education Policy 2020? Discuss its key features.",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["NEP 2020", "education reform", "multidisciplinary", "mother tongue"],
+      "follow_up": "What challenges might arise in implementing NEP in rural areas?"
+    },
+    {
+      "id": "upsc_015",
+      "text": "Discuss the concept of climate justice. How should India approach international climate negotiations?",
+      "category": "environment",
+      "difficulty": "hard",
+      "keywords": ["climate justice", "UNFCCC", "COP", "common but differentiated responsibilities"],
+      "follow_up": "Should India commit to net-zero emissions? At what cost?"
+    },
+    {
+      "id": "upsc_016",
+      "text": "What do you understand by the term 'conscience'? Can a civil servant act against the government's policy based on conscience?",
+      "category": "ethics_integrity",
+      "difficulty": "hard",
+      "keywords": ["conscience", "ethics", "policy", "civil servant duty"],
+      "follow_up": "Where do you draw the line between following orders and following conscience?"
+    },
+    {
+      "id": "upsc_017",
+      "text": "Explain the concept of fiscal federalism in India. What are the issues in Centre-State financial relations?",
+      "category": "economy",
+      "difficulty": "hard",
+      "keywords": ["fiscal federalism", "Finance Commission", "GST", "devolution"],
+      "follow_up": "How has GST affected state fiscal autonomy?"
+    },
+    {
+      "id": "upsc_018",
+      "text": "Who is your role model and why?",
+      "category": "personality",
+      "difficulty": "easy",
+      "keywords": ["role model", "inspiration", "values", "leadership"],
+      "follow_up": "What qualities of this person would you like to emulate as an administrator?"
+    },
+    {
+      "id": "upsc_019",
+      "text": "What are the major cyber security challenges facing India? How can the government address them?",
+      "category": "science_technology",
+      "difficulty": "medium",
+      "keywords": ["cyber security", "digital threats", "data protection", "critical infrastructure"],
+      "follow_up": "Should India have its own social media platforms for security reasons?"
+    },
+    {
+      "id": "upsc_020",
+      "text": "Discuss the issue of manual scavenging in India. What steps should be taken to eliminate it completely?",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["manual scavenging", "social justice", "dignity", "sanitation"],
+      "follow_up": "Why does manual scavenging persist despite legal prohibition?"
+    },
+    {
+      "id": "upsc_021",
+      "text": "What is the Indo-Pacific strategy? Why is this region important for India's foreign policy?",
+      "category": "international_relations",
+      "difficulty": "medium",
+      "keywords": ["Indo-Pacific", "Quad", "maritime security", "China"],
+      "follow_up": "How should India handle the US-China rivalry in this region?"
+    },
+    {
+      "id": "upsc_022",
+      "text": "Explain the concept of judicial activism and judicial overreach. Where should the line be drawn?",
+      "category": "indian_polity",
+      "difficulty": "hard",
+      "keywords": ["judicial activism", "PIL", "separation of powers", "checks and balances"],
+      "follow_up": "Give examples where judicial intervention was beneficial and where it overstepped."
+    },
+    {
+      "id": "upsc_023",
+      "text": "What are your three strengths and three weaknesses?",
+      "category": "personality",
+      "difficulty": "easy",
+      "keywords": ["self-awareness", "strengths", "weaknesses", "introspection"],
+      "follow_up": "How are you working to overcome your weaknesses?"
+    },
+    {
+      "id": "upsc_024",
+      "text": "Discuss the importance of civil services reforms in India. What changes would you suggest?",
+      "category": "administrative",
+      "difficulty": "hard",
+      "keywords": ["civil services reform", "bureaucracy", "efficiency", "accountability"],
+      "follow_up": "Why have previous reform recommendations not been fully implemented?"
+    },
+    {
+      "id": "upsc_025",
+      "text": "What is Universal Basic Income (UBI)? Is it feasible for India?",
+      "category": "economy",
+      "difficulty": "medium",
+      "keywords": ["UBI", "poverty alleviation", "welfare", "fiscal impact"],
+      "follow_up": "Would you prefer UBI over targeted subsidies? Why?"
+    },
+    {
+      "id": "upsc_026",
+      "text": "Discuss the challenges of urbanization in India. How can we make our cities more livable?",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["urbanization", "smart cities", "infrastructure", "migration"],
+      "follow_up": "Should we focus on developing tier-2 and tier-3 cities instead?"
+    },
+    {
+      "id": "upsc_027",
+      "text": "What is the significance of Mission Chandrayaan and Gaganyaan for India?",
+      "category": "science_technology",
+      "difficulty": "medium",
+      "keywords": ["ISRO", "Chandrayaan", "Gaganyaan", "space program"],
+      "follow_up": "Is spending on space exploration justified when we have poverty to address?"
+    },
+    {
+      "id": "upsc_028",
+      "text": "You discover that your superior officer is involved in corruption. What will you do?",
+      "category": "ethics_integrity",
+      "difficulty": "hard",
+      "keywords": ["corruption", "whistleblowing", "hierarchy", "ethics"],
+      "follow_up": "What if reporting this might end your career?"
+    },
+    {
+      "id": "upsc_029",
+      "text": "Discuss the concept of social capital and its importance in governance.",
+      "category": "administrative",
+      "difficulty": "medium",
+      "keywords": ["social capital", "trust", "community", "governance"],
+      "follow_up": "How can administrators build social capital in their jurisdictions?"
+    },
+    {
+      "id": "upsc_030",
+      "text": "What are the main provisions of the Citizenship Amendment Act? Discuss the controversy around it.",
+      "category": "indian_polity",
+      "difficulty": "hard",
+      "keywords": ["CAA", "citizenship", "NRC", "secularism"],
+      "follow_up": "How would you explain this law to a concerned citizen?"
+    },
+    {
+      "id": "upsc_031",
+      "text": "Tell us about your educational background and how it has prepared you for civil services.",
+      "category": "personality",
+      "difficulty": "easy",
+      "keywords": ["education", "background", "preparation", "relevance"],
+      "follow_up": "How will you apply your academic knowledge in administration?"
+    },
+    {
+      "id": "upsc_032",
+      "text": "Discuss the importance of women's representation in Parliament and state legislatures.",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["women reservation", "representation", "gender equality", "legislature"],
+      "follow_up": "Why has the Women's Reservation Bill not been passed despite decades of discussion?"
+    },
+    {
+      "id": "upsc_033",
+      "text": "What is blockchain technology? How can it be used in governance?",
+      "category": "science_technology",
+      "difficulty": "medium",
+      "keywords": ["blockchain", "transparency", "land records", "supply chain"],
+      "follow_up": "What are the challenges in implementing blockchain in government systems?"
+    },
+    {
+      "id": "upsc_034",
+      "text": "Discuss India's energy security challenges and the transition to renewable energy.",
+      "category": "environment",
+      "difficulty": "medium",
+      "keywords": ["energy security", "renewable energy", "solar", "energy transition"],
+      "follow_up": "How should India balance coal dependency with climate commitments?"
+    },
+    {
+      "id": "upsc_035",
+      "text": "What do you understand by the term 'public interest'? How should an administrator interpret it?",
+      "category": "ethics_integrity",
+      "difficulty": "medium",
+      "keywords": ["public interest", "ethics", "decision-making", "welfare"],
+      "follow_up": "What if public interest conflicts with political directives?"
+    },
+    {
+      "id": "upsc_036",
+      "text": "Explain the concept of Atmanirbhar Bharat. What are its key components?",
+      "category": "economy",
+      "difficulty": "medium",
+      "keywords": ["Atmanirbhar Bharat", "self-reliance", "manufacturing", "Make in India"],
+      "follow_up": "Is self-reliance compatible with globalization and free trade?"
+    },
+    {
+      "id": "upsc_037",
+      "text": "Should there be a Uniform Civil Code in India? Present arguments for and against.",
+      "category": "opinion_based",
+      "difficulty": "hard",
+      "keywords": ["UCC", "personal laws", "secularism", "Article 44"],
+      "follow_up": "How would you implement UCC without hurting religious sentiments?"
+    },
+    {
+      "id": "upsc_038",
+      "text": "Discuss the significance of e-governance initiatives in India. Give examples.",
+      "category": "administrative",
+      "difficulty": "medium",
+      "keywords": ["e-governance", "digital India", "service delivery", "transparency"],
+      "follow_up": "How can we bridge the digital divide in rural areas?"
+    },
+    {
+      "id": "upsc_039",
+      "text": "What are the challenges facing the Indian judiciary? Suggest reforms.",
+      "category": "indian_polity",
+      "difficulty": "hard",
+      "keywords": ["judiciary", "pendency", "judicial reforms", "appointment"],
+      "follow_up": "Should judges be appointed through a transparent process like NJAC?"
+    },
+    {
+      "id": "upsc_040",
+      "text": "What would you do if posted to a conflict-affected area like Kashmir or Northeast?",
+      "category": "administrative",
+      "difficulty": "hard",
+      "keywords": ["conflict", "security", "administration", "development"],
+      "follow_up": "How would you win the trust of local communities?"
+    },
+    {
+      "id": "upsc_041",
+      "text": "Discuss the farmer distress in India and suggest measures to improve their condition.",
+      "category": "economy",
+      "difficulty": "medium",
+      "keywords": ["farmers", "agriculture", "MSP", "rural distress"],
+      "follow_up": "What is your view on farm laws and the farmer protests?"
+    },
+    {
+      "id": "upsc_042",
+      "text": "What is the difference between secularism as practiced in India and Western countries?",
+      "category": "indian_polity",
+      "difficulty": "medium",
+      "keywords": ["secularism", "religion", "state", "Constitution"],
+      "follow_up": "Is there a threat to India's secular fabric?"
+    },
+    {
+      "id": "upsc_043",
+      "text": "Define good governance. What are its essential features?",
+      "category": "administrative",
+      "difficulty": "easy",
+      "keywords": ["good governance", "transparency", "accountability", "participation"],
+      "follow_up": "How can you contribute to good governance as an administrator?"
+    },
+    {
+      "id": "upsc_044",
+      "text": "Discuss the importance of water conservation and management in India.",
+      "category": "environment",
+      "difficulty": "medium",
+      "keywords": ["water conservation", "Jal Jeevan Mission", "groundwater", "rivers"],
+      "follow_up": "How would you handle water disputes between states?"
+    },
+    {
+      "id": "upsc_045",
+      "text": "What is your opinion on capital punishment? Should it be abolished?",
+      "category": "opinion_based",
+      "difficulty": "hard",
+      "keywords": ["capital punishment", "death penalty", "justice", "human rights"],
+      "follow_up": "What about the 'rarest of rare' doctrine?"
+    },
+    {
+      "id": "upsc_046",
+      "text": "Discuss the healthcare challenges in India and the potential of Ayushman Bharat scheme.",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["healthcare", "Ayushman Bharat", "public health", "insurance"],
+      "follow_up": "Should India increase public spending on healthcare to 5% of GDP?"
+    },
+    {
+      "id": "upsc_047",
+      "text": "What is data localization? Why is it important for India?",
+      "category": "science_technology",
+      "difficulty": "medium",
+      "keywords": ["data localization", "data protection", "privacy", "sovereignty"],
+      "follow_up": "How do you balance data localization with ease of doing business?"
+    },
+    {
+      "id": "upsc_048",
+      "text": "How should an administrator maintain neutrality while implementing government policies?",
+      "category": "ethics_integrity",
+      "difficulty": "medium",
+      "keywords": ["neutrality", "impartiality", "politics", "civil servant"],
+      "follow_up": "What if you fundamentally disagree with a government policy?"
+    },
+    {
+      "id": "upsc_049",
+      "text": "Discuss India's relations with Russia in the changing geopolitical scenario.",
+      "category": "international_relations",
+      "difficulty": "hard",
+      "keywords": ["India-Russia", "strategic partnership", "defense", "Ukraine"],
+      "follow_up": "How should India navigate between Russia and Western allies?"
+    },
+    {
+      "id": "upsc_050",
+      "text": "What is the significance of your optional subject in civil services? How is it relevant to administration?",
+      "category": "personality",
+      "difficulty": "easy",
+      "keywords": ["optional subject", "relevance", "knowledge", "preparation"],
+      "follow_up": "Give a practical application of your optional subject knowledge in governance."
+    },
+    {
+      "id": "upsc_051",
+      "text": "Discuss the role of media in democracy. Is there a need for regulating social media?",
+      "category": "indian_polity",
+      "difficulty": "medium",
+      "keywords": ["media", "press freedom", "social media", "fake news"],
+      "follow_up": "How would you combat misinformation while protecting free speech?"
+    },
+    {
+      "id": "upsc_052",
+      "text": "What is the Startup India initiative? How can it promote entrepreneurship?",
+      "category": "economy",
+      "difficulty": "medium",
+      "keywords": ["Startup India", "entrepreneurship", "innovation", "MSME"],
+      "follow_up": "What challenges do startups face in India?"
+    },
+    {
+      "id": "upsc_053",
+      "text": "Discuss the importance of ethics in public administration. Can ethical governance be achieved in India?",
+      "category": "ethics_integrity",
+      "difficulty": "medium",
+      "keywords": ["ethics", "public administration", "corruption", "integrity"],
+      "follow_up": "What administrative reforms would promote ethical governance?"
+    },
+    {
+      "id": "upsc_054",
+      "text": "What is your understanding of the term 'nation-building'? How can civil services contribute?",
+      "category": "administrative",
+      "difficulty": "easy",
+      "keywords": ["nation-building", "development", "civil services", "public service"],
+      "follow_up": "What aspect of nation-building would you prioritize?"
+    },
+    {
+      "id": "upsc_055",
+      "text": "Discuss the challenges of implementing land reforms in India.",
+      "category": "economy",
+      "difficulty": "hard",
+      "keywords": ["land reforms", "land acquisition", "compensation", "agriculture"],
+      "follow_up": "How would you balance industry needs with farmers' rights?"
+    },
+    {
+      "id": "upsc_056",
+      "text": "What are the implications of rising sea levels for India's coastal regions?",
+      "category": "environment",
+      "difficulty": "medium",
+      "keywords": ["sea level rise", "coastal erosion", "climate change", "adaptation"],
+      "follow_up": "What measures should coastal states take?"
+    },
+    {
+      "id": "upsc_057",
+      "text": "How do you handle stress and pressure? Give examples from your life.",
+      "category": "personality",
+      "difficulty": "easy",
+      "keywords": ["stress management", "pressure", "resilience", "coping"],
+      "follow_up": "How will this help you in handling administrative challenges?"
+    },
+    {
+      "id": "upsc_058",
+      "text": "Discuss the concept of smart cities. What are the challenges in their implementation?",
+      "category": "administrative",
+      "difficulty": "medium",
+      "keywords": ["smart cities", "urban planning", "technology", "infrastructure"],
+      "follow_up": "Are smart cities the solution for urban India?"
+    },
+    {
+      "id": "upsc_059",
+      "text": "What is the significance of India's G20 presidency?",
+      "category": "international_relations",
+      "difficulty": "medium",
+      "keywords": ["G20", "multilateralism", "global south", "climate"],
+      "follow_up": "What priorities should India push in global forums?"
+    },
+    {
+      "id": "upsc_060",
+      "text": "Discuss the reservation policy in India. Is it still relevant?",
+      "category": "social_issues",
+      "difficulty": "hard",
+      "keywords": ["reservation", "affirmative action", "social justice", "caste"],
+      "follow_up": "Should reservation be based on economic criteria instead of caste?"
+    },
+    {
+      "id": "upsc_061",
+      "text": "What is the role of civil society in governance? Give examples.",
+      "category": "indian_polity",
+      "difficulty": "medium",
+      "keywords": ["civil society", "NGO", "participation", "accountability"],
+      "follow_up": "Should there be more regulation of civil society organizations?"
+    },
+    {
+      "id": "upsc_062",
+      "text": "Discuss the issue of child malnutrition in India. What can be done to address it?",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["malnutrition", "POSHAN Abhiyaan", "stunting", "child health"],
+      "follow_up": "Why has progress been slow despite various schemes?"
+    },
+    {
+      "id": "upsc_063",
+      "text": "What do you understand by the phrase 'corruption is a way of life in India'?",
+      "category": "ethics_integrity",
+      "difficulty": "hard",
+      "keywords": ["corruption", "systemic", "ethics", "governance"],
+      "follow_up": "As an administrator, how would you tackle petty corruption?"
+    },
+    {
+      "id": "upsc_064",
+      "text": "Explain India's nuclear doctrine. Is there a need to revise it?",
+      "category": "international_relations",
+      "difficulty": "hard",
+      "keywords": ["nuclear doctrine", "no first use", "deterrence", "security"],
+      "follow_up": "How do you view India's nuclear relationship with Pakistan and China?"
+    },
+    {
+      "id": "upsc_065",
+      "text": "What are the emerging technologies that will shape the future of governance?",
+      "category": "science_technology",
+      "difficulty": "medium",
+      "keywords": ["AI", "IoT", "5G", "emerging tech"],
+      "follow_up": "What skills should civil servants develop to leverage these technologies?"
+    },
+    {
+      "id": "upsc_066",
+      "text": "Why is there a trust deficit between citizens and the government? How can it be addressed?",
+      "category": "administrative",
+      "difficulty": "medium",
+      "keywords": ["trust", "governance", "citizen engagement", "transparency"],
+      "follow_up": "What role can social media play in bridging this gap?"
+    },
+    {
+      "id": "upsc_067",
+      "text": "Discuss the Naxalite problem in India. What approach should be taken to address it?",
+      "category": "indian_polity",
+      "difficulty": "hard",
+      "keywords": ["Naxalism", "left-wing extremism", "development", "security"],
+      "follow_up": "Is the development-security approach working?"
+    },
+    {
+      "id": "upsc_068",
+      "text": "What is the demographic dividend? How can India maximize its benefits?",
+      "category": "economy",
+      "difficulty": "medium",
+      "keywords": ["demographic dividend", "youth", "employment", "skill development"],
+      "follow_up": "Is India's demographic dividend turning into a demographic disaster?"
+    },
+    {
+      "id": "upsc_069",
+      "text": "How would you describe yourself in one word? Justify.",
+      "category": "personality",
+      "difficulty": "easy",
+      "keywords": ["self-assessment", "personality", "values"],
+      "follow_up": "How does this quality relate to your suitability for civil services?"
+    },
+    {
+      "id": "upsc_070",
+      "text": "Discuss the significance of the Right to Information Act. Has it achieved its objectives?",
+      "category": "indian_polity",
+      "difficulty": "medium",
+      "keywords": ["RTI", "transparency", "accountability", "information"],
+      "follow_up": "Why are attacks on RTI activists increasing?"
+    },
+    {
+      "id": "upsc_071",
+      "text": "What is your view on legalizing same-sex marriages in India?",
+      "category": "opinion_based",
+      "difficulty": "hard",
+      "keywords": ["LGBTQ", "same-sex marriage", "equality", "tradition"],
+      "follow_up": "How would you balance individual rights with societal concerns?"
+    },
+    {
+      "id": "upsc_072",
+      "text": "Discuss the role of DRDO in India's defense preparedness.",
+      "category": "science_technology",
+      "difficulty": "medium",
+      "keywords": ["DRDO", "defense", "indigenization", "technology"],
+      "follow_up": "Why has India struggled with indigenous weapons development?"
+    },
+    {
+      "id": "upsc_073",
+      "text": "How should India manage its relationship with the Taliban-led Afghanistan?",
+      "category": "international_relations",
+      "difficulty": "hard",
+      "keywords": ["Afghanistan", "Taliban", "regional stability", "terrorism"],
+      "follow_up": "What are India's security concerns in Afghanistan?"
+    },
+    {
+      "id": "upsc_074",
+      "text": "What is your opinion on freebies culture in Indian politics?",
+      "category": "opinion_based",
+      "difficulty": "medium",
+      "keywords": ["freebies", "welfare", "populism", "fiscal responsibility"],
+      "follow_up": "Where do you draw the line between welfare and freebies?"
+    },
+    {
+      "id": "upsc_075",
+      "text": "Discuss the challenges of plastic pollution in India. What solutions would you suggest?",
+      "category": "environment",
+      "difficulty": "medium",
+      "keywords": ["plastic pollution", "waste management", "single-use plastic", "recycling"],
+      "follow_up": "How can behavioral change be promoted?"
+    },
+    {
+      "id": "upsc_076",
+      "text": "What do you understand by 'service before self'? How would you practice it?",
+      "category": "ethics_integrity",
+      "difficulty": "easy",
+      "keywords": ["service", "selflessness", "duty", "public service"],
+      "follow_up": "Can you give an example where you put others' interests before your own?"
+    },
+    {
+      "id": "upsc_077",
+      "text": "Discuss India's manufacturing sector challenges and the PLI scheme.",
+      "category": "economy",
+      "difficulty": "medium",
+      "keywords": ["manufacturing", "PLI", "Make in India", "industry"],
+      "follow_up": "Can India become a global manufacturing hub?"
+    },
+    {
+      "id": "upsc_078",
+      "text": "What are the issues in India's higher education system? How can they be addressed?",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["higher education", "universities", "research", "quality"],
+      "follow_up": "Should we have more central universities or focus on state universities?"
+    },
+    {
+      "id": "upsc_079",
+      "text": "Explain the concept of 'minimum government, maximum governance'. Is it achievable?",
+      "category": "administrative",
+      "difficulty": "medium",
+      "keywords": ["governance", "government", "efficiency", "bureaucracy"],
+      "follow_up": "What administrative reforms support this concept?"
+    },
+    {
+      "id": "upsc_080",
+      "text": "What lessons should India learn from Sri Lanka's economic crisis?",
+      "category": "economy",
+      "difficulty": "medium",
+      "keywords": ["Sri Lanka crisis", "debt", "forex", "fiscal prudence"],
+      "follow_up": "Is India at risk of a similar crisis?"
+    },
+    {
+      "id": "upsc_081",
+      "text": "Discuss the role of religion in Indian politics. Is there politicization of religion?",
+      "category": "indian_polity",
+      "difficulty": "hard",
+      "keywords": ["religion", "politics", "secularism", "polarization"],
+      "follow_up": "How should civil servants deal with communal tensions?"
+    },
+    {
+      "id": "upsc_082",
+      "text": "What is your view on providing minority status to Hindus in states where they are numerically less?",
+      "category": "opinion_based",
+      "difficulty": "hard",
+      "keywords": ["minority", "Hindu", "states", "Constitution"],
+      "follow_up": "What is the rationale behind minority protections?"
+    },
+    {
+      "id": "upsc_083",
+      "text": "Discuss the importance of disaster management in India. Give examples of recent disasters.",
+      "category": "administrative",
+      "difficulty": "medium",
+      "keywords": ["disaster management", "NDMA", "preparedness", "response"],
+      "follow_up": "Are we adequately prepared for climate-related disasters?"
+    },
+    {
+      "id": "upsc_084",
+      "text": "What is quantum computing? How can it impact governance and security?",
+      "category": "science_technology",
+      "difficulty": "hard",
+      "keywords": ["quantum computing", "encryption", "technology", "security"],
+      "follow_up": "Should India invest more in quantum research?"
+    },
+    {
+      "id": "upsc_085",
+      "text": "Discuss India's relations with the Gulf countries and their importance.",
+      "category": "international_relations",
+      "difficulty": "medium",
+      "keywords": ["Gulf", "Middle East", "diaspora", "energy"],
+      "follow_up": "How has the Abraham Accords affected India's position?"
+    },
+    {
+      "id": "upsc_086",
+      "text": "What qualities distinguish a good leader from an administrator?",
+      "category": "ethics_integrity",
+      "difficulty": "medium",
+      "keywords": ["leadership", "administration", "qualities", "vision"],
+      "follow_up": "Which quality do you think is more important in a civil servant?"
+    },
+    {
+      "id": "upsc_087",
+      "text": "Discuss the problem of stubble burning and its impact on air quality.",
+      "category": "environment",
+      "difficulty": "medium",
+      "keywords": ["stubble burning", "air pollution", "Punjab", "Haryana"],
+      "follow_up": "Why have solutions not been implemented effectively?"
+    },
+    {
+      "id": "upsc_088",
+      "text": "What is your opinion on the criminalization of politics in India?",
+      "category": "opinion_based",
+      "difficulty": "hard",
+      "keywords": ["criminalization", "politics", "election", "democracy"],
+      "follow_up": "What reforms would you suggest?"
+    },
+    {
+      "id": "upsc_089",
+      "text": "Tell us about your family background and how it has influenced you.",
+      "category": "personality",
+      "difficulty": "easy",
+      "keywords": ["family", "background", "influence", "values"],
+      "follow_up": "What values from your family will you carry into your service?"
+    },
+    {
+      "id": "upsc_090",
+      "text": "Discuss the issue of mob lynching in India. What measures should be taken?",
+      "category": "social_issues",
+      "difficulty": "hard",
+      "keywords": ["mob lynching", "law and order", "vigilantism", "justice"],
+      "follow_up": "Is there a need for a separate law against mob lynching?"
+    },
+    {
+      "id": "upsc_091",
+      "text": "What do you understand by 'lateral entry' into civil services? Is it a good idea?",
+      "category": "administrative",
+      "difficulty": "medium",
+      "keywords": ["lateral entry", "civil services", "expertise", "reforms"],
+      "follow_up": "Does it undermine the traditional civil services system?"
+    },
+    {
+      "id": "upsc_092",
+      "text": "Discuss the Digital India initiative and its achievements.",
+      "category": "science_technology",
+      "difficulty": "easy",
+      "keywords": ["Digital India", "digitization", "connectivity", "services"],
+      "follow_up": "What are the challenges in last-mile connectivity?"
+    },
+    {
+      "id": "upsc_093",
+      "text": "What is gig economy? What protections should gig workers have?",
+      "category": "economy",
+      "difficulty": "medium",
+      "keywords": ["gig economy", "platform workers", "labor laws", "social security"],
+      "follow_up": "How are the new labor codes addressing gig worker concerns?"
+    },
+    {
+      "id": "upsc_094",
+      "text": "Discuss the issue of fake news and its impact on democracy.",
+      "category": "indian_polity",
+      "difficulty": "medium",
+      "keywords": ["fake news", "misinformation", "media", "democracy"],
+      "follow_up": "Should the government regulate social media content?"
+    },
+    {
+      "id": "upsc_095",
+      "text": "What would you do if you witness your colleague taking a bribe?",
+      "category": "ethics_integrity",
+      "difficulty": "medium",
+      "keywords": ["bribery", "corruption", "colleague", "action"],
+      "follow_up": "What if confronting them directly might be risky?"
+    },
+    {
+      "id": "upsc_096",
+      "text": "Discuss India's semiconductor mission and its strategic importance.",
+      "category": "science_technology",
+      "difficulty": "medium",
+      "keywords": ["semiconductor", "chips", "manufacturing", "supply chain"],
+      "follow_up": "Can India compete with Taiwan and South Korea?"
+    },
+    {
+      "id": "upsc_097",
+      "text": "What is your view on the working of the Election Commission of India?",
+      "category": "indian_polity",
+      "difficulty": "hard",
+      "keywords": ["Election Commission", "EVM", "elections", "neutrality"],
+      "follow_up": "Should there be more transparency in EC appointments?"
+    },
+    {
+      "id": "upsc_098",
+      "text": "Discuss the importance of mental health awareness in India.",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["mental health", "stigma", "awareness", "healthcare"],
+      "follow_up": "How can civil servants promote mental health in their departments?"
+    },
+    {
+      "id": "upsc_099",
+      "text": "What is your biggest failure and what did you learn from it?",
+      "category": "personality",
+      "difficulty": "medium",
+      "keywords": ["failure", "learning", "resilience", "growth"],
+      "follow_up": "How has this experience prepared you for civil services challenges?"
+    },
+    {
+      "id": "upsc_100",
+      "text": "Discuss India's relationship with Bangladesh and recent developments.",
+      "category": "international_relations",
+      "difficulty": "medium",
+      "keywords": ["Bangladesh", "bilateral", "border", "water sharing"],
+      "follow_up": "What are the key irritants in the relationship?"
+    },
+    {
+      "id": "upsc_101",
+      "text": "What is the significance of the Anti-Defection Law? Has it achieved its objectives?",
+      "category": "indian_polity",
+      "difficulty": "medium",
+      "keywords": ["anti-defection", "tenth schedule", "party discipline", "democracy"],
+      "follow_up": "Should the law be amended?"
+    },
+    {
+      "id": "upsc_102",
+      "text": "Discuss the concept of blue economy and its relevance for India.",
+      "category": "economy",
+      "difficulty": "medium",
+      "keywords": ["blue economy", "maritime", "ocean resources", "fisheries"],
+      "follow_up": "How can coastal states benefit from the blue economy?"
+    },
+    {
+      "id": "upsc_103",
+      "text": "What measures should be taken to promote gender equality in India?",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["gender equality", "women empowerment", "discrimination", "rights"],
+      "follow_up": "What role can male civil servants play in promoting gender equality?"
+    },
+    {
+      "id": "upsc_104",
+      "text": "Explain the concept of carbon credits and carbon trading.",
+      "category": "environment",
+      "difficulty": "medium",
+      "keywords": ["carbon credits", "emissions trading", "climate", "market"],
+      "follow_up": "Should India have a domestic carbon market?"
+    },
+    {
+      "id": "upsc_105",
+      "text": "What are your views on the population control debate in India?",
+      "category": "opinion_based",
+      "difficulty": "hard",
+      "keywords": ["population", "control", "policy", "demographics"],
+      "follow_up": "Should India have a two-child policy?"
+    },
+    {
+      "id": "upsc_106",
+      "text": "Discuss the importance of the Swachh Bharat Mission and its achievements.",
+      "category": "administrative",
+      "difficulty": "easy",
+      "keywords": ["Swachh Bharat", "sanitation", "ODF", "cleanliness"],
+      "follow_up": "What challenges remain in sustaining ODF status?"
+    },
+    {
+      "id": "upsc_107",
+      "text": "What is genetic engineering? What are its ethical implications?",
+      "category": "science_technology",
+      "difficulty": "hard",
+      "keywords": ["genetic engineering", "GMO", "CRISPR", "ethics"],
+      "follow_up": "Should India allow GM crops?"
+    },
+    {
+      "id": "upsc_108",
+      "text": "Discuss the concept of social audit and its importance in governance.",
+      "category": "administrative",
+      "difficulty": "medium",
+      "keywords": ["social audit", "MGNREGA", "accountability", "participation"],
+      "follow_up": "Why are social audits not happening regularly in most states?"
+    },
+    {
+      "id": "upsc_109",
+      "text": "What is your view on the Agnipath scheme for military recruitment?",
+      "category": "opinion_based",
+      "difficulty": "medium",
+      "keywords": ["Agnipath", "Agniveer", "military", "recruitment"],
+      "follow_up": "How would you address the concerns of protesters?"
+    },
+    {
+      "id": "upsc_110",
+      "text": "Discuss India's space diplomacy and its role in regional cooperation.",
+      "category": "international_relations",
+      "difficulty": "medium",
+      "keywords": ["space diplomacy", "SAARC", "satellite", "ISRO"],
+      "follow_up": "How can India leverage its space capabilities for soft power?"
+    },
+    {
+      "id": "upsc_111",
+      "text": "What is the importance of federalism in India? Is it under threat?",
+      "category": "indian_polity",
+      "difficulty": "hard",
+      "keywords": ["federalism", "centre-state", "GST", "autonomy"],
+      "follow_up": "How should disputes between Centre and States be resolved?"
+    },
+    {
+      "id": "upsc_112",
+      "text": "Discuss the issue of child labor in India. What more needs to be done?",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["child labor", "exploitation", "education", "rights"],
+      "follow_up": "Why does child labor persist despite laws?"
+    },
+    {
+      "id": "upsc_113",
+      "text": "What is compassion in administration? Give an example where you showed compassion.",
+      "category": "ethics_integrity",
+      "difficulty": "easy",
+      "keywords": ["compassion", "empathy", "humanity", "service"],
+      "follow_up": "How would you balance compassion with enforcing rules?"
+    },
+    {
+      "id": "upsc_114",
+      "text": "Discuss the challenges of implementing GST in India.",
+      "category": "economy",
+      "difficulty": "medium",
+      "keywords": ["GST", "taxation", "compliance", "rates"],
+      "follow_up": "Is GST living up to its promise of 'One Nation One Tax'?"
+    },
+    {
+      "id": "upsc_115",
+      "text": "What is the significance of the International Solar Alliance?",
+      "category": "environment",
+      "difficulty": "medium",
+      "keywords": ["ISA", "solar", "renewable", "climate leadership"],
+      "follow_up": "How can India lead the global energy transition?"
+    },
+    {
+      "id": "upsc_116",
+      "text": "If you could change one thing about India, what would it be and why?",
+      "category": "personality",
+      "difficulty": "medium",
+      "keywords": ["change", "improvement", "vision", "priority"],
+      "follow_up": "How would you work towards this change as a civil servant?"
+    },
+    {
+      "id": "upsc_117",
+      "text": "Discuss the impact of COVID-19 on India's economy and society.",
+      "category": "current_affairs",
+      "difficulty": "medium",
+      "keywords": ["COVID-19", "pandemic", "recovery", "lessons"],
+      "follow_up": "Were we prepared for the second wave? What lessons did we learn?"
+    },
+    {
+      "id": "upsc_118",
+      "text": "What is the One District One Product (ODOP) scheme? How effective is it?",
+      "category": "economy",
+      "difficulty": "medium",
+      "keywords": ["ODOP", "local products", "MSME", "exports"],
+      "follow_up": "How can it promote rural entrepreneurship?"
+    },
+    {
+      "id": "upsc_119",
+      "text": "Discuss the role of the Finance Commission in Indian fiscal federalism.",
+      "category": "economy",
+      "difficulty": "hard",
+      "keywords": ["Finance Commission", "devolution", "grants", "federalism"],
+      "follow_up": "Should the frequency of Finance Commission recommendations be increased?"
+    },
+    {
+      "id": "upsc_120",
+      "text": "What is your opinion on euthanasia and right to die with dignity?",
+      "category": "opinion_based",
+      "difficulty": "hard",
+      "keywords": ["euthanasia", "passive euthanasia", "dignity", "life"],
+      "follow_up": "How did the Aruna Shanbaug case shape this debate?"
+    },
+    {
+      "id": "upsc_121",
+      "text": "Discuss the importance of protecting endangered species in India.",
+      "category": "environment",
+      "difficulty": "medium",
+      "keywords": ["wildlife", "conservation", "endangered species", "biodiversity"],
+      "follow_up": "Should conservation come at the cost of tribal rights?"
+    },
+    {
+      "id": "upsc_122",
+      "text": "What are the challenges in India's prison reforms?",
+      "category": "social_issues",
+      "difficulty": "hard",
+      "keywords": ["prison reform", "undertrials", "overcrowding", "rehabilitation"],
+      "follow_up": "Should we focus on reformation or punishment?"
+    },
+    {
+      "id": "upsc_123",
+      "text": "Discuss India's vaccine diplomacy and its significance.",
+      "category": "international_relations",
+      "difficulty": "medium",
+      "keywords": ["vaccine diplomacy", "Vaccine Maitri", "soft power", "pharma"],
+      "follow_up": "Should India have prioritized domestic vaccination first?"
+    },
+    {
+      "id": "upsc_124",
+      "text": "What is the concept of nudge theory in governance? Give examples.",
+      "category": "administrative",
+      "difficulty": "medium",
+      "keywords": ["nudge theory", "behavioral economics", "policy", "behavior change"],
+      "follow_up": "How can nudge be used to improve tax compliance?"
+    },
+    {
+      "id": "upsc_125",
+      "text": "Discuss the importance of preserving indigenous knowledge systems.",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["indigenous knowledge", "traditional", "preservation", "IP rights"],
+      "follow_up": "How can we protect traditional knowledge from biopiracy?"
+    },
+    {
+      "id": "upsc_126",
+      "text": "What do you understand by 'performative governance'? Is it a problem?",
+      "category": "administrative",
+      "difficulty": "hard",
+      "keywords": ["performative governance", "optics", "substance", "reform"],
+      "follow_up": "How would you ensure substance over symbolism in your work?"
+    },
+    {
+      "id": "upsc_127",
+      "text": "Discuss the role of think tanks in policy formulation.",
+      "category": "indian_polity",
+      "difficulty": "medium",
+      "keywords": ["think tanks", "policy", "research", "evidence-based"],
+      "follow_up": "Should government rely more on outside expertise?"
+    },
+    {
+      "id": "upsc_128",
+      "text": "What is the importance of sports in national integration?",
+      "category": "social_issues",
+      "difficulty": "easy",
+      "keywords": ["sports", "integration", "soft power", "unity"],
+      "follow_up": "How can India improve its Olympic medal tally?"
+    },
+    {
+      "id": "upsc_129",
+      "text": "Discuss the concept of moral courage and its importance for civil servants.",
+      "category": "ethics_integrity",
+      "difficulty": "medium",
+      "keywords": ["moral courage", "ethics", "stand", "principles"],
+      "follow_up": "Give an example where you demonstrated moral courage."
+    },
+    {
+      "id": "upsc_130",
+      "text": "What is Digital Public Infrastructure (DPI)? Discuss India Stack.",
+      "category": "science_technology",
+      "difficulty": "medium",
+      "keywords": ["DPI", "India Stack", "Aadhaar", "UPI"],
+      "follow_up": "How can other countries benefit from India's experience?"
+    },
+    {
+      "id": "upsc_131",
+      "text": "Discuss the issue of declining groundwater levels in India.",
+      "category": "environment",
+      "difficulty": "medium",
+      "keywords": ["groundwater", "depletion", "irrigation", "recharge"],
+      "follow_up": "How would you promote rainwater harvesting in your district?"
+    },
+    {
+      "id": "upsc_132",
+      "text": "What are your views on compulsory voting in India?",
+      "category": "opinion_based",
+      "difficulty": "medium",
+      "keywords": ["compulsory voting", "elections", "participation", "democracy"],
+      "follow_up": "Would compulsory voting improve electoral outcomes?"
+    },
+    {
+      "id": "upsc_133",
+      "text": "Discuss the importance of preventive healthcare versus curative healthcare.",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["preventive healthcare", "primary health", "wellness", "disease prevention"],
+      "follow_up": "How can we shift focus to preventive healthcare?"
+    },
+    {
+      "id": "upsc_134",
+      "text": "What is your understanding of the term 'soft power'? How does India project it?",
+      "category": "international_relations",
+      "difficulty": "medium",
+      "keywords": ["soft power", "culture", "diplomacy", "influence"],
+      "follow_up": "What more can India do to enhance its soft power?"
+    },
+    {
+      "id": "upsc_135",
+      "text": "Discuss the concept of separation of powers and checks and balances.",
+      "category": "indian_polity",
+      "difficulty": "medium",
+      "keywords": ["separation of powers", "checks and balances", "executive", "legislature"],
+      "follow_up": "Is the separation of powers adequate in India?"
+    },
+    {
+      "id": "upsc_136",
+      "text": "What would you do if transferred to a remote tribal area?",
+      "category": "administrative",
+      "difficulty": "medium",
+      "keywords": ["tribal", "remote posting", "challenges", "development"],
+      "follow_up": "How would you understand and respect tribal culture while implementing policies?"
+    },
+    {
+      "id": "upsc_137",
+      "text": "Discuss the importance of public-private partnerships in infrastructure development.",
+      "category": "economy",
+      "difficulty": "medium",
+      "keywords": ["PPP", "infrastructure", "investment", "efficiency"],
+      "follow_up": "What are the challenges in PPP models in India?"
+    },
+    {
+      "id": "upsc_138",
+      "text": "What is circular economy? How can India transition to it?",
+      "category": "environment",
+      "difficulty": "medium",
+      "keywords": ["circular economy", "waste", "recycling", "sustainability"],
+      "follow_up": "Give an example of circular economy in practice."
+    },
+    {
+      "id": "upsc_139",
+      "text": "Do you think bureaucracy in India is resistant to change?",
+      "category": "administrative",
+      "difficulty": "hard",
+      "keywords": ["bureaucracy", "change", "reform", "resistance"],
+      "follow_up": "How would you introduce reforms in a resistant environment?"
+    },
+    {
+      "id": "upsc_140",
+      "text": "Discuss the relevance of Gandhian principles in modern governance.",
+      "category": "ethics_integrity",
+      "difficulty": "medium",
+      "keywords": ["Gandhi", "non-violence", "truth", "governance"],
+      "follow_up": "Which Gandhian principle would you apply as an administrator?"
+    },
+    {
+      "id": "upsc_141",
+      "text": "What is the significance of the BRICS grouping for India?",
+      "category": "international_relations",
+      "difficulty": "medium",
+      "keywords": ["BRICS", "multilateralism", "developing countries", "global south"],
+      "follow_up": "How has BRICS expansion changed its dynamics?"
+    },
+    {
+      "id": "upsc_142",
+      "text": "Discuss the problem of unemployment among educated youth in India.",
+      "category": "economy",
+      "difficulty": "medium",
+      "keywords": ["unemployment", "youth", "education", "skills gap"],
+      "follow_up": "Is our education system preparing students for jobs?"
+    },
+    {
+      "id": "upsc_143",
+      "text": "What is the Doctrine of Pith and Substance in Indian federalism?",
+      "category": "indian_polity",
+      "difficulty": "hard",
+      "keywords": ["pith and substance", "legislative competence", "federalism", "courts"],
+      "follow_up": "How do courts resolve conflicts between Centre and State laws?"
+    },
+    {
+      "id": "upsc_144",
+      "text": "Discuss the significance of the National Commission for Women.",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["NCW", "women rights", "commission", "protection"],
+      "follow_up": "Has NCW been effective in addressing women's issues?"
+    },
+    {
+      "id": "upsc_145",
+      "text": "What is your view on the use of Hindi as the link language?",
+      "category": "opinion_based",
+      "difficulty": "hard",
+      "keywords": ["Hindi", "language", "three-language formula", "regional"],
+      "follow_up": "How would you handle language related protests in your district?"
+    },
+    {
+      "id": "upsc_146",
+      "text": "Discuss the importance of ethics committees in research institutions.",
+      "category": "ethics_integrity",
+      "difficulty": "medium",
+      "keywords": ["ethics committee", "research ethics", "consent", "regulation"],
+      "follow_up": "What should happen when research ethics are violated?"
+    },
+    {
+      "id": "upsc_147",
+      "text": "What lessons can India learn from China's economic rise?",
+      "category": "economy",
+      "difficulty": "hard",
+      "keywords": ["China", "economic growth", "lessons", "strategy"],
+      "follow_up": "Should India follow China's authoritarian model for development?"
+    },
+    {
+      "id": "upsc_148",
+      "text": "Discuss the importance of river interlinking projects in India.",
+      "category": "environment",
+      "difficulty": "hard",
+      "keywords": ["river linking", "Ken-Betwa", "water management", "irrigation"],
+      "follow_up": "What are the environmental concerns about river interlinking?"
+    },
+    {
+      "id": "upsc_149",
+      "text": "What book are you currently reading? What have you learned from it?",
+      "category": "personality",
+      "difficulty": "easy",
+      "keywords": ["reading", "books", "learning", "perspective"],
+      "follow_up": "How will this knowledge be useful in administration?"
+    },
+    {
+      "id": "upsc_150",
+      "text": "Discuss the importance of the United Nations in the current world order.",
+      "category": "international_relations",
+      "difficulty": "medium",
+      "keywords": ["UN", "UNSC", "multilateralism", "reform"],
+      "follow_up": "Should India be a permanent member of UNSC? How likely is it?"
+    },
+    {
+      "id": "upsc_151",
+      "text": "What is mission creep in the context of government schemes?",
+      "category": "administrative",
+      "difficulty": "hard",
+      "keywords": ["mission creep", "schemes", "scope", "effectiveness"],
+      "follow_up": "Give an example of a scheme that has suffered from mission creep."
+    },
+    {
+      "id": "upsc_152",
+      "text": "Discuss the concept of evidence-based policymaking.",
+      "category": "administrative",
+      "difficulty": "medium",
+      "keywords": ["evidence-based", "policy", "data", "research"],
+      "follow_up": "Why is policymaking in India often not evidence-based?"
+    },
+    {
+      "id": "upsc_153",
+      "text": "What is intergenerational equity in the context of environment?",
+      "category": "environment",
+      "difficulty": "medium",
+      "keywords": ["intergenerational equity", "future generations", "sustainability", "resources"],
+      "follow_up": "How should current policies protect future generations?"
+    },
+    {
+      "id": "upsc_154",
+      "text": "Discuss the challenges in implementing the Food Security Act.",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["food security", "PDS", "ration", "nutrition"],
+      "follow_up": "Should we move to cash transfers instead of food distribution?"
+    },
+    {
+      "id": "upsc_155",
+      "text": "What is your view on the privatization of public sector banks?",
+      "category": "opinion_based",
+      "difficulty": "hard",
+      "keywords": ["privatization", "PSU banks", "banking reform", "efficiency"],
+      "follow_up": "What about financial inclusion if banks are privatized?"
+    },
+    {
+      "id": "upsc_156",
+      "text": "Discuss the importance of audit institutions like CAG in democracy.",
+      "category": "indian_polity",
+      "difficulty": "medium",
+      "keywords": ["CAG", "audit", "accountability", "public finance"],
+      "follow_up": "Are CAG reports taken seriously by the government?"
+    },
+    {
+      "id": "upsc_157",
+      "text": "What is the concept of deliberative democracy?",
+      "category": "indian_polity",
+      "difficulty": "hard",
+      "keywords": ["deliberative democracy", "participation", "discourse", "consensus"],
+      "follow_up": "How can Indian democracy become more deliberative?"
+    },
+    {
+      "id": "upsc_158",
+      "text": "Discuss the role of Indian diaspora in diplomatic relations.",
+      "category": "international_relations",
+      "difficulty": "medium",
+      "keywords": ["diaspora", "NRI", "lobbying", "cultural ties"],
+      "follow_up": "How can India better engage with its diaspora?"
+    },
+    {
+      "id": "upsc_159",
+      "text": "What do you understand by work-life balance? How will you maintain it as an officer?",
+      "category": "personality",
+      "difficulty": "easy",
+      "keywords": ["work-life balance", "time management", "health", "family"],
+      "follow_up": "How will you handle family responsibilities with demanding postings?"
+    },
+    {
+      "id": "upsc_160",
+      "text": "Discuss the importance of institution building in governance.",
+      "category": "administrative",
+      "difficulty": "medium",
+      "keywords": ["institution building", "systems", "sustainability", "governance"],
+      "follow_up": "Why do many institutions in India remain weak?"
+    },
+    {
+      "id": "upsc_161",
+      "text": "What is green hydrogen? Why is it important for India's energy future?",
+      "category": "science_technology",
+      "difficulty": "medium",
+      "keywords": ["green hydrogen", "clean energy", "electrolyzer", "fuel"],
+      "follow_up": "What are the challenges in scaling green hydrogen production?"
+    },
+    {
+      "id": "upsc_162",
+      "text": "Discuss the concept of outcome budgeting in government.",
+      "category": "economy",
+      "difficulty": "hard",
+      "keywords": ["outcome budgeting", "performance", "results", "expenditure"],
+      "follow_up": "Why has outcome budgeting not been widely successful?"
+    },
+    {
+      "id": "upsc_163",
+      "text": "What is your view on lowering the voting age to 16?",
+      "category": "opinion_based",
+      "difficulty": "medium",
+      "keywords": ["voting age", "youth", "participation", "maturity"],
+      "follow_up": "Should there be an upper age limit for contesting elections?"
+    },
+    {
+      "id": "upsc_164",
+      "text": "Discuss the importance of Lokpal and Lokayuktas.",
+      "category": "indian_polity",
+      "difficulty": "medium",
+      "keywords": ["Lokpal", "Lokayukta", "corruption", "ombudsman"],
+      "follow_up": "Why has Lokpal not been very effective so far?"
+    },
+    {
+      "id": "upsc_165",
+      "text": "What is the significance of the Chipko movement in environmental activism?",
+      "category": "environment",
+      "difficulty": "easy",
+      "keywords": ["Chipko", "forest", "environmental movement", "community"],
+      "follow_up": "What lessons can current environmental activism learn from Chipko?"
+    },
+    {
+      "id": "upsc_166",
+      "text": "Discuss the impact of migration on urban areas and sending regions.",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["migration", "urban", "rural", "remittances"],
+      "follow_up": "Should there be policies to discourage rural-urban migration?"
+    },
+    {
+      "id": "upsc_167",
+      "text": "What is the principle of natural justice? Why is it important in administration?",
+      "category": "ethics_integrity",
+      "difficulty": "medium",
+      "keywords": ["natural justice", "fair hearing", "bias", "due process"],
+      "follow_up": "Give an example where natural justice was violated."
+    },
+    {
+      "id": "upsc_168",
+      "text": "Discuss India's achievements and challenges in space exploration.",
+      "category": "science_technology",
+      "difficulty": "medium",
+      "keywords": ["space", "ISRO", "Mars mission", "Chandrayaan"],
+      "follow_up": "Should ISRO focus on commercial launches or exploration?"
+    },
+    {
+      "id": "upsc_169",
+      "text": "What is the concept of common but differentiated responsibilities in climate negotiations?",
+      "category": "environment",
+      "difficulty": "hard",
+      "keywords": ["CBDR", "climate", "equity", "developed countries"],
+      "follow_up": "Is this principle being eroded in recent climate negotiations?"
+    },
+    {
+      "id": "upsc_170",
+      "text": "Discuss the role of financial inclusion in reducing poverty.",
+      "category": "economy",
+      "difficulty": "medium",
+      "keywords": ["financial inclusion", "Jan Dhan", "banking", "poverty"],
+      "follow_up": "Have schemes like Jan Dhan achieved their objectives?"
+    },
+    {
+      "id": "upsc_171",
+      "text": "What is the doctrine of basic structure of the Constitution?",
+      "category": "indian_polity",
+      "difficulty": "hard",
+      "keywords": ["basic structure", "Kesavananda Bharati", "amendment", "judiciary"],
+      "follow_up": "Can Parliament overturn this doctrine?"
+    },
+    {
+      "id": "upsc_172",
+      "text": "Discuss the importance of gram sabhas in rural governance.",
+      "category": "indian_polity",
+      "difficulty": "medium",
+      "keywords": ["gram sabha", "participation", "local democracy", "accountability"],
+      "follow_up": "Why are gram sabhas often inactive?"
+    },
+    {
+      "id": "upsc_173",
+      "text": "What is the role of social media in shaping public opinion?",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["social media", "public opinion", "echo chambers", "democracy"],
+      "follow_up": "How should civil servants engage with social media?"
+    },
+    {
+      "id": "upsc_174",
+      "text": "Discuss the concept of situational ethics. Is it acceptable?",
+      "category": "ethics_integrity",
+      "difficulty": "hard",
+      "keywords": ["situational ethics", "relativism", "context", "principles"],
+      "follow_up": "As an administrator, would you apply situational ethics?"
+    },
+    {
+      "id": "upsc_175",
+      "text": "What are your views on state funding of elections?",
+      "category": "opinion_based",
+      "difficulty": "hard",
+      "keywords": ["state funding", "elections", "money power", "reform"],
+      "follow_up": "What about electoral bonds?"
+    },
+    {
+      "id": "upsc_176",
+      "text": "Discuss India's maritime security challenges.",
+      "category": "international_relations",
+      "difficulty": "hard",
+      "keywords": ["maritime security", "IOR", "navy", "sea lanes"],
+      "follow_up": "How should India counter China's String of Pearls strategy?"
+    },
+    {
+      "id": "upsc_177",
+      "text": "What is the importance of documentation and record-keeping in administration?",
+      "category": "administrative",
+      "difficulty": "easy",
+      "keywords": ["documentation", "records", "transparency", "accountability"],
+      "follow_up": "How can digitization improve record-keeping?"
+    },
+    {
+      "id": "upsc_178",
+      "text": "Discuss the challenges of e-waste management in India.",
+      "category": "environment",
+      "difficulty": "medium",
+      "keywords": ["e-waste", "electronics", "recycling", "hazardous"],
+      "follow_up": "What policy measures would you suggest?"
+    },
+    {
+      "id": "upsc_179",
+      "text": "What is the significance of the National Human Rights Commission?",
+      "category": "indian_polity",
+      "difficulty": "medium",
+      "keywords": ["NHRC", "human rights", "protection", "complaints"],
+      "follow_up": "Why is NHRC called a 'toothless tiger'?"
+    },
+    {
+      "id": "upsc_180",
+      "text": "Discuss the issue of drug abuse among youth and its solutions.",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["drug abuse", "youth", "rehabilitation", "awareness"],
+      "follow_up": "How would you handle a drug menace in your district?"
+    },
+    {
+      "id": "upsc_181",
+      "text": "What do you understand by the concept of 'vocal for local'?",
+      "category": "economy",
+      "difficulty": "easy",
+      "keywords": ["vocal for local", "local products", "self-reliance", "MSME"],
+      "follow_up": "How can it be promoted effectively?"
+    },
+    {
+      "id": "upsc_182",
+      "text": "Discuss the role of cooperative sector in Indian economy.",
+      "category": "economy",
+      "difficulty": "medium",
+      "keywords": ["cooperatives", "Amul", "dairy", "credit"],
+      "follow_up": "What reforms are needed in the cooperative sector?"
+    },
+    {
+      "id": "upsc_183",
+      "text": "What is the significance of interlinking of Aadhaar with various services?",
+      "category": "administrative",
+      "difficulty": "medium",
+      "keywords": ["Aadhaar", "identity", "DBT", "leakage"],
+      "follow_up": "What are the privacy concerns with Aadhaar?"
+    },
+    {
+      "id": "upsc_184",
+      "text": "Discuss the importance of transparency in government procurement.",
+      "category": "administrative",
+      "difficulty": "medium",
+      "keywords": ["procurement", "GeM", "transparency", "corruption"],
+      "follow_up": "How has GeM improved government procurement?"
+    },
+    {
+      "id": "upsc_185",
+      "text": "What is your view on the commercialization of education?",
+      "category": "opinion_based",
+      "difficulty": "medium",
+      "keywords": ["education", "commercialization", "private schools", "fees"],
+      "follow_up": "How can quality education be made affordable?"
+    },
+    {
+      "id": "upsc_186",
+      "text": "Discuss the importance of biodiversity conservation.",
+      "category": "environment",
+      "difficulty": "medium",
+      "keywords": ["biodiversity", "conservation", "species", "ecosystem"],
+      "follow_up": "What is the significance of the Nagoya Protocol for India?"
+    },
+    {
+      "id": "upsc_187",
+      "text": "What qualities do you think are essential for an IAS officer?",
+      "category": "personality",
+      "difficulty": "easy",
+      "keywords": ["qualities", "IAS", "leadership", "service"],
+      "follow_up": "Which of these qualities do you possess?"
+    },
+    {
+      "id": "upsc_188",
+      "text": "Discuss the importance of cultural preservation in policymaking.",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["culture", "heritage", "preservation", "policy"],
+      "follow_up": "How can development and cultural preservation coexist?"
+    },
+    {
+      "id": "upsc_189",
+      "text": "What is the concept of probity in governance?",
+      "category": "ethics_integrity",
+      "difficulty": "medium",
+      "keywords": ["probity", "integrity", "honesty", "governance"],
+      "follow_up": "How is probity different from integrity?"
+    },
+    {
+      "id": "upsc_190",
+      "text": "Discuss India's participation in multilateral organizations.",
+      "category": "international_relations",
+      "difficulty": "medium",
+      "keywords": ["multilateral", "WTO", "UN", "diplomacy"],
+      "follow_up": "Should India be more assertive in these forums?"
+    },
+    {
+      "id": "upsc_191",
+      "text": "What is the importance of delegation and decentralization in administration?",
+      "category": "administrative",
+      "difficulty": "medium",
+      "keywords": ["delegation", "decentralization", "efficiency", "empowerment"],
+      "follow_up": "What are the risks of excessive delegation?"
+    },
+    {
+      "id": "upsc_192",
+      "text": "Discuss the National Monetisation Pipeline and its significance.",
+      "category": "economy",
+      "difficulty": "medium",
+      "keywords": ["monetisation", "assets", "infrastructure", "investment"],
+      "follow_up": "Is it selling national assets or smart financial management?"
+    },
+    {
+      "id": "upsc_193",
+      "text": "What is the significance of the National Green Tribunal?",
+      "category": "environment",
+      "difficulty": "medium",
+      "keywords": ["NGT", "environment", "tribunal", "justice"],
+      "follow_up": "Has NGT been effective in environmental protection?"
+    },
+    {
+      "id": "upsc_194",
+      "text": "Discuss the importance of scientific temper as mentioned in the Constitution.",
+      "category": "social_issues",
+      "difficulty": "medium",
+      "keywords": ["scientific temper", "rationality", "superstition", "duty"],
+      "follow_up": "How can scientific temper be promoted in society?"
+    },
+    {
+      "id": "upsc_195",
+      "text": "What would you do if your best friend who is also an officer is involved in wrongdoing?",
+      "category": "ethics_integrity",
+      "difficulty": "hard",
+      "keywords": ["friendship", "duty", "conflict", "ethics"],
+      "follow_up": "Would your answer change if it was a minor wrongdoing?"
+    },
+    {
+      "id": "upsc_196",
+      "text": "Discuss the importance of India-Africa relations.",
+      "category": "international_relations",
+      "difficulty": "medium",
+      "keywords": ["Africa", "development partnership", "trade", "diaspora"],
+      "follow_up": "How is India's approach different from China's in Africa?"
+    },
+    {
+      "id": "upsc_197",
+      "text": "What is the concept of 'Mission Karmayogi'?",
+      "category": "administrative",
+      "difficulty": "medium",
+      "keywords": ["Mission Karmayogi", "capacity building", "civil services", "training"],
+      "follow_up": "Will it transform the civil services?"
+    },
+    {
+      "id": "upsc_198",
+      "text": "Discuss the importance of ethics in international relations.",
+      "category": "ethics_integrity",
+      "difficulty": "hard",
+      "keywords": ["ethics", "international relations", "diplomacy", "morality"],
+      "follow_up": "Can nations afford to be ethical in a competitive world?"
+    },
+    {
+      "id": "upsc_199",
+      "text": "What message would you like to give to future UPSC aspirants?",
+      "category": "personality",
+      "difficulty": "easy",
+      "keywords": ["advice", "aspirants", "preparation", "motivation"],
+      "follow_up": "What would you have done differently in your preparation?"
+    },
+    {
+      "id": "upsc_200",
+      "text": "If you are not selected in civil services, what will you do?",
+      "category": "personality",
+      "difficulty": "medium",
+      "keywords": ["backup plan", "career", "alternative", "resilience"],
+      "follow_up": "Have you thought about public service beyond civil services?"
+    }
+  ]
+}

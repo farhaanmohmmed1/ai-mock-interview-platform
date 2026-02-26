@@ -9,34 +9,50 @@ from backend.models import User, Interview, Question, Response, Resume
 from backend.api.auth import get_current_user
 
 # Conditional imports for AI modules (may not be available on Vercel)
+# Import each module independently so partial loading works
+AI_MODULES_AVAILABLE = False
+AGENT_AVAILABLE = False
+QuestionGenerator = None
+AdaptiveSystem = None
+InterviewAgent = None
+
 try:
     from ai_modules.nlp.question_generator import QuestionGenerator
-    from ai_modules.adaptive.adaptive_system import AdaptiveSystem
-    from ai_modules.agent import InterviewAgent
     AI_MODULES_AVAILABLE = True
+    print("[Interview] QuestionGenerator imported successfully")
+except ImportError as e:
+    print(f"[Interview] QuestionGenerator import failed: {e}")
+
+try:
+    from ai_modules.adaptive.adaptive_system import AdaptiveSystem
+    print("[Interview] AdaptiveSystem imported successfully")
+except ImportError as e:
+    print(f"[Interview] AdaptiveSystem import failed (optional): {e}")
+
+try:
+    from ai_modules.agent import InterviewAgent
     AGENT_AVAILABLE = True
-except ImportError:
-    AI_MODULES_AVAILABLE = False
-    AGENT_AVAILABLE = False
-    QuestionGenerator = None
-    AdaptiveSystem = None
-    InterviewAgent = None
+    print("[Interview] InterviewAgent imported successfully")
+except ImportError as e:
+    print(f"[Interview] InterviewAgent import failed (optional): {e}")
 
 router = APIRouter()
 
-# Initialize AI modules and agent
-if AI_MODULES_AVAILABLE:
-    question_generator = QuestionGenerator()
-    adaptive_system = AdaptiveSystem()
-else:
-    question_generator = None
-    adaptive_system = None
+# Initialize AI modules and agent (only if imported successfully)
+question_generator = QuestionGenerator() if QuestionGenerator else None
+adaptive_system = AdaptiveSystem() if AdaptiveSystem else None
+interview_agent = InterviewAgent() if InterviewAgent else None
 
-# Initialize the Interview Agent (central orchestrator)
-if AGENT_AVAILABLE:
-    interview_agent = InterviewAgent()
+if question_generator:
+    print("[Interview] QuestionGenerator initialized")
+if adaptive_system:
+    print("[Interview] AdaptiveSystem initialized")
+if interview_agent:
+    print("[Interview] InterviewAgent initialized")
+if AI_MODULES_AVAILABLE:
+    print("[Interview] Core AI modules ready")
 else:
-    interview_agent = None
+    print("[Interview] Core AI modules not available")
 
 
 class InterviewCreate(BaseModel):

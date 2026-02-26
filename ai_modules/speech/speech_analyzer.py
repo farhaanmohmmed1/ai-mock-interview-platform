@@ -31,12 +31,12 @@ class SpeechAnalyzer:
     Whisper Models:
     - tiny: Fastest, ~32x realtime, ~72% accuracy
     - base: Fast, ~16x realtime, ~82% accuracy  
-    - small: Balanced, ~6x realtime, ~90% accuracy
+    - small: Balanced, ~6x realtime, ~90% accuracy (RECOMMENDED)
     - medium: Accurate, ~2x realtime, ~95% accuracy
     - large: Most accurate, ~1x realtime, ~97% accuracy
     """
     
-    def __init__(self, whisper_model: str = "base"):
+    def __init__(self, whisper_model: str = "small"):
         """
         Initialize speech analyzer.
         
