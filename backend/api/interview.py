@@ -562,12 +562,18 @@ async def complete_interview(
                 ]
             }
     
-    # If partially answered, scale down scores proportionally
+    # If partially answered, apply moderate penalty to overall score only
+    # Individual skill scores remain reflecting actual performance on answered questions
     if answered_count > 0 and answered_count < total_questions:
-        answer_ratio = answered_count / total_questions
-        for key in ["overall_score", "content_score", "clarity_score", "fluency_score", "confidence_score", "emotion_score"]:
-            if key in report and report[key]:
-                report[key] = round(report[key] * answer_ratio, 1)
+        completion_rate = answered_count / total_questions
+        # Apply penalty only to overall score - scale it by completion rate
+        # but keep individual dimension scores intact to show differentiation
+        if "overall_score" in report and report["overall_score"]:
+            original_overall = report["overall_score"]
+            # Blend: 70% of actual performance + 30% penalty for incomplete
+            # This way answering 1/6 questions with 80% score = 80*0.7 + 0*0.3 = 56%
+            # Instead of 80 * (1/6) = 13%
+            report["overall_score"] = round(original_overall * (0.7 + 0.3 * completion_rate), 1)
     
     # Update interview with scores
     interview.status = "completed"

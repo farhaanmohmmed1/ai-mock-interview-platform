@@ -15,10 +15,83 @@ Questions are categorized by:
 import json
 import random
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Set
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Skill-to-question-topic mapping
+# Maps user skills (from resume) to relevant question tags/keywords
+SKILL_TO_TOPIC_MAP = {
+    # Programming Languages -> Programming questions
+    'python': ['programming', 'algorithms', 'data-structures', 'python'],
+    'java': ['programming', 'algorithms', 'data-structures', 'java'],
+    'javascript': ['programming', 'algorithms', 'frontend', 'javascript'],
+    'typescript': ['programming', 'algorithms', 'frontend', 'typescript'],
+    'c++': ['programming', 'algorithms', 'data-structures', 'c++'],
+    'c#': ['programming', 'algorithms', '.net', 'csharp'],
+    'go': ['programming', 'algorithms', 'backend', 'golang'],
+    'rust': ['programming', 'algorithms', 'systems', 'rust'],
+    
+    # Frontend -> Frontend/Web questions
+    'react': ['frontend', 'javascript', 'web', 'react'],
+    'angular': ['frontend', 'javascript', 'web', 'angular'],
+    'vue': ['frontend', 'javascript', 'web', 'vue'],
+    'html': ['frontend', 'web'],
+    'css': ['frontend', 'web', 'css'],
+    'nextjs': ['frontend', 'javascript', 'react', 'web'],
+    
+    # Backend -> Backend/API questions
+    'nodejs': ['backend', 'javascript', 'api', 'nodejs'],
+    'django': ['backend', 'python', 'api', 'web'],
+    'flask': ['backend', 'python', 'api'],
+    'fastapi': ['backend', 'python', 'api'],
+    'spring': ['backend', 'java', 'api', 'microservices'],
+    'express': ['backend', 'javascript', 'api', 'nodejs'],
+    
+    # Databases -> Database questions
+    'sql': ['databases', 'sql', 'data'],
+    'mysql': ['databases', 'sql', 'data'],
+    'postgresql': ['databases', 'sql', 'data'],
+    'mongodb': ['databases', 'nosql', 'data'],
+    'redis': ['databases', 'caching', 'data'],
+    'elasticsearch': ['databases', 'search', 'data'],
+    
+    # Cloud/DevOps -> System Design/Infrastructure questions  
+    'aws': ['cloud', 'system-design', 'infrastructure', 'aws'],
+    'azure': ['cloud', 'system-design', 'infrastructure', 'azure'],
+    'gcp': ['cloud', 'system-design', 'infrastructure', 'gcp'],
+    'docker': ['devops', 'containers', 'infrastructure', 'docker'],
+    'kubernetes': ['devops', 'containers', 'system-design', 'k8s'],
+    'ci/cd': ['devops', 'automation', 'infrastructure'],
+    'jenkins': ['devops', 'automation', 'ci/cd'],
+    'terraform': ['devops', 'infrastructure', 'automation'],
+    
+    # Data Science/ML -> ML/Data questions
+    'machine learning': ['machine-learning', 'data-science', 'algorithms', 'ml'],
+    'deep learning': ['machine-learning', 'neural-networks', 'ml'],
+    'tensorflow': ['machine-learning', 'deep-learning', 'ml'],
+    'pytorch': ['machine-learning', 'deep-learning', 'ml'],
+    'pandas': ['data-science', 'python', 'data'],
+    'numpy': ['data-science', 'python', 'algorithms'],
+    
+    # System Design related
+    'system design': ['system-design', 'architecture', 'distributed-systems'],
+    'microservices': ['system-design', 'architecture', 'microservices'],
+    'api': ['api', 'backend', 'system-design'],
+    'rest': ['api', 'backend', 'web'],
+    'graphql': ['api', 'backend', 'graphql'],
+    
+    # Data Structures & Algorithms
+    'data structures': ['data-structures', 'algorithms', 'programming'],
+    'algorithms': ['algorithms', 'data-structures', 'programming'],
+    'dsa': ['data-structures', 'algorithms', 'programming'],
+    
+    # General categories
+    'git': ['version-control', 'devops'],
+    'linux': ['systems', 'devops', 'infrastructure'],
+    'networking': ['networking', 'system-design', 'infrastructure'],
+}
 
 
 class CompanyQuestionsLoader:
@@ -322,6 +395,126 @@ class CompanyQuestionsLoader:
             stats["by_company"][company] = stats["by_company"].get(company, 0) + 1
         
         return stats
+    
+    def _skills_to_topics(self, skills: List[str]) -> Set[str]:
+        """Convert user skills to relevant question topics/tags.
+        
+        Args:
+            skills: List of user skills (e.g., ['Python', 'React', 'AWS'])
+        
+        Returns:
+            Set of relevant topics/tags for question matching
+        """
+        topics = set()
+        skills_lower = [s.lower().strip() for s in skills if s]
+        
+        for skill in skills_lower:
+            # Direct match
+            if skill in SKILL_TO_TOPIC_MAP:
+                topics.update(SKILL_TO_TOPIC_MAP[skill])
+            else:
+                # Partial match (e.g., "python3" matches "python")
+                for key, values in SKILL_TO_TOPIC_MAP.items():
+                    if key in skill or skill in key:
+                        topics.update(values)
+                        break
+        
+        return topics
+    
+    def get_questions_by_skills(
+        self,
+        skills: List[str],
+        count: int = 5,
+        question_type: str = "technical",
+        difficulty: Optional[str] = None
+    ) -> List[Dict]:
+        """Get questions matched to user skills.
+        
+        This is the key method for skill-based question selection.
+        Maps user skills to relevant topics and finds matching questions.
+        
+        Args:
+            skills: User's skills from resume
+            count: Number of questions to return
+            question_type: Type of questions (technical, behavioral, hr)
+            difficulty: Optional difficulty filter
+        
+        Returns:
+            List of questions relevant to the user's skills
+        """
+        if not skills:
+            # No skills provided, return random questions
+            return self.get_formatted_questions(
+                count=count,
+                question_type=question_type,
+                difficulty=difficulty
+            )
+        
+        # Convert skills to topics
+        topics = self._skills_to_topics(skills)
+        logger.info(f"[Skills->Topics] Skills: {skills[:5]}... -> Topics: {list(topics)[:10]}...")
+        
+        # Get all questions of the requested type
+        type_questions = self.get_questions_by_type(question_type)
+        
+        # Apply difficulty filter if provided
+        if difficulty:
+            type_questions = [q for q in type_questions 
+                           if q.get("difficulty", "").lower() == difficulty.lower()]
+        
+        # Score questions by topic relevance
+        scored_questions = []
+        for q in type_questions:
+            score = 0
+            q_tags = set(t.lower() for t in q.get("tags", []))
+            q_keywords = set(k.lower() for k in q.get("keywords", []))
+            q_category = q.get("category", "").lower()
+            
+            # Check tags
+            for topic in topics:
+                if topic in q_tags:
+                    score += 3  # High weight for tag match
+                if topic in q_keywords:
+                    score += 2  # Medium weight for keyword match
+                if topic in q_category:
+                    score += 1  # Low weight for category match
+            
+            if score > 0:
+                scored_questions.append((score, q))
+        
+        # Shuffle before sorting to randomize among same-score questions
+        random.shuffle(scored_questions)
+        
+        # Sort by score (highest first) - stable sort preserves shuffle order for ties
+        scored_questions.sort(key=lambda x: x[0], reverse=True)
+        
+        # Take more than needed, then randomly select from top matches
+        # This adds variety while still prioritizing relevant questions
+        top_pool_size = min(len(scored_questions), count * 3)
+        top_pool = [q for _, q in scored_questions[:top_pool_size]]
+        
+        if len(top_pool) > count:
+            # Randomly select from top pool for variety
+            random.shuffle(top_pool)
+            matched_questions = top_pool[:count]
+        else:
+            matched_questions = top_pool
+        
+        logger.info(f"[Skill Matching] Found {len(matched_questions)} questions matching skills (pool: {len(top_pool)})")
+        
+        # If not enough skill-matched questions, fill with random
+        if len(matched_questions) < count:
+            remaining = count - len(matched_questions)
+            matched_ids = {q.get("id") for q in matched_questions}
+            
+            # Get random questions not already selected
+            filler = [q for q in type_questions if q.get("id") not in matched_ids]
+            if filler:
+                random.shuffle(filler)
+                matched_questions.extend(filler[:remaining])
+        
+        # Format questions for interview
+        return [self.format_question_for_interview(q) for q in matched_questions]
 
 
 # Global instance for easy import

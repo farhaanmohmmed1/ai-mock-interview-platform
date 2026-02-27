@@ -767,83 +767,107 @@ const Interview = () => {
       const token = localStorage.getItem('token');
       const currentQuestion = questions[currentQuestionIndex];
       let answerText = currentAnswer.trim();
+      let data;
 
-      // If we have audio but no text, transcribe audio first
-      if (!answerText && audioBlob) {
-        setTranscribing(true);
-        try {
-          const formData = new FormData();
-          formData.append('audio', audioBlob, 'recording.webm');
-          formData.append('question_id', currentQuestion.id);
+      // If we have audio, submit via audio endpoint for proper speech analysis scores
+      if (audioBlob) {
+        const formData = new FormData();
+        formData.append('audio_file', audioBlob, 'recording.webm');
+        formData.append('thinking_time', thinkingTime.toString());
 
-          const transcribeResponse = await fetch(`${API_URL}/api/evaluation/transcribe`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-            body: formData,
-          });
+        const response = await fetch(`${API_URL}/api/evaluation/submit-audio/${currentQuestion.id}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        });
 
-          if (transcribeResponse.ok) {
-            const transcribeData = await transcribeResponse.json();
-            answerText = transcribeData.transcription || '';
-            setCurrentAnswer(answerText);
+        data = await response.json();
+
+        if (!response.ok) {
+          // If audio submission fails, fall back to text submission
+          console.warn('Audio submission failed, falling back to text:', data.detail);
+          if (answerText) {
+            // Submit as text if we have transcribed text
+            const textResponse = await fetch(`${API_URL}/api/evaluation/submit-text`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                question_id: currentQuestion.id,
+                text_response: answerText,
+                thinking_time_seconds: thinkingTime,
+              }),
+            });
+            data = await textResponse.json();
+            if (!textResponse.ok) {
+              setError(data.detail || 'Failed to submit answer');
+              setSubmitting(false);
+              return;
+            }
           } else {
-            // If transcription fails, use a placeholder
-            answerText = '[Audio response - transcription unavailable]';
+            setError(data.detail || 'Failed to submit audio answer');
+            setSubmitting(false);
+            return;
           }
-        } catch (transcribeErr) {
-          console.error('Transcription error:', transcribeErr);
-          answerText = '[Audio response - transcription unavailable]';
-        } finally {
-          setTranscribing(false);
+        } else {
+          // Update answer text from transcription if available
+          if (data.transcription) {
+            answerText = data.transcription;
+            setCurrentAnswer(answerText);
+          }
+        }
+      } else {
+        // Text-only submission
+        const response = await fetch(`${API_URL}/api/evaluation/submit-text`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            question_id: currentQuestion.id,
+            text_response: answerText,
+            thinking_time_seconds: thinkingTime,
+          }),
+        });
+
+        data = await response.json();
+
+        if (!response.ok) {
+          setError(data.detail || 'Failed to submit answer');
+          setSubmitting(false);
+          return;
         }
       }
 
-      // Now submit the answer
-      const response = await fetch(`${API_URL}/api/evaluation/submit-text`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+      // Success - save answer locally
+      setAnswers((prev) => ({
+        ...prev,
+        [currentQuestion.id]: {
+          answer: answerText,
+          scores: data.scores,
+          responseId: data.response_id,
         },
-        body: JSON.stringify({
-          question_id: currentQuestion.id,
-          text_response: answerText,
-          thinking_time_seconds: thinkingTime,
-        }),
-      });
+      }));
 
-      const data = await response.json();
-
-      if (response.ok) {
-        // Save answer locally
-        setAnswers((prev) => ({
-          ...prev,
-          [currentQuestion.id]: {
-            answer: answerText,
-            scores: data.scores,
-            responseId: data.response_id,
-          },
-        }));
-
-        // Move to next question or complete
-        if (currentQuestionIndex < questions.length - 1) {
-          // For full interview, check if this is the last question in the round
-          if (isFullInterview && isLastQuestionInRound()) {
-            handleRoundComplete();
-          } else {
-            setCurrentQuestionIndex((prev) => prev + 1);
-          }
-          setCurrentAnswer('');
-          setAudioBlob(null);
-          setRecordingTime(0);
-          setLiveTranscript('');
+      // Move to next question or complete
+      if (currentQuestionIndex < questions.length - 1) {
+        // For full interview, check if this is the last question in the round
+        if (isFullInterview && isLastQuestionInRound()) {
+          handleRoundComplete();
         } else {
-          setCompleteDialogOpen(true);
+          setCurrentQuestionIndex((prev) => prev + 1);
         }
+        setCurrentAnswer('');
+        setAudioBlob(null);
+        setRecordingTime(0);
+        setLiveTranscript('');
       } else {
-        setError(data.detail || 'Failed to submit answer');
+        setCompleteDialogOpen(true);
       }
     } catch (err) {
       console.error('Error submitting answer:', err);

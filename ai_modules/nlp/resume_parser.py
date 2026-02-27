@@ -70,8 +70,55 @@ class ResumeParser:
             print(f"Error extracting DOCX text: {e}")
             return ""
     
+    def _extract_section_text(self, text: str, section_names: List[str]) -> str:
+        """Extract text from specific sections of the resume"""
+        extracted_text = ""
+        
+        # Common section headers that mark the END of a section
+        end_section_markers = r'(?:experience|education|certifications?|awards?|achievements?|references?|summary|objective|profile|contact|work\s*history|employment|qualifications?|languages?|hobbies|interests|publications?|activities)'
+        
+        for section_name in section_names:
+            # Multiple patterns to match different resume formats
+            patterns = [
+                # Pattern 1: Section header followed by content until next section
+                rf'(?:^|\n)\s*(?:technical\s+|key\s+|core\s+|professional\s+)?{section_name}s?\s*[:|\-|–]?\s*\n(.*?)(?=\n\s*{end_section_markers}\s*[:|\-|–\n]|\Z)',
+                # Pattern 2: Section header on same line as content
+                rf'(?:^|\n)\s*(?:technical\s+|key\s+|core\s+|professional\s+)?{section_name}s?\s*[:|\-|–]\s*(.+?)(?=\n\s*{end_section_markers}\s*[:|\-|–\n]|\Z)',
+                # Pattern 3: All caps section header
+                rf'(?:^|\n)\s*(?:TECHNICAL\s+)?{section_name.upper()}S?\s*[:|\-|–]?\s*\n?(.*?)(?=\n\s*[A-Z][A-Z\s]+[:|\-|–\n]|\Z)',
+            ]
+            
+            for pattern in patterns:
+                match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
+                if match and match.group(1).strip():
+                    section_content = match.group(1).strip()
+                    # Only add if we got meaningful content
+                    if len(section_content) > 10:
+                        extracted_text += " " + section_content
+                        break  # Found section, move to next section name
+        
+        return extracted_text.strip()
+    
     def _extract_skills(self, text: str) -> List[str]:
-        """Extract skills from text with comprehensive skill detection"""
+        """Extract skills ONLY from Skills and Projects sections"""
+        
+        # First, extract only the Skills and Projects sections
+        skills_section = self._extract_section_text(text, ['skill', 'competenc', 'technolog', 'tools'])
+        projects_section = self._extract_section_text(text, ['project'])
+        
+        # Combine the relevant sections only
+        relevant_text = skills_section + " " + projects_section
+        
+        # Debug output - can be removed after testing
+        print(f"[DEBUG] Skills section length: {len(skills_section)}")
+        print(f"[DEBUG] Projects section length: {len(projects_section)}")
+        print(f"[DEBUG] Total relevant text length: {len(relevant_text)}")
+        
+        # If no skills or projects section found, return empty list
+        # DO NOT fall back to full text extraction
+        if not relevant_text.strip():
+            print("[DEBUG] No Skills or Projects section found - returning empty skills list")
+            return []
         
         # Comprehensive technical skills database
         skill_keywords = {
@@ -212,9 +259,10 @@ class ResumeParser:
         }
         
         skills = set()
-        text_lower = text.lower()
+        # Use only the relevant sections text (Skills + Projects) instead of full text
+        text_lower = relevant_text.lower()
         
-        # Method 1: Direct keyword matching from comprehensive list
+        # Direct keyword matching from comprehensive list - only from Skills and Projects sections
         for skill in skill_keywords:
             # Escape special characters for regex
             escaped_skill = re.escape(skill)
@@ -228,56 +276,6 @@ class ResumeParser:
                 elif skill in ['javascript', 'typescript', 'python', 'java', 'react', 'angular', 'vue', 'django', 'flask', 'nodejs', 'docker', 'kubernetes']:
                     display_skill = skill.capitalize() if len(skill) > 3 else skill.title()
                 skills.add(display_skill)
-        
-        # Method 2: Extract skills from dedicated skills section
-        # Only add skills that match our known skills database to avoid garbage extraction
-        skills_section_patterns = [
-            r'(?:technical\s+)?skills?\s*[:|\-|–]?\s*(.*?)(?=\n\s*\n|\n[A-Z][a-z]+\s*[:|\-]|experience|education|projects|certifications|$)',
-            r'competenc(?:y|ies)\s*[:|\-|–]?\s*(.*?)(?=\n\s*\n|\n[A-Z][a-z]+\s*[:|\-]|$)',
-            r'technologies?\s*[:|\-|–]?\s*(.*?)(?=\n\s*\n|\n[A-Z][a-z]+\s*[:|\-]|$)',
-            r'tools?\s*(?:&|and)?\s*technologies?\s*[:|\-|–]?\s*(.*?)(?=\n\s*\n|\n[A-Z][a-z]+\s*[:|\-]|$)',
-        ]
-        
-        for pattern in skills_section_patterns:
-            match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
-            if match:
-                section_text = match.group(1)
-                # Re-check this section against our known skills database
-                # This avoids adding arbitrary multi-word chunks as skills
-                section_lower = section_text.lower()
-                for skill in skill_keywords:
-                    escaped_skill = re.escape(skill)
-                    skill_pattern = r'(?<![a-zA-Z])' + escaped_skill + r'(?![a-zA-Z])'
-                    if re.search(skill_pattern, section_lower):
-                        display_skill = skill.replace('.', '').title() if '.' not in skill else skill
-                        if skill in ['aws', 'gcp', 'sql', 'html', 'css', 'api', 'ci/cd', 'ai', 'ml', 'dl', 'ui/ux']:
-                            display_skill = skill.upper()
-                        elif skill in ['javascript', 'typescript', 'python', 'java', 'react', 'angular', 'vue', 'django', 'flask', 'nodejs', 'docker', 'kubernetes']:
-                            display_skill = skill.capitalize() if len(skill) > 3 else skill.title()
-                        skills.add(display_skill)
-        
-        # Method 3: Extract skills near keywords like "proficient in", "experience with"
-        # Re-check matched text against known skills database
-        context_patterns = [
-            r'(?:proficient|experienced|skilled|expertise|knowledge|familiar)\s+(?:in|with)\s+([A-Za-z0-9+#,\s\-]+?)(?:\.|,\s*(?:and|including)|$)',
-            r'(?:worked|working)\s+with\s+([A-Za-z0-9+#,\s\-]+?)(?:\.|,\s*(?:and|including)|$)',
-        ]
-        
-        for pattern in context_patterns:
-            matches = re.findall(pattern, text, re.IGNORECASE)
-            for match_text in matches:
-                match_lower = match_text.lower()
-                # Only add skills that match our database
-                for skill in skill_keywords:
-                    escaped_skill = re.escape(skill)
-                    skill_pattern = r'(?<![a-zA-Z])' + escaped_skill + r'(?![a-zA-Z])'
-                    if re.search(skill_pattern, match_lower):
-                        display_skill = skill.replace('.', '').title() if '.' not in skill else skill
-                        if skill in ['aws', 'gcp', 'sql', 'html', 'css', 'api', 'ci/cd', 'ai', 'ml', 'dl', 'ui/ux']:
-                            display_skill = skill.upper()
-                        elif skill in ['javascript', 'typescript', 'python', 'java', 'react', 'angular', 'vue', 'django', 'flask', 'nodejs', 'docker', 'kubernetes']:
-                            display_skill = skill.capitalize() if len(skill) > 3 else skill.title()
-                        skills.add(display_skill)
         
         # Clean up and format skills
         cleaned_skills = []
