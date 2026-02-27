@@ -4,7 +4,7 @@
     <strong>Intelligent interview preparation powered by NLP, Speech Analysis, and Emotion Recognition</strong>
   </p>
   <p align="center">
-    <a href="https://ai-mock-interview-platform-t8ph-okbn90n64.vercel.app/">Live Demo</a> •
+    <a href="https://ai-mock-interview-platform-t8ph.vercel.app/">Live Demo</a> •
     <a href="#features">Features</a> •
     <a href="#quick-start">Quick Start</a> •
     <a href="#documentation">Documentation</a>
