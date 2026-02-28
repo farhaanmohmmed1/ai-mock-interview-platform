@@ -98,8 +98,22 @@ class InterviewResponse(BaseModel):
         from_attributes = True
 
 
+class QuestionSummaryItem(BaseModel):
+    question: str
+    question_type: Optional[str] = None
+    category: Optional[str] = None
+    difficulty: Optional[str] = None
+    score: Optional[float] = 0
+    user_answer: Optional[str] = None
+    feedback: Optional[str] = None
+    ideal_answer: Optional[str] = None
+    voice_clarity: Optional[float] = None
+    concept_clarity: Optional[float] = None
+
+
 class InterviewDetailResponse(InterviewResponse):
     questions: List[QuestionResponse] = []
+    questions_summary: Optional[List[QuestionSummaryItem]] = None
     content_score: Optional[float] = None
     clarity_score: Optional[float] = None
     fluency_score: Optional[float] = None
@@ -406,7 +420,7 @@ async def get_interview(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get interview details"""
+    """Get interview details with questions summary"""
     interview = db.query(Interview).filter(
         Interview.id == interview_id,
         Interview.user_id == current_user.id
@@ -418,7 +432,61 @@ async def get_interview(
             detail="Interview not found"
         )
     
-    return interview
+    # Build questions_summary by joining questions with their responses
+    questions_summary = []
+    for question in sorted(interview.questions, key=lambda q: q.order_number or 0):
+        # Find the response for this question
+        response = db.query(Response).filter(
+            Response.interview_id == interview_id,
+            Response.question_id == question.id
+        ).first()
+        
+        # Calculate an average score from available response scores
+        score = 0
+        if response:
+            score_values = [s for s in [
+                response.content_score,
+                response.relevance_score,
+                response.clarity_score,
+                response.fluency_score,
+                response.confidence_score
+            ] if s is not None]
+            score = round(sum(score_values) / len(score_values), 1) if score_values else 0
+        
+        # Extract voice/concept clarity from speech/nlp analysis if available
+        voice_clarity = None
+        concept_clarity = None
+        if response and response.speech_analysis:
+            voice_clarity = response.speech_analysis.get("clarity_score") or response.speech_analysis.get("voice_clarity")
+        if response and response.nlp_analysis:
+            concept_clarity = response.nlp_analysis.get("concept_clarity") or response.nlp_analysis.get("relevance_score")
+        
+        # Get expected keywords as ideal answer hints
+        ideal_answer = None
+        if question.expected_keywords:
+            if isinstance(question.expected_keywords, list):
+                ideal_answer = "Key points: " + ", ".join(question.expected_keywords)
+            elif isinstance(question.expected_keywords, str):
+                ideal_answer = question.expected_keywords
+        
+        questions_summary.append(QuestionSummaryItem(
+            question=question.question_text,
+            question_type=question.question_type,
+            category=question.category,
+            difficulty=question.difficulty,
+            score=score,
+            user_answer=response.text_response if response else None,
+            feedback=response.feedback if response else "Not answered",
+            ideal_answer=ideal_answer,
+            voice_clarity=voice_clarity,
+            concept_clarity=concept_clarity
+        ))
+    
+    # Build the response dict from the interview ORM object
+    result = InterviewDetailResponse.model_validate(interview)
+    result.questions_summary = questions_summary
+    
+    return result
 
 
 @router.post("/{interview_id}/complete", response_model=InterviewResponse)

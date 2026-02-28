@@ -520,30 +520,52 @@ const Results = () => {
               <Paper sx={{ p: 3, bgcolor: '#1A1A1A', border: '1px solid #262626' }}>
                 <Typography variant="h6" sx={{ fontWeight: 600, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                   <RecordVoiceOver sx={{ color: '#0EA5E9' }} />
-                  Question-by-Question Analysis
+                  Interview Questions &amp; Analysis
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#888888', mb: 3 }}>
+                  Here are all the questions asked during your interview along with your performance on each.
                 </Typography>
                 <Divider sx={{ mb: 3, borderColor: '#262626' }} />
                 {results.questions_summary.map((q, index) => (
                   <Card key={index} sx={{ mb: 2, bgcolor: '#0B0B0B', border: '1px solid #262626' }}>
                     <CardContent>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#FFFFFF', flex: 1 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#FFFFFF', flex: 1, mr: 2 }}>
                           Q{index + 1}: {q.question}
                         </Typography>
                         <Chip 
-                          label={`${q.score}%`} 
+                          label={q.user_answer ? `${q.score}%` : 'Skipped'} 
                           size="small"
                           sx={{
-                            bgcolor: q.score >= 80 ? 'rgba(16, 185, 129, 0.15)' : q.score >= 60 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                            color: q.score >= 80 ? '#10B981' : q.score >= 60 ? '#F59E0B' : '#EF4444',
-                            border: `1px solid ${q.score >= 80 ? 'rgba(16, 185, 129, 0.3)' : q.score >= 60 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                            bgcolor: !q.user_answer ? 'rgba(156, 163, 175, 0.15)' : q.score >= 80 ? 'rgba(16, 185, 129, 0.15)' : q.score >= 60 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                            color: !q.user_answer ? '#9CA3AF' : q.score >= 80 ? '#10B981' : q.score >= 60 ? '#F59E0B' : '#EF4444',
+                            border: `1px solid ${!q.user_answer ? 'rgba(156, 163, 175, 0.3)' : q.score >= 80 ? 'rgba(16, 185, 129, 0.3)' : q.score >= 60 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
                           }}
                         />
                       </Box>
+                      {/* Question metadata tags */}
+                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 1, mb: 2 }}>
+                        {q.question_type && (
+                          <Chip size="small" label={q.question_type.charAt(0).toUpperCase() + q.question_type.slice(1)} sx={{ bgcolor: 'rgba(14, 165, 233, 0.1)', color: '#0EA5E9', border: '1px solid rgba(14, 165, 233, 0.2)', fontSize: '0.7rem', height: 22 }} />
+                        )}
+                        {q.category && (
+                          <Chip size="small" label={q.category} sx={{ bgcolor: 'rgba(168, 85, 247, 0.1)', color: '#A855F7', border: '1px solid rgba(168, 85, 247, 0.2)', fontSize: '0.7rem', height: 22 }} />
+                        )}
+                        {q.difficulty && (
+                          <Chip size="small" label={q.difficulty.charAt(0).toUpperCase() + q.difficulty.slice(1)} sx={{ bgcolor: q.difficulty === 'hard' ? 'rgba(239, 68, 68, 0.1)' : q.difficulty === 'medium' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)', color: q.difficulty === 'hard' ? '#EF4444' : q.difficulty === 'medium' ? '#F59E0B' : '#10B981', border: `1px solid ${q.difficulty === 'hard' ? 'rgba(239, 68, 68, 0.2)' : q.difficulty === 'medium' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`, fontSize: '0.7rem', height: 22 }} />
+                        )}
+                      </Box>
                       <Box sx={{ mt: 2 }}>
-                        <Typography variant="body2" sx={{ color: '#888888', mb: 1 }}>
-                          <strong style={{ color: '#E0E0E0' }}>Feedback:</strong> {q.feedback}
-                        </Typography>
+                        {q.feedback && q.feedback !== 'Not answered' && (
+                          <Typography variant="body2" sx={{ color: '#888888', mb: 1 }}>
+                            <strong style={{ color: '#E0E0E0' }}>Feedback:</strong> {q.feedback}
+                          </Typography>
+                        )}
+                        {!q.user_answer && (
+                          <Typography variant="body2" sx={{ color: '#9CA3AF', fontStyle: 'italic', mb: 1 }}>
+                            This question was not answered.
+                          </Typography>
+                        )}
                         {q.user_answer && (
                           <Typography variant="body2" sx={{ mb: 1, p: 2, bgcolor: '#1A1A1A', borderRadius: '6px', border: '1px solid #262626', color: '#E0E0E0' }}>
                             <strong>Your Answer:</strong> {q.user_answer}
