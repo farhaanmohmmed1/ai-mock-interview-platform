@@ -34,7 +34,11 @@ import {
   Psychology,
   School,
   OpenInNew,
+  Download,
+  PictureAsPdf,
 } from '@mui/icons-material';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 import API_URL from '../config';
 
 const ScoreCircle = ({ score, label, color }) => (
@@ -143,6 +147,300 @@ const Results = () => {
     if (score >= 40) return { grade: 'D', label: 'Needs Improvement' };
     if (score > 0) return { grade: 'E', label: 'Poor' };
     return { grade: 'F', label: 'No Answers Submitted' };
+  };
+
+  const [exporting, setExporting] = useState(false);
+
+  const exportReport = async () => {
+    setExporting(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/api/interview/${id}/export`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        alert(errorData.detail || 'Failed to export report');
+        return;
+      }
+
+      const data = await response.json();
+      
+      // Generate PDF
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      let yPos = margin;
+      
+      // Helper function to add new page if needed
+      const checkPageBreak = (height = 10) => {
+        if (yPos + height > pageHeight - margin) {
+          doc.addPage();
+          yPos = margin;
+          return true;
+        }
+        return false;
+      };
+      
+      // Helper to add section header
+      const addSectionHeader = (text) => {
+        checkPageBreak(15);
+        doc.setFillColor(14, 165, 233); // #0EA5E9
+        doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text(text, margin + 3, yPos + 5.5);
+        doc.setTextColor(0, 0, 0);
+        yPos += 12;
+      };
+      
+      // Title
+      doc.setFillColor(11, 11, 11);
+      doc.rect(0, 0, pageWidth, 45, 'F');
+      doc.setTextColor(14, 165, 233);
+      doc.setFontSize(22);
+      doc.setFont('helvetica', 'bold');
+      doc.text('AI MOCK INTERVIEW REPORT', pageWidth / 2, 20, { align: 'center' });
+      doc.setTextColor(150, 150, 150);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Generated: ${new Date(data.report_generated_at).toLocaleString()}`, pageWidth / 2, 30, { align: 'center' });
+      doc.setTextColor(0, 0, 0);
+      yPos = 55;
+      
+      // Grade circle (simulated)
+      const gradeColor = data.overall_performance.overall_score >= 80 ? [16, 185, 129] :
+                         data.overall_performance.overall_score >= 60 ? [245, 158, 11] : [239, 68, 68];
+      doc.setFillColor(...gradeColor);
+      doc.circle(pageWidth / 2, yPos + 15, 18, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text(data.overall_performance.grade.letter, pageWidth / 2, yPos + 18, { align: 'center' });
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+      doc.text(`${data.overall_performance.grade.label} - ${data.overall_performance.overall_score?.toFixed(1) || 0}%`, pageWidth / 2, yPos + 38, { align: 'center' });
+      yPos += 50;
+      
+      // Candidate & Interview Info side by side
+      addSectionHeader('CANDIDATE & INTERVIEW DETAILS');
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const col1 = margin;
+      const col2 = pageWidth / 2 + 5;
+      doc.text(`Name: ${data.candidate_info.name}`, col1, yPos);
+      doc.text(`Type: ${data.interview_details.interview_type}`, col2, yPos);
+      yPos += 6;
+      doc.text(`Email: ${data.candidate_info.email}`, col1, yPos);
+      doc.text(`Difficulty: ${data.interview_details.difficulty_level}`, col2, yPos);
+      yPos += 6;
+      doc.text(`Duration: ${data.interview_details.duration_minutes?.toFixed(1) || 0} minutes`, col1, yPos);
+      doc.text(`Questions: ${data.interview_details.answered_questions}/${data.interview_details.total_questions}`, col2, yPos);
+      yPos += 12;
+      
+      // Score Breakdown Table
+      addSectionHeader('PERFORMANCE SCORES');
+      const scores = [
+        ['Content', `${data.overall_performance.content_score?.toFixed(1) || 0}%`],
+        ['Clarity', `${data.overall_performance.clarity_score?.toFixed(1) || 0}%`],
+        ['Fluency', `${data.overall_performance.fluency_score?.toFixed(1) || 0}%`],
+        ['Confidence', `${data.overall_performance.confidence_score?.toFixed(1) || 0}%`],
+        ['Emotion', `${data.overall_performance.emotion_score?.toFixed(1) || 0}%`],
+      ];
+      doc.autoTable({
+        startY: yPos,
+        head: [['Metric', 'Score']],
+        body: scores,
+        theme: 'striped',
+        headStyles: { fillColor: [14, 165, 233], textColor: 255 },
+        margin: { left: margin, right: margin },
+        tableWidth: pageWidth - 2 * margin,
+      });
+      yPos = doc.lastAutoTable.finalY + 10;
+      
+      // Strong Areas
+      if (data.analysis.strong_areas?.length > 0) {
+        addSectionHeader('STRONG AREAS');
+        doc.setFontSize(10);
+        data.analysis.strong_areas.forEach(area => {
+          checkPageBreak(8);
+          doc.setTextColor(16, 185, 129);
+          doc.text('✓', margin, yPos);
+          doc.setTextColor(0, 0, 0);
+          doc.text(`${area.area}: ${area.score?.toFixed(1) || 0}%`, margin + 6, yPos);
+          yPos += 6;
+          if (area.description) {
+            doc.setTextColor(100, 100, 100);
+            doc.text(`  ${area.description}`, margin + 6, yPos);
+            doc.setTextColor(0, 0, 0);
+            yPos += 6;
+          }
+        });
+        yPos += 5;
+      }
+      
+      // Weak Areas
+      if (data.analysis.weak_areas?.length > 0) {
+        addSectionHeader('AREAS FOR IMPROVEMENT');
+        doc.setFontSize(10);
+        data.analysis.weak_areas.forEach(area => {
+          checkPageBreak(14);
+          doc.setTextColor(239, 68, 68);
+          doc.text('•', margin, yPos);
+          doc.setTextColor(0, 0, 0);
+          doc.text(`${area.area}: ${area.score?.toFixed(1) || 0}%`, margin + 6, yPos);
+          yPos += 6;
+          if (area.suggestion) {
+            doc.setTextColor(100, 100, 100);
+            const lines = doc.splitTextToSize(`Suggestion: ${area.suggestion}`, pageWidth - 2 * margin - 10);
+            lines.forEach(line => {
+              checkPageBreak(6);
+              doc.text(line, margin + 6, yPos);
+              yPos += 5;
+            });
+            doc.setTextColor(0, 0, 0);
+          }
+        });
+        yPos += 5;
+      }
+      
+      // Overall Feedback
+      if (data.analysis.feedback) {
+        addSectionHeader('OVERALL FEEDBACK');
+        doc.setFontSize(10);
+        const feedbackLines = doc.splitTextToSize(data.analysis.feedback, pageWidth - 2 * margin);
+        feedbackLines.forEach(line => {
+          checkPageBreak(6);
+          doc.text(line, margin, yPos);
+          yPos += 5;
+        });
+        yPos += 5;
+      }
+      
+      // Recommendations
+      if (data.analysis.recommendations?.length > 0) {
+        addSectionHeader('RECOMMENDATIONS');
+        doc.setFontSize(10);
+        data.analysis.recommendations.forEach((rec, i) => {
+          checkPageBreak(8);
+          const text = rec.text || rec;
+          const lines = doc.splitTextToSize(`${i + 1}. ${text}`, pageWidth - 2 * margin);
+          lines.forEach(line => {
+            checkPageBreak(6);
+            doc.text(line, margin, yPos);
+            yPos += 5;
+          });
+          yPos += 2;
+        });
+        yPos += 5;
+      }
+      
+      // Questions Detail
+      addSectionHeader('DETAILED QUESTION ANALYSIS');
+      data.questions_detail.forEach((q, i) => {
+        checkPageBreak(40);
+        
+        // Question header
+        doc.setFillColor(240, 240, 240);
+        doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Q${i + 1}: ${q.question_type || 'General'} | ${q.category || 'N/A'} | ${q.difficulty || 'N/A'}`, margin + 2, yPos + 5.5);
+        doc.setFont('helvetica', 'normal');
+        yPos += 12;
+        
+        // Question text
+        const qLines = doc.splitTextToSize(q.question_text, pageWidth - 2 * margin);
+        qLines.forEach(line => {
+          checkPageBreak(6);
+          doc.text(line, margin, yPos);
+          yPos += 5;
+        });
+        yPos += 3;
+        
+        if (q.user_answer) {
+          // Answer
+          doc.setTextColor(14, 165, 233);
+          doc.text('Your Answer:', margin, yPos);
+          doc.setTextColor(0, 0, 0);
+          yPos += 5;
+          const ansLines = doc.splitTextToSize(q.user_answer, pageWidth - 2 * margin - 5);
+          ansLines.forEach(line => {
+            checkPageBreak(6);
+            doc.text(line, margin + 3, yPos);
+            yPos += 5;
+          });
+          yPos += 3;
+          
+          // Scores row
+          if (q.scores) {
+            checkPageBreak(10);
+            const scoreText = `Content: ${q.scores.content_score?.toFixed(0) || '-'}% | Relevance: ${q.scores.relevance_score?.toFixed(0) || '-'}% | Clarity: ${q.scores.clarity_score?.toFixed(0) || '-'}% | Fluency: ${q.scores.fluency_score?.toFixed(0) || '-'}% | Confidence: ${q.scores.confidence_score?.toFixed(0) || '-'}%`;
+            doc.setFontSize(9);
+            doc.setTextColor(100, 100, 100);
+            doc.text(scoreText, margin, yPos);
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(10);
+            yPos += 6;
+          }
+          
+          // Feedback
+          if (q.feedback) {
+            checkPageBreak(10);
+            doc.setTextColor(16, 185, 129);
+            doc.text('Feedback:', margin, yPos);
+            doc.setTextColor(0, 0, 0);
+            yPos += 5;
+            const fbLines = doc.splitTextToSize(q.feedback, pageWidth - 2 * margin - 5);
+            fbLines.forEach(line => {
+              checkPageBreak(6);
+              doc.text(line, margin + 3, yPos);
+              yPos += 5;
+            });
+          }
+          
+          // Suggestions
+          if (q.improvement_suggestions?.length > 0) {
+            checkPageBreak(10);
+            doc.setTextColor(245, 158, 11);
+            doc.text('Suggestions:', margin, yPos);
+            doc.setTextColor(0, 0, 0);
+            yPos += 5;
+            q.improvement_suggestions.forEach(s => {
+              checkPageBreak(6);
+              doc.text(`• ${s}`, margin + 3, yPos);
+              yPos += 5;
+            });
+          }
+        } else {
+          doc.setTextColor(150, 150, 150);
+          doc.text('(Not answered)', margin, yPos);
+          doc.setTextColor(0, 0, 0);
+          yPos += 6;
+        }
+        
+        yPos += 8;
+      });
+      
+      // Footer on last page
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text('AI Mock Interview Platform - Interview Report', pageWidth / 2, pageHeight - 10, { align: 'center' });
+      
+      // Save PDF
+      doc.save(`interview_report_${id}_${new Date().toISOString().split('T')[0]}.pdf`);
+      
+    } catch (err) {
+      console.error('Export error:', err);
+      alert('Failed to export report: ' + err.message);
+    } finally {
+      setExporting(false);
+    }
   };
 
   if (loading) {
@@ -594,7 +892,7 @@ const Results = () => {
         </Grid>
 
         {/* Action Buttons */}
-        <Box sx={{ mt: 5, display: 'flex', justifyContent: 'center', gap: 2 }}>
+        <Box sx={{ mt: 5, display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
           <Button
             variant="outlined"
             size="large"
@@ -607,6 +905,21 @@ const Results = () => {
             }}
           >
             Back to Dashboard
+          </Button>
+          <Button
+            variant="outlined"
+            size="large"
+            startIcon={exporting ? <CircularProgress size={20} sx={{ color: '#10B981' }} /> : <PictureAsPdf />}
+            onClick={exportReport}
+            disabled={exporting}
+            sx={{ 
+              borderColor: '#10B981', 
+              color: '#10B981',
+              '&:hover': { borderColor: '#059669', bgcolor: 'rgba(16, 185, 129, 0.08)' },
+              '&:disabled': { borderColor: '#333333', color: '#666666' },
+            }}
+          >
+            {exporting ? 'Exporting...' : 'Export PDF'}
           </Button>
           <Button
             variant="contained"

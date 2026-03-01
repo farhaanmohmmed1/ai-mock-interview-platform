@@ -702,3 +702,115 @@ async def cancel_interview(
     db.commit()
     
     return None
+
+
+@router.get("/{interview_id}/export")
+async def export_interview_report(
+    interview_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Export detailed interview report with all scores and feedback"""
+    interview = db.query(Interview).filter(
+        Interview.id == interview_id,
+        Interview.user_id == current_user.id
+    ).first()
+    
+    if not interview:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview not found"
+        )
+    
+    if interview.status != "completed":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Interview must be completed before exporting"
+        )
+    
+    # Build detailed questions data
+    questions_detail = []
+    for question in sorted(interview.questions, key=lambda q: q.order_number or 0):
+        response = db.query(Response).filter(
+            Response.interview_id == interview_id,
+            Response.question_id == question.id
+        ).first()
+        
+        question_data = {
+            "question_number": question.order_number or 0,
+            "question_text": question.question_text,
+            "question_type": question.question_type,
+            "category": question.category,
+            "difficulty": question.difficulty,
+            "expected_keywords": question.expected_keywords,
+            "user_answer": response.text_response if response else None,
+            "scores": {
+                "content_score": response.content_score if response else None,
+                "relevance_score": response.relevance_score if response else None,
+                "clarity_score": response.clarity_score if response else None,
+                "fluency_score": response.fluency_score if response else None,
+                "confidence_score": response.confidence_score if response else None,
+            } if response else None,
+            "feedback": response.feedback if response else "Not answered",
+            "improvement_suggestions": response.improvement_suggestions if response else [],
+            "nlp_analysis": response.nlp_analysis if response else None,
+            "speech_analysis": response.speech_analysis if response else None,
+            "thinking_time_seconds": response.thinking_time_seconds if response else None,
+        }
+        questions_detail.append(question_data)
+    
+    # Calculate grade
+    overall_score = interview.overall_score or 0
+    if overall_score >= 90:
+        grade = {"letter": "A+", "label": "Excellent"}
+    elif overall_score >= 80:
+        grade = {"letter": "A", "label": "Great"}
+    elif overall_score >= 70:
+        grade = {"letter": "B", "label": "Good"}
+    elif overall_score >= 60:
+        grade = {"letter": "C", "label": "Fair"}
+    elif overall_score >= 40:
+        grade = {"letter": "D", "label": "Needs Improvement"}
+    elif overall_score > 0:
+        grade = {"letter": "E", "label": "Poor"}
+    else:
+        grade = {"letter": "F", "label": "No Answers Submitted"}
+    
+    # Build comprehensive report
+    report = {
+        "report_generated_at": datetime.utcnow().isoformat(),
+        "interview_details": {
+            "interview_id": interview.id,
+            "interview_type": interview.interview_type,
+            "difficulty_level": interview.difficulty_level,
+            "status": interview.status,
+            "started_at": interview.started_at.isoformat() if interview.started_at else None,
+            "completed_at": interview.completed_at.isoformat() if interview.completed_at else None,
+            "duration_minutes": interview.duration_minutes,
+            "total_questions": interview.total_questions,
+            "answered_questions": interview.answered_questions,
+        },
+        "candidate_info": {
+            "name": current_user.full_name or current_user.username,
+            "email": current_user.email,
+        },
+        "overall_performance": {
+            "overall_score": interview.overall_score,
+            "grade": grade,
+            "content_score": interview.content_score,
+            "clarity_score": interview.clarity_score,
+            "fluency_score": interview.fluency_score,
+            "confidence_score": interview.confidence_score,
+            "emotion_score": interview.emotion_score,
+        },
+        "analysis": {
+            "strong_areas": interview.strong_areas or [],
+            "weak_areas": interview.weak_areas or [],
+            "feedback": interview.feedback,
+            "recommendations": interview.recommendations or [],
+            "course_recommendations": interview.course_recommendations or [],
+        },
+        "questions_detail": questions_detail,
+    }
+    
+    return report
