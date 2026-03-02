@@ -525,15 +525,46 @@ async def complete_interview(
         report = {
             "overall_score": 0,
             "content_score": 0,
-            "clarity_score": None,  # Not measured
-            "fluency_score": None,  # Not measured
-            "confidence_score": None,  # Not measured
-            "emotion_score": None,  # Not measured
+            "clarity_score": 0,
+            "fluency_score": 0,
+            "confidence_score": 0,
+            "emotion_score": 0,
             "weak_areas": [{"area": "All Areas", "score": 0, "suggestion": "You skipped all questions. Please attempt answering to get meaningful feedback."}],
             "strong_areas": [],
             "feedback": "No questions were answered. Please attempt the interview again and try answering the questions to receive a proper evaluation.",
             "recommendations": [{"text": "Practice answering interview questions out loud to build confidence."}],
-            "course_recommendations": []
+            "course_recommendations": [
+                {
+                    "topic": "Interview Preparation",
+                    "severity": "medium",
+                    "course": {
+                        "title": "The Complete Interview Preparation Course",
+                        "platform": "Udemy",
+                        "url": "https://www.udemy.com/course/the-complete-job-interview-preparation/",
+                        "level": "All Levels"
+                    }
+                },
+                {
+                    "topic": "Interview Skills",
+                    "severity": "low",
+                    "course": {
+                        "title": "Interview Skills: How to Get the Job",
+                        "platform": "Udemy",
+                        "url": "https://www.udemy.com/course/interview-skills-that-win-the-job/",
+                        "level": "All Levels"
+                    }
+                },
+                {
+                    "topic": "Communication",
+                    "severity": "low",
+                    "course": {
+                        "title": "Effective Communication Skills",
+                        "platform": "Coursera",
+                        "url": "https://www.coursera.org/learn/wharton-communication-skills",
+                        "level": "All Levels"
+                    }
+                }
+            ]
         }
     # If some but not all questions answered, penalize score proportionally
     elif answered_count < total_questions:
@@ -568,18 +599,93 @@ async def complete_interview(
             # Only use agent report if it produced valid scores (not 0)
             # Agent may return 0 if its in-memory context was lost
             if agent_overall and agent_overall > 0:
+                agent_weak_areas_raw = agent_report.get("weak_areas", [])
+                agent_strong_areas_raw = agent_report.get("strong_areas", [])
+                
+                # Normalize agent areas to match ReportGenerator format
+                # Agent format: {"area": category, "average_score": X, "severity": Y, "common_gaps": [...]}
+                # Expected format for weak: {"area": name, "score": X, "suggestion": text}
+                # Expected format for strong: {"area": name, "score": X, "description": text}
+                
+                agent_weak_areas = []
+                for w in agent_weak_areas_raw:
+                    area_name = w.get("area") or "General"
+                    score = w.get("average_score", w.get("score", 0))
+                    suggestion = w.get("suggestion", "")
+                    if not suggestion:
+                        gaps = w.get("common_gaps", [])
+                        if gaps:
+                            suggestion = f"Review these key concepts: {', '.join(gaps[:3])}. Practice answering questions in this area with specific examples."
+                        else:
+                            suggestion = f"Practice more {area_name} questions and aim for detailed, structured answers with concrete examples."
+                    agent_weak_areas.append({
+                        "area": area_name,
+                        "score": round(score, 1),
+                        "suggestion": suggestion
+                    })
+                
+                agent_strong_areas = []
+                for s in agent_strong_areas_raw:
+                    area_name = s.get("area") or "General"
+                    score = s.get("average_score", s.get("score", 0))
+                    desc = s.get("description", "")
+                    if not desc:
+                        if score >= 90:
+                            desc = f"Excellent performance in {area_name}! Your answers were detailed and well-structured."
+                        elif score >= 80:
+                            desc = f"Great job on {area_name} — you demonstrated solid knowledge and gave relevant answers."
+                        else:
+                            desc = f"Good understanding of {area_name} topics."
+                    agent_strong_areas.append({
+                        "area": area_name,
+                        "score": round(score, 1),
+                        "description": desc
+                    })
+                
+                # Filter out any areas with None names
+                agent_weak_areas = [a for a in agent_weak_areas if a["area"] != "None"]
+                agent_strong_areas = [a for a in agent_strong_areas if a["area"] != "None"]
+                
+                # Generate course recommendations using ReportGenerator
+                agent_courses = []
+                try:
+                    from ai_modules.adaptive.report_generator import ReportGenerator
+                    rg = ReportGenerator()
+                    agent_courses = rg._get_course_recommendations(agent_weak_areas, interview.interview_type)
+                except Exception:
+                    pass
+                
+                # Use ReportGenerator for comprehensive feedback and recommendations if available
+                rg_feedback = None
+                rg_recommendations = None
+                try:
+                    from ai_modules.adaptive.report_generator import ReportGenerator
+                    rg = ReportGenerator()
+                    rg_report = rg.generate_final_report(interview_id, db)
+                    rg_feedback = rg_report.get("feedback")
+                    rg_recommendations = rg_report.get("recommendations")
+                    # Also use ReportGenerator's areas if agent produced fewer
+                    if len(rg_report.get("strong_areas", [])) > len(agent_strong_areas):
+                        agent_strong_areas = rg_report.get("strong_areas", [])
+                    if len(rg_report.get("weak_areas", [])) > len(agent_weak_areas):
+                        agent_weak_areas = rg_report.get("weak_areas", [])
+                    if rg_report.get("course_recommendations") and len(rg_report["course_recommendations"]) > len(agent_courses):
+                        agent_courses = rg_report["course_recommendations"]
+                except Exception as e:
+                    print(f"ReportGenerator supplementary failed: {e}")
+                
                 report = {
                     "overall_score": agent_overall,
                     "content_score": agent_report.get("scores", {}).get("content_score", 50),
-                    # Only include audio metrics if audio was recorded
-                    "clarity_score": agent_report.get("scores", {}).get("clarity_score") if has_audio or has_fluency else None,
-                    "fluency_score": agent_report.get("scores", {}).get("fluency_score") if has_audio or has_fluency else None,
-                    "confidence_score": agent_report.get("scores", {}).get("confidence_score") if has_confidence else None,
-                    "emotion_score": None,  # Requires video - agent doesn't have video analysis
-                    "weak_areas": agent_report.get("weak_areas", []),
-                    "strong_areas": agent_report.get("strong_areas", []),
-                    "feedback": agent_report.get("feedback", "Interview completed."),
-                    "recommendations": agent_report.get("suggestions", []),
+                    "clarity_score": agent_report.get("scores", {}).get("clarity_score", 50),
+                    "fluency_score": agent_report.get("scores", {}).get("fluency_score", 50),
+                    "confidence_score": agent_report.get("scores", {}).get("confidence_score", 50),
+                    "emotion_score": agent_report.get("scores", {}).get("emotion_score", 50),
+                    "weak_areas": agent_weak_areas,
+                    "strong_areas": agent_strong_areas,
+                    "feedback": rg_feedback or agent_report.get("feedback", "Interview completed."),
+                    "recommendations": rg_recommendations or agent_report.get("suggestions", []),
+                    "course_recommendations": agent_courses,
                     "skill_gaps": agent_report.get("skill_gaps", []),
                     "learning_path": agent_report.get("learning_path", {}),
                     "agent_insights": agent_report.get("agent_insights", {})
@@ -615,10 +721,10 @@ async def complete_interview(
             report = {
                 "overall_score": 0,
                 "content_score": 0,
-                "clarity_score": None,  # Cannot determine without analysis
-                "fluency_score": None,  # Requires audio
-                "confidence_score": None,  # Requires audio/video
-                "emotion_score": None,  # Requires video
+                "clarity_score": 0,
+                "fluency_score": 0,
+                "confidence_score": 0,
+                "emotion_score": 0,
                 "weak_areas": [],
                 "strong_areas": [],
                 "feedback": "Could not generate detailed evaluation. Please try the interview again.",
@@ -708,7 +814,7 @@ async def complete_interview(
     interview.clarity_score = report.get("clarity_score")  # None if not measurable
     interview.fluency_score = report.get("fluency_score")  # None if no audio
     interview.confidence_score = report.get("confidence_score")  # None if no audio/video
-    interview.emotion_score = report.get("emotion_score")  # None if no video
+    interview.emotion_score = report.get("emotion_score", 0)
     interview.weak_areas = report.get("weak_areas", [])
     interview.strong_areas = report.get("strong_areas", [])
     interview.feedback = report.get("feedback", "Thank you for completing the interview!")

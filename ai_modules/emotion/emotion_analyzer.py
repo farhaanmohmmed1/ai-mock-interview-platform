@@ -207,6 +207,7 @@ class EmotionAnalyzer:
         
         return {
             "confidence_score": round(confidence_score, 2),
+            "expression_score": round(confidence_score, 2),
             "dominant_emotion": dominant_emotion,
             "emotion_distribution": {k: round(v, 2) for k, v in emotion_distribution.items()},
             "emotional_stability": round(stability, 2),

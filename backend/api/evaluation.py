@@ -254,21 +254,20 @@ async def submit_text_response(
     
     print(f"[submit-text] Evaluation complete: content={evaluation['content_score']}")
     
-    # TEXT-ONLY MODE: ONLY Content can be scored from text
-    # Clarity, Fluency, Confidence, Expression ALL require audio/video
-    print(f"[submit-text] Text-only mode: content={evaluation['content_score']} ONLY")
-    print(f"[submit-text] Clarity/Fluency/Confidence/Expression = null (no audio/video)")
+    # Text mode: Content is directly scored, Clarity/Fluency/Confidence are estimated from text analysis
+    print(f"[submit-text] Text mode: content={evaluation['content_score']}, clarity={evaluation.get('clarity_score')}, fluency={evaluation.get('fluency_score')}, confidence={evaluation.get('confidence_score')}")
     
-    # Create response - ONLY Content is scored for text-only
+    # Create response - All scores estimated from text analysis
     new_response = Response(
         interview_id=interview.id,
         question_id=question.id,
         text_response=response_data.text_response,
         content_score=evaluation["content_score"],
         relevance_score=evaluation["relevance_score"],
-        clarity_score=None,      # Requires audio
-        fluency_score=None,      # Requires audio
-        confidence_score=None,   # Requires audio/video
+        clarity_score=evaluation.get("clarity_score"),
+        fluency_score=evaluation.get("fluency_score"),
+        confidence_score=evaluation.get("confidence_score"),
+        emotion_analysis={"expression_score": evaluation.get("expression_score", 0)},
         thinking_time_seconds=response_data.thinking_time_seconds,
         nlp_analysis=evaluation["nlp_analysis"],
         feedback=evaluation["feedback"],
@@ -290,7 +289,10 @@ async def submit_text_response(
         "message": "Response submitted successfully",
         "scores": {
             "content_score": new_response.content_score,
-            "relevance_score": new_response.relevance_score
+            "relevance_score": new_response.relevance_score,
+            "clarity_score": new_response.clarity_score,
+            "fluency_score": new_response.fluency_score,
+            "confidence_score": new_response.confidence_score
         }
     }
 
@@ -415,12 +417,11 @@ async def submit_audio_response(
     
     confidence_score = min(100, max(30, confidence_score))
     
-    # AUDIO-ONLY MODE: Content, Clarity, Fluency, Confidence can be measured
-    # Expression requires video - set to null
+    # AUDIO MODE: Content, Clarity, Fluency, Confidence measured from audio
+    # Expression estimated from text analysis
     print(f"[submit-audio] Audio mode: content={evaluation['content_score']}, clarity={speech_analysis['clarity_score']}, fluency={speech_analysis['fluency_score']}, confidence={confidence_score}")
-    print(f"[submit-audio] Expression = null (no video)")
     
-    # Create response - Expression is null (no video)
+    # Create response with expression estimated from text
     new_response = Response(
         interview_id=interview.id,
         question_id=question.id,
@@ -431,7 +432,7 @@ async def submit_audio_response(
         clarity_score=speech_analysis["clarity_score"],
         fluency_score=speech_analysis["fluency_score"],
         confidence_score=confidence_score,
-        # expression_score=None,  # Cannot measure without video (stored via emotion_analyzer separately)
+        emotion_analysis={"expression_score": evaluation.get("expression_score", 0)},
         response_time_seconds=response_time,
         thinking_time_seconds=thinking_time,
         speech_analysis=speech_analysis,

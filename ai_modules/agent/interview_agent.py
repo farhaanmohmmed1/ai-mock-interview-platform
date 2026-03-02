@@ -551,10 +551,11 @@ class InterviewAgent:
                 "relevance_score": 0,
                 "clarity_score": 0,
                 "fluency_score": 0,
-                "confidence_score": 0
+                "confidence_score": 0,
+                "emotion_score": 0
             }
         
-        # Average scores
+        # Average scores from evaluations (includes DB-loaded data)
         content_scores = [e.get("content_score", 0) for e in evaluations]
         relevance_scores = [e.get("relevance_score", 0) for e in evaluations]
         
@@ -562,34 +563,44 @@ class InterviewAgent:
         avg_relevance = sum(relevance_scores) / len(relevance_scores)
         
         # Apply synonym boost: if content is strong but relevance is low, boost relevance
-        # (User might use synonyms/paraphrasing instead of exact keywords)
         adjusted_relevance = avg_relevance
         if avg_content >= 75 and avg_relevance < 50:
             adjusted_relevance = max(avg_relevance, avg_content * 0.6)
         
-        # Combined content score - weight content heavily (good answers shouldn't be penalized
-        # for not matching exact keywords)
+        # Combined content score - weight content heavily
         combined_content = (avg_content * 0.70 + adjusted_relevance * 0.30)
         
-        # Get speech/emotion scores from context, estimate from content if not available
-        avg_clarity = context.get_average_score("clarity")
-        avg_fluency = context.get_average_score("fluency")
-        avg_confidence = context.get_average_score("confidence")
+        # Get clarity/fluency/confidence from evaluations first (works for DB-loaded data)
+        # Fall back to context only if evaluations don't have them
+        clarity_scores = [e.get("clarity_score", 0) for e in evaluations if e.get("clarity_score")]
+        fluency_scores = [e.get("fluency_score", 0) for e in evaluations if e.get("fluency_score")]
+        confidence_scores = [e.get("confidence_score", 0) for e in evaluations if e.get("confidence_score")]
         
-        # If speech/emotion data not available, DO NOT penalize text-only submissions
-        # Use the same combined content score (no 0.9/0.85 penalties)
+        avg_clarity = sum(clarity_scores) / len(clarity_scores) if clarity_scores else context.get_average_score("clarity")
+        avg_fluency = sum(fluency_scores) / len(fluency_scores) if fluency_scores else context.get_average_score("fluency")
+        avg_confidence = sum(confidence_scores) / len(confidence_scores) if confidence_scores else context.get_average_score("confidence")
+        
+        # Get emotion/expression score from evaluations
+        emotion_scores = [e.get("expression_score", 0) or e.get("emotion_score", 0) for e in evaluations if e.get("expression_score") or e.get("emotion_score")]
+        avg_emotion = sum(emotion_scores) / len(emotion_scores) if emotion_scores else 0
+        
+        # If speech/emotion data not available, use text-estimated content as fallback
         if avg_clarity == 0:
-            avg_clarity = combined_content  # No penalty for text-only
+            avg_clarity = combined_content
         if avg_fluency == 0:
-            avg_fluency = combined_content  # No penalty for text-only
+            avg_fluency = combined_content
         if avg_confidence == 0:
-            avg_confidence = combined_content  # No penalty for text-only
+            avg_confidence = combined_content
+        if avg_emotion == 0:
+            avg_emotion = combined_content * 0.85  # Slight discount for unmeasured expression
         
         # Overall score (weighted)
         overall = (
-            combined_content * 0.40 +
-            ((avg_clarity + avg_fluency) / 2) * 0.30 +
-            avg_confidence * 0.30
+            combined_content * 0.35 +
+            avg_clarity * 0.20 +
+            avg_fluency * 0.15 +
+            avg_confidence * 0.15 +
+            avg_emotion * 0.15
         )
         
         return {
@@ -598,7 +609,8 @@ class InterviewAgent:
             "relevance_score": round(adjusted_relevance, 2),
             "clarity_score": round(avg_clarity, 2),
             "fluency_score": round(avg_fluency, 2),
-            "confidence_score": round(avg_confidence, 2)
+            "confidence_score": round(avg_confidence, 2),
+            "emotion_score": round(avg_emotion, 2)
         }
     
     def _generate_comprehensive_feedback(
@@ -608,35 +620,81 @@ class InterviewAgent:
         weak_areas: List[Dict],
         strong_areas: List[Dict]
     ) -> str:
-        """Generate comprehensive textual feedback"""
+        """Generate comprehensive multi-paragraph textual feedback"""
         overall = scores.get("overall_score", 0)
+        content = scores.get("content_score", 0)
+        clarity = scores.get("clarity_score", 0)
+        fluency = scores.get("fluency_score", 0)
+        confidence = scores.get("confidence_score", 0)
+        emotion = scores.get("emotion_score", 0)
         
-        # Opening assessment
-        if overall >= 80:
-            opening = "Outstanding performance! You demonstrated strong interview skills."
-        elif overall >= 65:
-            opening = "Good performance overall. You showed competence in most areas."
-        elif overall >= 50:
-            opening = "Satisfactory performance with clear areas for improvement."
+        paragraphs = []
+        
+        # Opening assessment paragraph
+        if overall >= 85:
+            opening = "Outstanding performance! 🌟 You demonstrated exceptional interview skills across the board. Your answers were thorough, well-structured, and showed deep understanding of the topics. You're clearly well-prepared and should feel confident going into any interview."
+        elif overall >= 75:
+            opening = "Great work! 👏 You showed strong skills across the board and came across as well-prepared. Your answers were solid, and you clearly have a good grasp of key concepts. With a few refinements, you'll be even more impressive."
+        elif overall >= 60:
+            opening = "Good effort! 👍 You showed competence in most areas and gave some strong answers. There are a few areas where you can sharpen your responses, but overall you're on the right track."
+        elif overall >= 45:
+            opening = "Decent start! 💪 You tackled the questions and showed some knowledge, but there's room to grow. Don't be discouraged — with focused practice on a few key areas, you'll see big improvements."
         else:
-            opening = "This interview highlighted several areas that need focused practice."
+            opening = "Thanks for completing the interview! 🎯 This was a good opportunity to identify areas for growth. Everyone starts somewhere, and the fact that you're practicing puts you ahead. Let's focus on building up your skills step by step."
+        paragraphs.append(opening)
         
-        # Strengths section
-        strengths_text = ""
+        # Strengths paragraph
         if strong_areas:
-            areas = [s["area"] for s in strong_areas[:3]]
-            strengths_text = f" Your strengths include: {', '.join(areas)}."
+            area_names = [s["area"] for s in strong_areas[:4]]
+            if len(area_names) == 1:
+                strengths_text = f"You really shone in {area_names[0]}."
+            else:
+                strengths_text = f"You really shone in {', '.join(area_names[:-1])}, and {area_names[-1]}."
+            strengths_text += " These are genuine strengths — make sure to highlight them in your real interviews!"
+            paragraphs.append(strengths_text)
         
-        # Improvement section
-        improvement_text = ""
+        # Areas for improvement paragraph
         if weak_areas:
-            areas = [w["area"] for w in weak_areas[:3]]
-            improvement_text = f" Focus on improving: {', '.join(areas)}."
+            weak_names = [w["area"] for w in weak_areas[:3]]
+            if len(weak_names) == 1:
+                improve_text = f"To go from great to outstanding, I'd suggest paying extra attention to {weak_names[0]}."
+            else:
+                improve_text = f"To go from great to outstanding, I'd suggest paying extra attention to {', '.join(weak_names[:-1])}, and {weak_names[-1]}."
+            improve_text += " These are minor areas, but polishing them will make a noticeable difference."
+            paragraphs.append(improve_text)
         
-        # Closing encouragement
-        closing = " Continue practicing regularly, and review the detailed suggestions below for targeted improvement."
+        # Score-specific insights paragraph
+        insights = []
+        if content >= 75:
+            insights.append("Your answers had great substance — you included relevant details and examples that made your points convincing.")
+        elif content >= 50:
+            insights.append("Your answer content was decent. Try adding more specific examples and quantifiable achievements to strengthen your responses.")
+        else:
+            insights.append("Focus on adding more depth to your answers — specific examples, metrics, and concrete experiences will make your responses much stronger.")
         
-        return opening + strengths_text + improvement_text + closing
+        if clarity >= 75:
+            insights.append("Your ideas were well-organized and easy to follow.")
+        elif clarity < 55:
+            insights.append("Try structuring your answers more clearly — start with your main point, then support it with details.")
+        
+        if confidence >= 75:
+            insights.append("You came across as confident and self-assured.")
+        elif confidence < 55:
+            insights.append("Practice speaking with more conviction — even when you're unsure, confident delivery makes a big difference.")
+        
+        if insights:
+            paragraphs.append(" ".join(insights))
+        
+        # Closing encouragement paragraph
+        if overall >= 75:
+            closing = "Keep up the great work — you're well on your way to acing your interviews! 🚀"
+        elif overall >= 50:
+            closing = "You're making solid progress! Keep practicing regularly and reviewing the suggestions below, and you'll see steady improvement. 🚀"
+        else:
+            closing = "Remember, interview skills are built through practice. Review the recommendations below, try again, and you'll see improvement with each attempt! 💪"
+        paragraphs.append(closing)
+        
+        return "\n\n".join(paragraphs)
     
     # ==================== UTILITY METHODS ====================
     

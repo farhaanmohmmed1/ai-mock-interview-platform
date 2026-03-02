@@ -684,18 +684,25 @@ class QuestionGenerator:
         # Store original questions before filtering (in case we need to restore)
         original_questions = questions.copy()
         
-        # Filter out questions the user has already seen (only if we'll still have enough)
+        # Filter out questions the user has already seen
         if exclude_texts:
             filtered_questions = [q for q in questions if q['text'].lower().strip() not in exclude_texts]
+            repeated_questions = [q for q in questions if q['text'].lower().strip() in exclude_texts]
             filtered_count = len(questions) - len(filtered_questions)
             
-            # Only apply filtering if we'll have at least the minimum needed
             if len(filtered_questions) >= total_questions:
+                # Enough unique questions — use only those
                 questions = filtered_questions
                 if filtered_count > 0:
                     logger.info(f"Filtered out {filtered_count} repeated questions, {len(questions)} remaining")
+            elif len(filtered_questions) > 0:
+                # Not enough unique questions but some are available
+                # Use all unique ones first, then fill with least-recently-asked repeats
+                shortfall = total_questions - len(filtered_questions)
+                logger.info(f"Only {len(filtered_questions)} unique questions available (need {total_questions}), adding {shortfall} repeats")
+                questions = filtered_questions + repeated_questions[:shortfall]
             else:
-                logger.info(f"Skipping filter - would reduce from {len(questions)} to {len(filtered_questions)} (need {total_questions})")
+                logger.info(f"No unique questions available, using all {len(questions)} questions")
         
         # Deduplicate within the same interview - avoid similar questions
         # But ensure we maintain minimum count
@@ -709,10 +716,23 @@ class QuestionGenerator:
             extra_qs = [q for q in questions if q not in deduplicated][:remaining_needed]
             deduplicated.extend(extra_qs)
         
-        # Final safety: if still short, use original questions (allow repeats)
+        # Final safety: if still short, add back from originals (prefer unique ones first)
         if len(deduplicated) < total_questions and len(original_questions) >= total_questions:
-            logger.warning(f"Using original questions without filtering to meet count requirement")
-            return original_questions[:total_questions]
+            logger.warning(f"Dedup left only {len(deduplicated)} questions, filling to {total_questions}")
+            existing_texts = {q['text'].lower().strip() for q in deduplicated}
+            for q in original_questions:
+                if len(deduplicated) >= total_questions:
+                    break
+                if q['text'].lower().strip() not in existing_texts:
+                    deduplicated.append(q)
+                    existing_texts.add(q['text'].lower().strip())
+            # If still short, allow repeats from originals as last resort
+            if len(deduplicated) < total_questions:
+                for q in original_questions:
+                    if len(deduplicated) >= total_questions:
+                        break
+                    if q not in deduplicated:
+                        deduplicated.append(q)
         
         return deduplicated
     
@@ -790,8 +810,8 @@ class QuestionGenerator:
     def _get_user_question_history(self, user_id: int, db: Session) -> Set[str]:
         """Get set of question texts the user has already been asked recently.
         
-        Only exclude questions from the last 3 interviews to allow question recycling
-        while avoiding immediate repetition in concurrent interviews.
+        Excludes questions from the last 10 interviews to prevent repetition
+        across consecutive interviews while still allowing recycling eventually.
         """
         global _user_question_cache
         
@@ -800,12 +820,13 @@ class QuestionGenerator:
             return _user_question_cache[user_id]
         
         try:
-            # Only get questions from the last 3 interviews (recently asked)
-            # This allows questions to cycle back after a few interviews
+            # Get questions from the last 10 interviews to avoid repetition
+            # With 250+ questions in the pool and 5-12 per interview,
+            # this covers ~60-120 past questions, leaving plenty of fresh ones
             recent_interview_ids = db.query(Interview.id).filter(
                 Interview.user_id == user_id,
                 Interview.status.in_(["completed", "in_progress"])
-            ).order_by(Interview.id.desc()).limit(3).all()
+            ).order_by(Interview.id.desc()).limit(10).all()
             
             recent_ids = [i[0] for i in recent_interview_ids]
             

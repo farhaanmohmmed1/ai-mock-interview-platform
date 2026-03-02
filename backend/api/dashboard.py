@@ -111,14 +111,12 @@ async def get_dashboard_stats(
         technical_avg = sum(i.overall_score or 0 for i in technical_interviews) / len(technical_interviews) if technical_interviews else 0
         hr_avg = sum(i.overall_score or 0 for i in hr_interviews) / len(hr_interviews) if hr_interviews else 0
         
-        # Calculate improvement rate by comparing recent half vs older half
+        # Calculate overall improvement: latest score minus first score
+        # Shows how much the user has grown since their first interview
         if len(scored_interviews) >= 2:
-            mid = len(scored_interviews) // 2
-            older_half = scored_interviews[:mid]
-            recent_half = scored_interviews[mid:]
-            older_avg = sum(i.overall_score or 0 for i in older_half) / len(older_half)
-            recent_avg = sum(i.overall_score or 0 for i in recent_half) / len(recent_half)
-            improvement_rate = ((recent_avg - older_avg) / older_avg * 100) if older_avg > 0 else 0
+            first_score = scored_interviews[0].overall_score
+            latest_score = scored_interviews[-1].overall_score
+            improvement_rate = round(latest_score - first_score, 2)
         else:
             improvement_rate = 0
     else:
