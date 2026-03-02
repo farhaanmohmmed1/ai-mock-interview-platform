@@ -187,7 +187,7 @@ const Dashboard = () => {
               <Typography variant="body2" sx={{ color: '#888888', fontWeight: 500 }}>Improvement</Typography>
             </Box>
             <Typography variant="h3" sx={{ color: '#10B981', fontWeight: 700 }}>
-              +{stats.improvement_rate}%
+              +{Math.abs(stats.improvement_rate)}%
             </Typography>
           </Paper>
         </Grid>

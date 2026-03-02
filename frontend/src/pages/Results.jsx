@@ -567,7 +567,7 @@ const Results = () => {
               <Divider sx={{ mb: 4, borderColor: '#262626' }} />
               
               <Grid container spacing={4} justifyContent="center">
-                {/* Content - always shown */}
+                {/* Content */}
                 <Grid item>
                   <ScoreCircle
                     score={results?.content_score}
@@ -576,65 +576,51 @@ const Results = () => {
                   />
                 </Grid>
                 
-                {/* Clarity - shown if available */}
-                {results?.clarity_score != null && (
-                  <Grid item>
-                    <ScoreCircle
-                      score={results?.clarity_score}
-                      label="Clarity"
-                      color={getScoreColor(results?.clarity_score)}
-                    />
-                  </Grid>
-                )}
+                {/* Clarity */}
+                <Grid item>
+                  <ScoreCircle
+                    score={results?.clarity_score}
+                    label="Clarity"
+                    color={getScoreColor(results?.clarity_score)}
+                  />
+                </Grid>
                 
-                {/* Fluency - only shown with audio */}
-                {results?.fluency_score != null && (
-                  <Grid item>
-                    <ScoreCircle
-                      score={results?.fluency_score}
-                      label="Fluency"
-                      color={getScoreColor(results?.fluency_score)}
-                    />
-                  </Grid>
-                )}
+                {/* Fluency */}
+                <Grid item>
+                  <ScoreCircle
+                    score={results?.fluency_score}
+                    label="Fluency"
+                    color={getScoreColor(results?.fluency_score)}
+                  />
+                </Grid>
                 
-                {/* Confidence - only shown with audio/video */}
-                {results?.confidence_score != null && (
-                  <Grid item>
-                    <ScoreCircle
-                      score={results?.confidence_score}
-                      label="Confidence"
-                      color={getScoreColor(results?.confidence_score)}
-                    />
-                  </Grid>
-                )}
+                {/* Confidence */}
+                <Grid item>
+                  <ScoreCircle
+                    score={results?.confidence_score}
+                    label="Confidence"
+                    color={getScoreColor(results?.confidence_score)}
+                  />
+                </Grid>
                 
-                {/* Expression - only shown with video */}
-                {results?.emotion_score != null && (
-                  <Grid item>
-                    <ScoreCircle
-                      score={results?.emotion_score}
-                      label="Expression"
-                      color={getScoreColor(results?.emotion_score)}
-                    />
-                  </Grid>
-                )}
+                {/* Expression */}
+                <Grid item>
+                  <ScoreCircle
+                    score={results?.emotion_score}
+                    label="Expression"
+                    color={getScoreColor(results?.emotion_score)}
+                  />
+                </Grid>
               </Grid>
               
               {/* Mode indicator */}
-              {(!results?.clarity_score && !results?.fluency_score && !results?.confidence_score && !results?.emotion_score) && (
-                <Typography variant="caption" sx={{ color: '#888', display: 'block', textAlign: 'center', mt: 2 }}>
-                  Text-only mode: Only Content is scored. Enable microphone for more metrics.
-                </Typography>
-              )}
-              {(results?.clarity_score != null && results?.fluency_score != null && results?.emotion_score == null) && (
-                <Typography variant="caption" sx={{ color: '#888', display: 'block', textAlign: 'center', mt: 2 }}>
-                  Audio mode: Enable camera for Expression scoring.
-                </Typography>
-              )}
-              {results?.emotion_score != null && (
+              {results?.emotion_score != null && results?.emotion_score > 0 ? (
                 <Typography variant="caption" sx={{ color: '#10B981', display: 'block', textAlign: 'center', mt: 2 }}>
                   Full evaluation mode: All metrics scored.
+                </Typography>
+              ) : (
+                <Typography variant="caption" sx={{ color: '#888', display: 'block', textAlign: 'center', mt: 2 }}>
+                  Enable camera for enhanced Expression scoring.
                 </Typography>
               )}
             </Paper>
@@ -651,9 +637,14 @@ const Results = () => {
                 AI Feedback
               </Typography>
               <Divider sx={{ mb: 2, borderColor: '#262626' }} />
-              <Typography variant="body1" sx={{ color: '#E0E0E0', lineHeight: 1.8 }}>
-                {results?.feedback || 'Great job completing the interview! Review the detailed scores above to understand your performance.'}
-              </Typography>
+              {(results?.feedback || 'Great job completing the interview! Review the detailed scores above to understand your performance.')
+                .split('\n\n')
+                .map((paragraph, index) => (
+                  <Typography key={index} variant="body1" sx={{ color: '#E0E0E0', lineHeight: 1.8, mb: index < (results?.feedback || '').split('\n\n').length - 1 ? 2 : 0 }}>
+                    {paragraph}
+                  </Typography>
+                ))
+              }
             </Paper>
           </Grid>
 
@@ -668,15 +659,33 @@ const Results = () => {
               <List dense>
                 {results?.strong_areas?.length > 0 ? (
                   results.strong_areas.map((area, index) => (
-                    <ListItem key={index} sx={{ px: 0 }}>
-                      <ListItemIcon sx={{ minWidth: 36 }}>
+                    <ListItem key={index} sx={{ px: 0, alignItems: 'flex-start' }}>
+                      <ListItemIcon sx={{ minWidth: 36, mt: 0.5 }}>
                         <TrendingUp sx={{ color: '#10B981' }} />
                       </ListItemIcon>
                       <ListItemText
-                        primary={area.area || area}
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <span>{area.area || area}</span>
+                            {area.score && (
+                              <Chip 
+                                label={`${Math.round(area.score)}%`}
+                                size="small"
+                                sx={{ 
+                                  height: 20, 
+                                  fontSize: '0.7rem', 
+                                  fontWeight: 600,
+                                  bgcolor: 'rgba(16, 185, 129, 0.15)', 
+                                  color: '#10B981', 
+                                  border: '1px solid rgba(16, 185, 129, 0.3)' 
+                                }} 
+                              />
+                            )}
+                          </Box>
+                        }
                         secondary={area.description}
-                        primaryTypographyProps={{ sx: { color: '#FFFFFF' } }}
-                        secondaryTypographyProps={{ sx: { color: '#888888' } }}
+                        primaryTypographyProps={{ sx: { color: '#FFFFFF', fontWeight: 500 } }}
+                        secondaryTypographyProps={{ sx: { color: '#999999', mt: 0.5, lineHeight: 1.6 } }}
                       />
                     </ListItem>
                   ))
@@ -700,15 +709,33 @@ const Results = () => {
               <List dense>
                 {results?.weak_areas?.length > 0 ? (
                   results.weak_areas.map((area, index) => (
-                    <ListItem key={index} sx={{ px: 0 }}>
-                      <ListItemIcon sx={{ minWidth: 36 }}>
+                    <ListItem key={index} sx={{ px: 0, alignItems: 'flex-start' }}>
+                      <ListItemIcon sx={{ minWidth: 36, mt: 0.5 }}>
                         <Lightbulb sx={{ color: '#F59E0B' }} />
                       </ListItemIcon>
                       <ListItemText
-                        primary={area.area || area}
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <span>{area.area || area}</span>
+                            {area.score != null && (
+                              <Chip 
+                                label={`${Math.round(area.score)}%`}
+                                size="small"
+                                sx={{ 
+                                  height: 20, 
+                                  fontSize: '0.7rem', 
+                                  fontWeight: 600,
+                                  bgcolor: area.severity === 'high' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)', 
+                                  color: area.severity === 'high' ? '#EF4444' : '#F59E0B', 
+                                  border: `1px solid ${area.severity === 'high' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(245, 158, 11, 0.3)'}` 
+                                }} 
+                              />
+                            )}
+                          </Box>
+                        }
                         secondary={area.suggestion}
-                        primaryTypographyProps={{ sx: { color: '#FFFFFF' } }}
-                        secondaryTypographyProps={{ sx: { color: '#888888' } }}
+                        primaryTypographyProps={{ sx: { color: '#FFFFFF', fontWeight: 500 } }}
+                        secondaryTypographyProps={{ sx: { color: '#999999', mt: 0.5, lineHeight: 1.6 } }}
                       />
                     </ListItem>
                   ))
