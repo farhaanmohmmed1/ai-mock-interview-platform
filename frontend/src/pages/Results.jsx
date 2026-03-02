@@ -36,9 +36,11 @@ import {
   OpenInNew,
   Download,
   PictureAsPdf,
+  Mic,
+  Videocam,
 } from '@mui/icons-material';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import API_URL from '../config';
 
 const ScoreCircle = ({ score, label, color }) => (
@@ -252,7 +254,7 @@ const Results = () => {
         ['Confidence', `${data.overall_performance.confidence_score?.toFixed(1) || 0}%`],
         ['Emotion', `${data.overall_performance.emotion_score?.toFixed(1) || 0}%`],
       ];
-      doc.autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [['Metric', 'Score']],
         body: scores,
@@ -261,7 +263,7 @@ const Results = () => {
         margin: { left: margin, right: margin },
         tableWidth: pageWidth - 2 * margin,
       });
-      yPos = doc.lastAutoTable.finalY + 10;
+      yPos = (doc).lastAutoTable.finalY + 10;
       
       // Strong Areas
       if (data.analysis.strong_areas?.length > 0) {
@@ -565,6 +567,7 @@ const Results = () => {
               <Divider sx={{ mb: 4, borderColor: '#262626' }} />
               
               <Grid container spacing={4} justifyContent="center">
+                {/* Content - always shown */}
                 <Grid item>
                   <ScoreCircle
                     score={results?.content_score}
@@ -572,35 +575,68 @@ const Results = () => {
                     color={getScoreColor(results?.content_score)}
                   />
                 </Grid>
-                <Grid item>
-                  <ScoreCircle
-                    score={results?.clarity_score}
-                    label="Clarity"
-                    color={getScoreColor(results?.clarity_score)}
-                  />
-                </Grid>
-                <Grid item>
-                  <ScoreCircle
-                    score={results?.fluency_score}
-                    label="Fluency"
-                    color={getScoreColor(results?.fluency_score)}
-                  />
-                </Grid>
-                <Grid item>
-                  <ScoreCircle
-                    score={results?.confidence_score}
-                    label="Confidence"
-                    color={getScoreColor(results?.confidence_score)}
-                  />
-                </Grid>
-                <Grid item>
-                  <ScoreCircle
-                    score={results?.emotion_score}
-                    label="Expression"
-                    color={getScoreColor(results?.emotion_score)}
-                  />
-                </Grid>
+                
+                {/* Clarity - shown if available */}
+                {results?.clarity_score != null && (
+                  <Grid item>
+                    <ScoreCircle
+                      score={results?.clarity_score}
+                      label="Clarity"
+                      color={getScoreColor(results?.clarity_score)}
+                    />
+                  </Grid>
+                )}
+                
+                {/* Fluency - only shown with audio */}
+                {results?.fluency_score != null && (
+                  <Grid item>
+                    <ScoreCircle
+                      score={results?.fluency_score}
+                      label="Fluency"
+                      color={getScoreColor(results?.fluency_score)}
+                    />
+                  </Grid>
+                )}
+                
+                {/* Confidence - only shown with audio/video */}
+                {results?.confidence_score != null && (
+                  <Grid item>
+                    <ScoreCircle
+                      score={results?.confidence_score}
+                      label="Confidence"
+                      color={getScoreColor(results?.confidence_score)}
+                    />
+                  </Grid>
+                )}
+                
+                {/* Expression - only shown with video */}
+                {results?.emotion_score != null && (
+                  <Grid item>
+                    <ScoreCircle
+                      score={results?.emotion_score}
+                      label="Expression"
+                      color={getScoreColor(results?.emotion_score)}
+                    />
+                  </Grid>
+                )}
               </Grid>
+              
+              {/* Mode indicator */}
+              {(!results?.clarity_score && !results?.fluency_score && !results?.confidence_score && !results?.emotion_score) && (
+                <Typography variant="caption" sx={{ color: '#888', display: 'block', textAlign: 'center', mt: 2 }}>
+                  Text-only mode: Only Content is scored. Enable microphone for more metrics.
+                </Typography>
+              )}
+              {(results?.clarity_score != null && results?.fluency_score != null && results?.emotion_score == null) && (
+                <Typography variant="caption" sx={{ color: '#888', display: 'block', textAlign: 'center', mt: 2 }}>
+                  Audio mode: Enable camera for Expression scoring.
+                </Typography>
+              )}
+              {results?.emotion_score != null && (
+                <Typography variant="caption" sx={{ color: '#10B981', display: 'block', textAlign: 'center', mt: 2 }}>
+                  Full evaluation mode: All metrics scored.
+                </Typography>
+              )}
             </Paper>
           </Grid>
         </Grid>
@@ -693,38 +729,92 @@ const Results = () => {
                 Recommendations
               </Typography>
               <Divider sx={{ mb: 2, borderColor: '#262626' }} />
-              <List>
-                {results?.recommendations?.length > 0 ? (
-                  results.recommendations.map((rec, index) => (
-                    <ListItem key={index} sx={{ px: 0 }}>
-                      <ListItemIcon sx={{ minWidth: 36 }}>
-                        <CheckCircle sx={{ color: '#0EA5E9' }} />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={rec.text || rec.title || rec}
-                        secondary={rec.description}
-                        primaryTypographyProps={{ sx: { color: '#FFFFFF' } }}
-                        secondaryTypographyProps={{ sx: { color: '#888888' } }}
-                      />
+              
+              {results?.recommendations?.length > 0 ? (
+                <>
+                  {/* Mode Recommendations (Mic/Camera) */}
+                  {results.recommendations.filter(r => r.type === 'mode').length > 0 && (
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="subtitle2" sx={{ color: '#F59E0B', mb: 1, fontWeight: 600 }}>
+                        Enhance Your Evaluation
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        {results.recommendations.filter(r => r.type === 'mode').map((rec, index) => (
+                          <Box 
+                            key={`mode-${index}`}
+                            sx={{ 
+                              p: 2, 
+                              borderRadius: 2, 
+                              bgcolor: rec.action === 'enable_audio' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(139, 92, 246, 0.1)',
+                              border: `1px solid ${rec.action === 'enable_audio' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(139, 92, 246, 0.3)'}`,
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: 2
+                            }}
+                          >
+                            {rec.action === 'enable_audio' ? (
+                              <Mic sx={{ color: '#F59E0B', mt: 0.3 }} />
+                            ) : (
+                              <Videocam sx={{ color: '#8B5CF6', mt: 0.3 }} />
+                            )}
+                            <Typography variant="body2" sx={{ color: '#E0E0E0' }}>
+                              {rec.text}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                  
+                  {/* Other Recommendations */}
+                  {results.recommendations.filter(r => r.type !== 'mode').length > 0 && (
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ color: '#10B981', mb: 1, fontWeight: 600 }}>
+                        Tips for Improvement
+                      </Typography>
+                      <List sx={{ py: 0 }}>
+                        {results.recommendations.filter(r => r.type !== 'mode').map((rec, index) => {
+                          let iconColor = '#10B981';
+                          if (rec.priority === 'high') iconColor = '#EF4444';
+                          else if (rec.priority === 'medium') iconColor = '#F59E0B';
+                          
+                          return (
+                            <ListItem key={`tip-${index}`} sx={{ px: 0, py: 0.5 }}>
+                              <ListItemIcon sx={{ minWidth: 32 }}>
+                                <CheckCircle sx={{ color: iconColor, fontSize: 20 }} />
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={rec.text || rec.title || rec}
+                                primaryTypographyProps={{ sx: { color: '#E0E0E0', fontSize: '0.9rem' } }}
+                              />
+                            </ListItem>
+                          );
+                        })}
+                      </List>
+                    </Box>
+                  )}
+                </>
+              ) : (
+                <Box>
+                  <Typography variant="subtitle2" sx={{ color: '#10B981', mb: 1, fontWeight: 600 }}>
+                    Tips for Improvement
+                  </Typography>
+                  <List sx={{ py: 0 }}>
+                    <ListItem sx={{ px: 0, py: 0.5 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}><CheckCircle sx={{ color: '#10B981', fontSize: 20 }} /></ListItemIcon>
+                      <ListItemText primary="Practice more interviews to build confidence" primaryTypographyProps={{ sx: { color: '#E0E0E0', fontSize: '0.9rem' } }} />
                     </ListItem>
-                  ))
-                ) : (
-                  <>
-                    <ListItem sx={{ px: 0 }}>
-                      <ListItemIcon sx={{ minWidth: 36 }}><CheckCircle sx={{ color: '#0EA5E9' }} /></ListItemIcon>
-                      <ListItemText primary="Practice more interviews to build confidence" primaryTypographyProps={{ sx: { color: '#E0E0E0' } }} />
+                    <ListItem sx={{ px: 0, py: 0.5 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}><CheckCircle sx={{ color: '#10B981', fontSize: 20 }} /></ListItemIcon>
+                      <ListItemText primary="Review common interview questions in your field" primaryTypographyProps={{ sx: { color: '#E0E0E0', fontSize: '0.9rem' } }} />
                     </ListItem>
-                    <ListItem sx={{ px: 0 }}>
-                      <ListItemIcon sx={{ minWidth: 36 }}><CheckCircle sx={{ color: '#0EA5E9' }} /></ListItemIcon>
-                      <ListItemText primary="Review common interview questions in your field" primaryTypographyProps={{ sx: { color: '#E0E0E0' } }} />
+                    <ListItem sx={{ px: 0, py: 0.5 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}><CheckCircle sx={{ color: '#10B981', fontSize: 20 }} /></ListItemIcon>
+                      <ListItemText primary="Work on structuring your answers using the STAR method" primaryTypographyProps={{ sx: { color: '#E0E0E0', fontSize: '0.9rem' } }} />
                     </ListItem>
-                    <ListItem sx={{ px: 0 }}>
-                      <ListItemIcon sx={{ minWidth: 36 }}><CheckCircle sx={{ color: '#0EA5E9' }} /></ListItemIcon>
-                      <ListItemText primary="Work on structuring your answers using the STAR method" primaryTypographyProps={{ sx: { color: '#E0E0E0' } }} />
-                    </ListItem>
-                  </>
-                )}
-              </List>
+                  </List>
+                </Box>
+              )}
             </Paper>
           </Grid>
 

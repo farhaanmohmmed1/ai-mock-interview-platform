@@ -254,71 +254,28 @@ async def submit_text_response(
     
     print(f"[submit-text] Evaluation complete: content={evaluation['content_score']}")
     
-    # Calculate text-based speech estimates for text-only submissions
-    # These are derived from the text quality to provide differentiated scores
-    text = response_data.text_response.strip()
-    word_count = len(text.split())
-    sentence_count = max(1, text.count('.') + text.count('!') + text.count('?'))
-    avg_sentence_length = word_count / sentence_count
+    # TEXT-ONLY MODE: ONLY Content can be scored from text
+    # Clarity, Fluency, Confidence, Expression ALL require audio/video
+    print(f"[submit-text] Text-only mode: content={evaluation['content_score']} ONLY")
+    print(f"[submit-text] Clarity/Fluency/Confidence/Expression = null (no audio/video)")
     
-    print(f"[submit-text] Text stats: words={word_count}, sentences={sentence_count}, avg_len={avg_sentence_length:.1f}")
-    
-    # Clarity estimate: based on sentence structure and word choice
-    # Clear writing has moderate sentence lengths (10-20 words)
-    clarity_base = evaluation["content_score"]
-    if 10 <= avg_sentence_length <= 20:
-        clarity_estimate = min(100, clarity_base + 10)
-    elif avg_sentence_length > 30:  # Very long sentences reduce clarity
-        clarity_estimate = max(30, clarity_base - 15)
-    else:
-        clarity_estimate = clarity_base
-    
-    # Fluency estimate: based on answer length and completeness
-    fluency_base = evaluation["content_score"]
-    if word_count >= 50:  # Good detailed answer
-        fluency_estimate = min(100, fluency_base + 8)
-    elif word_count >= 30:  # Decent answer
-        fluency_estimate = fluency_base
-    elif word_count >= 15:  # Brief answer
-        fluency_estimate = max(40, fluency_base - 10)
-    else:  # Very short
-        fluency_estimate = max(30, fluency_base - 20)
-    
-    # Confidence estimate: based on assertive language
-    confidence_keywords = ['definitely', 'certainly', 'i believe', 'in my experience', 
-                          'i would', 'effectively', 'successfully', 'clearly']
-    uncertainty_keywords = ['maybe', 'perhaps', 'i think', 'probably', 'might', 
-                           'not sure', 'i guess', 'possibly']
-    
-    text_lower = text.lower()
-    confidence_boost = sum(1 for kw in confidence_keywords if kw in text_lower) * 5
-    confidence_penalty = sum(1 for kw in uncertainty_keywords if kw in text_lower) * 3
-    confidence_estimate = min(100, max(35, evaluation["content_score"] + confidence_boost - confidence_penalty))
-    
-    # Add some variation to make scores look more realistic
-    clarity_estimate = min(100, max(30, clarity_estimate + random.randint(-5, 5)))
-    fluency_estimate = min(100, max(30, fluency_estimate + random.randint(-5, 5)))
-    confidence_estimate = min(100, max(30, confidence_estimate + random.randint(-5, 5)))
-    
-    print(f"[submit-text] Estimated scores: clarity={clarity_estimate}, fluency={fluency_estimate}, confidence={confidence_estimate}")
-    
-    # Create response with all scores
+    # Create response - ONLY Content is scored for text-only
     new_response = Response(
         interview_id=interview.id,
         question_id=question.id,
         text_response=response_data.text_response,
         content_score=evaluation["content_score"],
         relevance_score=evaluation["relevance_score"],
-        clarity_score=clarity_estimate,
-        fluency_score=fluency_estimate,
-        confidence_score=confidence_estimate,
+        clarity_score=None,      # Requires audio
+        fluency_score=None,      # Requires audio
+        confidence_score=None,   # Requires audio/video
         thinking_time_seconds=response_data.thinking_time_seconds,
         nlp_analysis=evaluation["nlp_analysis"],
         feedback=evaluation["feedback"],
         improvement_suggestions=evaluation["suggestions"]
     )
     
-    print(f"[submit-text] Response created with scores: clarity={new_response.clarity_score}, fluency={new_response.fluency_score}, confidence={new_response.confidence_score}")
+    print(f"[submit-text] Response created: content={new_response.content_score}, clarity={new_response.clarity_score}")
     
     db.add(new_response)
     
@@ -458,7 +415,12 @@ async def submit_audio_response(
     
     confidence_score = min(100, max(30, confidence_score))
     
-    # Create response
+    # AUDIO-ONLY MODE: Content, Clarity, Fluency, Confidence can be measured
+    # Expression requires video - set to null
+    print(f"[submit-audio] Audio mode: content={evaluation['content_score']}, clarity={speech_analysis['clarity_score']}, fluency={speech_analysis['fluency_score']}, confidence={confidence_score}")
+    print(f"[submit-audio] Expression = null (no video)")
+    
+    # Create response - Expression is null (no video)
     new_response = Response(
         interview_id=interview.id,
         question_id=question.id,
@@ -469,6 +431,7 @@ async def submit_audio_response(
         clarity_score=speech_analysis["clarity_score"],
         fluency_score=speech_analysis["fluency_score"],
         confidence_score=confidence_score,
+        # expression_score=None,  # Cannot measure without video (stored via emotion_analyzer separately)
         response_time_seconds=response_time,
         thinking_time_seconds=thinking_time,
         speech_analysis=speech_analysis,

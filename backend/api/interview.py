@@ -525,10 +525,10 @@ async def complete_interview(
         report = {
             "overall_score": 0,
             "content_score": 0,
-            "clarity_score": 0,
-            "fluency_score": 0,
-            "confidence_score": 0,
-            "emotion_score": 0,
+            "clarity_score": None,  # Not measured
+            "fluency_score": None,  # Not measured
+            "confidence_score": None,  # Not measured
+            "emotion_score": None,  # Not measured
             "weak_areas": [{"area": "All Areas", "score": 0, "suggestion": "You skipped all questions. Please attempt answering to get meaningful feedback."}],
             "strong_areas": [],
             "feedback": "No questions were answered. Please attempt the interview again and try answering the questions to receive a proper evaluation.",
@@ -559,16 +559,23 @@ async def complete_interview(
             
             agent_overall = agent_report.get("scores", {}).get("overall_score", 0)
             
+            # Determine what metrics are available based on response data
+            # Check if any responses have audio/video data
+            has_audio = any(r.audio_path for r in answered_responses)
+            has_fluency = any(r.fluency_score is not None for r in answered_responses)
+            has_confidence = any(r.confidence_score is not None for r in answered_responses)
+            
             # Only use agent report if it produced valid scores (not 0)
             # Agent may return 0 if its in-memory context was lost
             if agent_overall and agent_overall > 0:
                 report = {
                     "overall_score": agent_overall,
                     "content_score": agent_report.get("scores", {}).get("content_score", 50),
-                    "clarity_score": agent_report.get("scores", {}).get("clarity_score", 50),
-                    "fluency_score": agent_report.get("scores", {}).get("fluency_score", 50),
-                    "confidence_score": agent_report.get("scores", {}).get("confidence_score", 50),
-                    "emotion_score": agent_report.get("scores", {}).get("confidence_score", 50),
+                    # Only include audio metrics if audio was recorded
+                    "clarity_score": agent_report.get("scores", {}).get("clarity_score") if has_audio or has_fluency else None,
+                    "fluency_score": agent_report.get("scores", {}).get("fluency_score") if has_audio or has_fluency else None,
+                    "confidence_score": agent_report.get("scores", {}).get("confidence_score") if has_confidence else None,
+                    "emotion_score": None,  # Requires video - agent doesn't have video analysis
                     "weak_areas": agent_report.get("weak_areas", []),
                     "strong_areas": agent_report.get("strong_areas", []),
                     "feedback": agent_report.get("feedback", "Interview completed."),
@@ -603,15 +610,15 @@ async def complete_interview(
             else:
                 raise Exception("Report generator not available")
         except Exception as e:
-            # Generate default report if error - give 0 scores instead of inflated defaults
+            # Generate default report if error - null for unmeasurable metrics
             print(f"ReportGenerator failed: {e}")
             report = {
                 "overall_score": 0,
                 "content_score": 0,
-                "clarity_score": 0,
-                "fluency_score": 0,
-                "confidence_score": 0,
-                "emotion_score": 0,
+                "clarity_score": None,  # Cannot determine without analysis
+                "fluency_score": None,  # Requires audio
+                "confidence_score": None,  # Requires audio/video
+                "emotion_score": None,  # Requires video
                 "weak_areas": [],
                 "strong_areas": [],
                 "feedback": "Could not generate detailed evaluation. Please try the interview again.",
@@ -630,20 +637,67 @@ async def complete_interview(
                 ]
             }
     
-    # If partially answered, apply moderate penalty to overall score only
-    # Individual skill scores remain reflecting actual performance on answered questions
+    # IMPORTANT: Apply completion ratio to ALL scores from ANY source (agent or generator)
+    # Each question contributes equally - skipped questions count as 0
     if answered_count > 0 and answered_count < total_questions:
-        completion_rate = answered_count / total_questions
-        # Apply penalty only to overall score - scale it by completion rate
-        # but keep individual dimension scores intact to show differentiation
-        if "overall_score" in report and report["overall_score"]:
-            original_overall = report["overall_score"]
-            # Blend: 70% of actual performance + 30% penalty for incomplete
-            # This way answering 1/6 questions with 80% score = 80*0.7 + 0*0.3 = 56%
-            # Instead of 80 * (1/6) = 13%
-            report["overall_score"] = round(original_overall * (0.7 + 0.3 * completion_rate), 1)
+        completion_ratio = answered_count / total_questions
+        print(f"[Complete] Applying completion ratio: {answered_count}/{total_questions} = {completion_ratio}")
+        
+        # Scale all scores by completion ratio
+        if report.get("overall_score"):
+            report["overall_score"] = round(report["overall_score"] * completion_ratio, 1)
+        if report.get("content_score"):
+            report["content_score"] = round(report["content_score"] * completion_ratio, 1)
+        if report.get("clarity_score"):
+            report["clarity_score"] = round(report["clarity_score"] * completion_ratio, 1)
+        if report.get("fluency_score"):
+            report["fluency_score"] = round(report["fluency_score"] * completion_ratio, 1)
+        if report.get("confidence_score"):
+            report["confidence_score"] = round(report["confidence_score"] * completion_ratio, 1)
+        if report.get("emotion_score"):
+            report["emotion_score"] = round(report["emotion_score"] * completion_ratio, 1)
+        
+        print(f"[Complete] Scaled scores: overall={report.get('overall_score')}, content={report.get('content_score')}")
+    
+    # Add audio/video recommendations if not already present
+    has_audio = any(r.audio_path for r in answered_responses) if answered_responses else False
+    has_fluency = any(r.fluency_score is not None for r in answered_responses) if answered_responses else False
+    has_video = report.get("emotion_score") is not None
+    
+    recommendations = report.get("recommendations", [])
+    
+    # Check if mic/camera recommendations already exist (from report_generator)
+    has_mic_rec = any(r.get("action") == "enable_audio" for r in recommendations)
+    has_cam_rec = any(r.get("action") == "enable_video" for r in recommendations)
+    
+    # Add microphone recommendation if no audio was used and not already added
+    if not has_audio and not has_fluency and not has_mic_rec:
+        mic_rec = {
+            "type": "mode",
+            "priority": "high",
+            "text": "Enable microphone in your next interview to get feedback on speech clarity, fluency, and confidence. This provides a more realistic interview experience.",
+            "action": "enable_audio",
+            "icon": "mic"
+        }
+        recommendations.insert(0, mic_rec)
+    
+    # Add camera recommendation if no video was used and not already added
+    if not has_video and not has_cam_rec:
+        cam_rec = {
+            "type": "mode", 
+            "priority": "medium",
+            "text": "Enable camera in your next interview to receive feedback on facial expressions, eye contact, and body language. Non-verbal communication is crucial in real interviews.",
+            "action": "enable_video",
+            "icon": "videocam"
+        }
+        # Add after mic recommendation or at beginning
+        insert_pos = 1 if (not has_audio and not has_fluency and not has_mic_rec) else 0
+        recommendations.insert(insert_pos, cam_rec)
+    
+    report["recommendations"] = recommendations
     
     # Update interview with scores
+    # Preserve null values for metrics that couldn't be measured
     interview.status = "completed"
     interview.completed_at = datetime.utcnow()
     interview.duration_minutes = (
@@ -651,10 +705,10 @@ async def complete_interview(
     ).total_seconds() / 60 if interview.started_at else 0
     interview.overall_score = report.get("overall_score", 0)
     interview.content_score = report.get("content_score", 0)
-    interview.clarity_score = report.get("clarity_score", 0)
-    interview.fluency_score = report.get("fluency_score", 0)
-    interview.confidence_score = report.get("confidence_score", 0)
-    interview.emotion_score = report.get("emotion_score", 0)
+    interview.clarity_score = report.get("clarity_score")  # None if not measurable
+    interview.fluency_score = report.get("fluency_score")  # None if no audio
+    interview.confidence_score = report.get("confidence_score")  # None if no audio/video
+    interview.emotion_score = report.get("emotion_score")  # None if no video
     interview.weak_areas = report.get("weak_areas", [])
     interview.strong_areas = report.get("strong_areas", [])
     interview.feedback = report.get("feedback", "Thank you for completing the interview!")

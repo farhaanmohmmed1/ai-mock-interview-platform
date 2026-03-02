@@ -769,59 +769,10 @@ const Interview = () => {
       let answerText = currentAnswer.trim();
       let data;
 
-      // If we have audio, submit via audio endpoint for proper speech analysis scores
-      if (audioBlob) {
-        const formData = new FormData();
-        formData.append('audio_file', audioBlob, 'recording.webm');
-        formData.append('thinking_time', thinkingTime.toString());
-
-        const response = await fetch(`${API_URL}/api/evaluation/submit-audio/${currentQuestion.id}`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formData,
-        });
-
-        data = await response.json();
-
-        if (!response.ok) {
-          // If audio submission fails, fall back to text submission
-          console.warn('Audio submission failed, falling back to text:', data.detail);
-          if (answerText) {
-            // Submit as text if we have transcribed text
-            const textResponse = await fetch(`${API_URL}/api/evaluation/submit-text`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                question_id: currentQuestion.id,
-                text_response: answerText,
-                thinking_time_seconds: thinkingTime,
-              }),
-            });
-            data = await textResponse.json();
-            if (!textResponse.ok) {
-              setError(data.detail || 'Failed to submit answer');
-              setSubmitting(false);
-              return;
-            }
-          } else {
-            setError(data.detail || 'Failed to submit audio answer');
-            setSubmitting(false);
-            return;
-          }
-        } else {
-          // Update answer text from transcription if available
-          if (data.transcription) {
-            answerText = data.transcription;
-            setCurrentAnswer(answerText);
-          }
-        }
-      } else {
-        // Text-only submission
+      // If user has edited text in the textarea, always use text submission
+      // This ensures any edits to the transcription are preserved
+      if (answerText) {
+        // Text submission (including edited transcriptions)
         const response = await fetch(`${API_URL}/api/evaluation/submit-text`, {
           method: 'POST',
           headers: {
@@ -841,6 +792,33 @@ const Interview = () => {
           setError(data.detail || 'Failed to submit answer');
           setSubmitting(false);
           return;
+        }
+      } else if (audioBlob) {
+        // Audio-only submission (no text available)
+        const formData = new FormData();
+        formData.append('audio_file', audioBlob, 'recording.webm');
+        formData.append('thinking_time', thinkingTime.toString());
+
+        const response = await fetch(`${API_URL}/api/evaluation/submit-audio/${currentQuestion.id}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        data = await response.json();
+
+        if (!response.ok) {
+          setError(data.detail || 'Failed to submit audio answer');
+          setSubmitting(false);
+          return;
+        }
+        
+        // Update answer text from transcription
+        if (data.transcription) {
+          answerText = data.transcription;
+          setCurrentAnswer(answerText);
         }
       }
 
@@ -897,6 +875,7 @@ const Interview = () => {
       if (response.ok) {
         const data = await response.json();
         console.log('Interview completed successfully:', data);
+        stopProctoring();
         stopCamera();
         setCompleteDialogOpen(false);
         // Small delay to ensure state is updated before navigation
@@ -928,6 +907,7 @@ const Interview = () => {
     } catch (err) {
       console.error('Error cancelling interview:', err);
     } finally {
+      stopProctoring();
       stopCamera();
       navigate('/dashboard');
     }

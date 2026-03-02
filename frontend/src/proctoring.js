@@ -210,7 +210,14 @@ class ProctoringClient {
         });
         
         if (!response.ok) {
-            console.error('Frame analysis failed');
+            // Stop capture on auth failure to prevent spam
+            if (response.status === 401) {
+                console.warn('Proctoring session unauthorized - stopping capture');
+                this.stopFrameCapture();
+                this.isActive = false;
+            } else {
+                console.error('Frame analysis failed:', response.status);
+            }
             return;
         }
         

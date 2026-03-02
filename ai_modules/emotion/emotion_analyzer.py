@@ -16,8 +16,9 @@ class EmotionAnalyzer:
         try:
             from fer import FER
             self.emotion_detector = FER(mtcnn=True)
-        except ImportError:
-            print("Warning: FER not installed. Emotion detection will be limited.")
+            print("[EmotionAnalyzer] FER initialized successfully")
+        except ImportError as e:
+            print(f"Warning: FER not installed ({e}). Emotion detection will be limited.")
             self.emotion_detector = None
         except Exception as e:
             print(f"Warning: Could not initialize FER: {e}")

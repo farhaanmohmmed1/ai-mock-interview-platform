@@ -87,47 +87,42 @@ class AnswerEvaluator:
         }
     
     def _calculate_content_score(self, answer: str, word_count: int, sentence_count: int) -> float:
-        """Calculate content quality score - GENEROUS VERSION"""
+        """Calculate content quality score"""
+        score = 0
         
-        # Check for gibberish first (Lorem Ipsum, random chars, etc.)
-        answer_lower = answer.lower()
-        lorem_indicators = ['lorem', 'ipsum', 'dolor sit', 'amet', 'consectetur', 'adipiscing', 'elit', 'sed do', 'eiusmod', 'tempor incididunt', 'labore et dolore', 'magna aliqua']
-        lorem_matches = sum(1 for indicator in lorem_indicators if indicator in answer_lower)
-        if lorem_matches >= 2:  # If 2+ Lorem Ipsum words found, it's gibberish
-            return 10
+        # First, check for gibberish/non-English content
+        english_ratio = self._check_english_content(answer)
+        if english_ratio < 0.25:
+            # Severe penalty for gibberish (like Lorem Ipsum)
+            return max(10, 30 * english_ratio)  # Max 7.5 points for mostly non-English
         
-        # Start with base score of 65 - any reasonable answer deserves this
-        score = 65
+        # Length scoring (0-30 points) - generous for detailed answers
+        if word_count < 15:
+            score += (word_count / 15) * 15
+        elif word_count < 40:
+            score += 15 + ((word_count - 15) / 25) * 5  # 15-20
+        elif word_count < 80:
+            score += 20 + ((word_count - 40) / 40) * 5  # 20-25
+        elif word_count < 150:
+            score += 25 + ((word_count - 80) / 70) * 5  # 25-30
+        else:
+            score += 30  # Very detailed answer
         
-        # Length bonus (up to +18 points)
-        if word_count >= 100:
+        # Structure scoring (0-18 points)
+        if sentence_count >= 6:
             score += 18
-        elif word_count >= 70:
-            score += 15
-        elif word_count >= 50:
-            score += 12
-        elif word_count >= 35:
-            score += 9
-        elif word_count >= 25:
-            score += 6
-        elif word_count >= 15:
-            score += 3
-        else:
-            score += 0
-        
-        # Structure bonus (up to +10 points)
-        if sentence_count >= 5:
-            score += 10
+        elif sentence_count >= 5:
+            score += 17
         elif sentence_count >= 4:
-            score += 8
+            score += 15
         elif sentence_count >= 3:
-            score += 6
+            score += 13
         elif sentence_count >= 2:
-            score += 4
+            score += 11
         else:
-            score += 2  # Single sentence still gets credit
+            score += 8  # Single sentence still gets credit
         
-        # Quality indicators bonus (up to +7 points)
+        # Check for examples/specifics (0-18 points)
         example_indicators = ['for example', 'for instance', 'such as', 'like', 'specifically',
                               'in my experience', 'i have', 'i worked', 'i used', 'we implemented',
                               'the result', 'this led to', 'because', 'which means', 'therefore',
@@ -135,17 +130,90 @@ class AnswerEvaluator:
                               'additionally', 'furthermore', 'moreover', 'first', 'second', 'finally',
                               'this means', 'as a result', 'consequently', 'thus', 'however']
         matches = sum(1 for indicator in example_indicators if indicator in answer.lower())
-        if matches >= 4:
-            score += 7
+        if matches >= 5:
+            score += 18
+        elif matches >= 4:
+            score += 16
         elif matches >= 3:
-            score += 5
+            score += 14
         elif matches >= 2:
-            score += 4
+            score += 12
         elif matches >= 1:
-            score += 3
-        # No penalty for no matches - base score is generous
+            score += 10
+        else:
+            score += 7  # Base credit
         
-        # Total max: 65 (base) + 18 (length) + 10 (structure) + 7 (quality) = 100
+        # Complexity & vocabulary (0-10 points)
+        avg_word_length = sum(len(word) for word in answer.split()) / len(answer.split()) if answer.split() else 0
+        if avg_word_length > 5.5:
+            score += 10
+        elif avg_word_length > 5.0:
+            score += 9
+        elif avg_word_length > 4.5:
+            score += 8
+        elif avg_word_length > 4.0:
+            score += 7
+        else:
+            score += 5
+        
+        # STAR method / structured response bonus (0-14 points)
+        answer_lower = answer.lower()
+        star_indicators = {
+            'situation': ['situation', 'context', 'when i', 'at my', 'in my previous', 'there was', 'while working', 'during my'],
+            'task': ['task', 'challenge', 'needed to', 'had to', 'responsible for', 'goal was', 'objective', 'required', 'aimed to'],
+            'action': ['i decided', 'i implemented', 'i coordinated', 'my approach', 'i took', 'i created', 'i developed', 'i set', 'i used', 'i followed', 'i established', 'i focused'],
+            'result': ['result', 'outcome', 'as a result', 'this led to', 'we achieved', 'improved by', 'reduced', 'increased', 'ultimately', 'consequently', 'success', 'accomplished']
+        }
+        star_count = 0
+        for category, indicators in star_indicators.items():
+            if any(ind in answer_lower for ind in indicators):
+                star_count += 1
+        
+        if star_count >= 4:
+            score += 14  # Full STAR method
+        elif star_count >= 3:
+            score += 11
+        elif star_count >= 2:
+            score += 8
+        elif star_count >= 1:
+            score += 5
+        
+        # Excellence bonus for comprehensive answers (0-15 points)
+        # Reward answers that combine multiple quality indicators
+        excellence_count = 0
+        if word_count >= 120:
+            excellence_count += 2  # Double credit for very detailed
+        elif word_count >= 80:
+            excellence_count += 1
+        if sentence_count >= 6:
+            excellence_count += 1
+        if matches >= 4:
+            excellence_count += 1
+        if star_count >= 3:
+            excellence_count += 1
+        if avg_word_length > 5.0:
+            excellence_count += 1
+        
+        if excellence_count >= 5:
+            score += 15
+        elif excellence_count >= 4:
+            score += 12
+        elif excellence_count >= 3:
+            score += 8
+        elif excellence_count >= 2:
+            score += 5
+        
+        # Apply English content ratio as multiplier ONLY for suspected gibberish
+        # Normal English text gets at least 0.35-0.5 ratio with our common word list
+        # Only penalize if ratio is very low (likely non-English or gibberish)
+        if english_ratio < 0.25:
+            # Severe penalty for gibberish
+            score *= (0.4 + english_ratio * 2)  # 0.4 to 0.9 multiplier
+        elif english_ratio < 0.35:
+            # Mild penalty for unusual text
+            score *= 0.95
+        # Otherwise, no penalty - normal English answers shouldn't be penalized
+        
         return min(score, 100)
     
     def _check_english_content(self, answer: str) -> float:
@@ -242,45 +310,112 @@ class AnswerEvaluator:
         answer: str,
         expected_keywords: List[str] = None
     ) -> float:
-        """Calculate answer relevance to question - GENEROUS VERSION"""
+        """Calculate answer relevance to question"""
+        score = 0
         
-        # Check for gibberish/Lorem Ipsum text - return low score immediately
-        answer_lower = answer.lower()
-        lorem_indicators = ['lorem', 'ipsum', 'dolor sit', 'amet', 'consectetur', 'adipiscing', 'elit', 'sed do', 'eiusmod', 'tempor incididunt', 'labore et dolore', 'magna aliqua']
-        lorem_matches = sum(1 for indicator in lorem_indicators if indicator in answer_lower)
-        if lorem_matches >= 2:  # If 2+ Lorem Ipsum words found, it's gibberish
-            return 10
+        # Extract key terms from question
+        question_words = set(self.word_tokenize(question.lower()))
+        answer_words = set(self.word_tokenize(answer.lower()))
         
-        # Start with generous base score based on answer length
-        word_count = len(answer.split())
+        # Remove stopwords
+        question_keywords = question_words - self.stopwords
+        answer_keywords = answer_words - self.stopwords
         
-        if word_count >= 80:
-            score = 88
-        elif word_count >= 50:
-            score = 85
-        elif word_count >= 35:
-            score = 80
-        elif word_count >= 25:
-            score = 75
-        elif word_count >= 15:
-            score = 70
+        # Calculate overlap (0-25 points) - reduced weight, exact matching is too strict
+        if question_keywords:
+            overlap = len(question_keywords & answer_keywords) / len(question_keywords)
+            score += overlap * 25
+        
+        # Base score for having substantial answer (0-30 points)
+        # This rewards thoughtful answers even when they use different vocabulary
+        if len(answer_keywords) >= 30:
+            score += 30
+        elif len(answer_keywords) >= 20:
+            score += 28
+        elif len(answer_keywords) >= 15:
+            score += 25
+        elif len(answer_keywords) >= 10:
+            score += 20
+        elif len(answer_keywords) >= 5:
+            score += 15
         else:
-            score = 65
+            score += 8
         
-        # Small bonus for question word overlap (up to +5)
-        question_words = set(self.word_tokenize(question.lower())) - self.stopwords
-        answer_words = set(self.word_tokenize(answer.lower())) - self.stopwords
-        
-        if question_words:
-            overlap = len(question_words & answer_words) / len(question_words)
-            score += min(overlap * 5, 5)
-        
-        # Small bonus for keyword matches (up to +7)
-        if expected_keywords:
+        # Expected keywords (0-35 points) - with partial/stem matching and synonyms
+        if expected_keywords and len(expected_keywords) > 0:
+            keywords_lower = [k.lower() for k in expected_keywords]
             answer_lower = answer.lower()
-            found = sum(1 for kw in expected_keywords if kw.lower() in answer_lower)
-            keyword_ratio = found / len(expected_keywords) if expected_keywords else 0
-            score += keyword_ratio * 7
+            found_count = 0
+            
+            # Common synonyms for interview keywords
+            synonym_map = {
+                'teamwork': ['team', 'collaborate', 'together', 'cooperation', 'collective', 'group', 'joint'],
+                'collaboration': ['team', 'work together', 'cooperate', 'partner', 'joint', 'collective'],
+                'motivation': ['motivated', 'driven', 'passionate', 'enthusiastic', 'dedicated', 'focused', 'committed', 'engaged'],
+                'persistence': ['persistent', 'persevere', 'determined', 'resilient', 'tenacity', 'consistent', 'sustained'],
+                'attitude': ['approach', 'mindset', 'perspective', 'outlook', 'viewpoint', 'position', 'stance'],
+                'leadership': ['lead', 'leader', 'manage', 'guide', 'direct', 'coordinate', 'oversee', 'head'],
+                'communication': ['communicate', 'discuss', 'convey', 'explain', 'articulate', 'express', 'share', 'present'],
+                'problem-solving': ['solve', 'solution', 'resolve', 'address', 'tackle', 'fix', 'handle', 'overcome'],
+                'preference': ['prefer', 'choice', 'favor', 'inclined', 'comfortable', 'enjoy', 'like'],
+                'goals': ['goal', 'objective', 'target', 'aim', 'milestone', 'outcome', 'result', 'achievement'],
+                'experience': ['experienced', 'worked', 'previous', 'background', 'expertise', 'history', 'career'],
+                'skills': ['skill', 'ability', 'capable', 'proficient', 'competent', 'expert', 'knowledge'],
+                'strength': ['strong', 'strengths', 'excel', 'good at', 'proficient', 'capable', 'best'],
+                'weakness': ['improve', 'improvement', 'working on', 'developing', 'learning', 'growth', 'area'],
+                'challenge': ['difficult', 'challenging', 'hard', 'obstacle', 'problem', 'issue', 'hurdle'],
+                'success': ['achieved', 'accomplished', 'successful', 'outcome', 'result', 'won', 'completed'],
+            }
+            
+            for keyword in keywords_lower:
+                # Check exact match
+                if keyword in answer_lower:
+                    found_count += 1
+                else:
+                    found = False
+                    # Check if the stem appears (for words > 4 chars)
+                    if len(keyword) > 4:
+                        stem = keyword[:min(len(keyword)-1, 6)]
+                        if stem in answer_lower:
+                            found_count += 0.8  # Partial credit for stem match
+                            found = True
+                    # Check synonyms if not found yet
+                    if not found and keyword in synonym_map:
+                        if any(syn in answer_lower for syn in synonym_map[keyword]):
+                            found_count += 0.85  # Good credit for synonym
+                            found = True
+                    # Check if any synonym map contains this keyword as a synonym
+                    if not found:
+                        for base_word, synonyms in synonym_map.items():
+                            if keyword in synonyms and base_word in answer_lower:
+                                found_count += 0.85
+                                found = True
+                                break
+            
+            keyword_ratio = min(found_count / len(expected_keywords), 1.0)
+            # Give substantial base score - don't punish too hard for keyword misses
+            score += keyword_ratio * 20 + 15  # Minimum 15 points, max 35
+        else:
+            # No expected keywords — generous scoring based on answer substance
+            if len(answer_keywords) >= 15:
+                score += 35
+            elif len(answer_keywords) >= 10:
+                score += 30
+            elif len(answer_keywords) >= 5:
+                score += 25
+            else:
+                score += 20
+        
+        # Bonus for comprehensive answers (0-15 points)
+        word_count = len(answer.split())
+        if word_count >= 120:
+            score += 15
+        elif word_count >= 80:
+            score += 12
+        elif word_count >= 50:
+            score += 8
+        elif word_count >= 30:
+            score += 5
         
         return min(score, 100)
     

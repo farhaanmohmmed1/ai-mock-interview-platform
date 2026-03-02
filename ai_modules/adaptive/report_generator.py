@@ -212,8 +212,16 @@ class ReportGenerator:
         if not responses:
             return self._generate_empty_report()
         
-        # Calculate scores
-        scores = self._calculate_all_scores(responses)
+        # Get total questions for this interview
+        total_questions = interview.total_questions or len(responses)
+        answered_count = len(responses)
+        
+        print(f"[ReportGenerator] Total questions: {total_questions}, Answered: {answered_count}")
+        
+        # Calculate scores based on answered questions
+        scores = self._calculate_all_scores(responses, total_questions, answered_count)
+        
+        print(f"[ReportGenerator] Raw scores (before completion ratio): overall={scores['overall']}, content={scores['content']}")
         
         # Identify weak and strong areas
         weak_areas = self._identify_weak_areas(responses, db)
@@ -272,8 +280,8 @@ class ReportGenerator:
             ]
         }
     
-    def _calculate_all_scores(self, responses: List[Response]) -> Dict:
-        """Calculate all performance scores"""
+    def _calculate_all_scores(self, responses: List[Response], total_questions: int = None, answered_count: int = None) -> Dict:
+        """Calculate all performance scores - each question contributes equally"""
         
         # Content scores
         content_scores = [r.content_score for r in responses if r.content_score is not None]
@@ -286,7 +294,13 @@ class ReportGenerator:
         # Emotion scores
         confidence_scores = [r.confidence_score for r in responses if r.confidence_score is not None]
         
-        # Calculate averages
+        # Calculate completion ratio (skipped questions count as 0)
+        if total_questions and answered_count:
+            completion_ratio = answered_count / total_questions
+        else:
+            completion_ratio = 1.0  # Default to full credit if not specified
+        
+        # Calculate averages of answered questions only
         avg_content = sum(content_scores) / len(content_scores) if content_scores else 0
         avg_relevance = sum(relevance_scores) / len(relevance_scores) if relevance_scores else 0
         avg_clarity = sum(clarity_scores) / len(clarity_scores) if clarity_scores else 0
@@ -303,43 +317,74 @@ class ReportGenerator:
         content_combined = (avg_content * 0.70 + adjusted_relevance * 0.30) if (content_scores or relevance_scores) else 0
         
         # Check if we have speech/emotion data
-        has_speech_data = bool(clarity_scores or fluency_scores)
+        has_speech_data = bool(clarity_scores and fluency_scores)
         has_confidence_data = bool(confidence_scores)
         
-        # Calculate speech combined (use content-based estimate if no speech data)
+        # STRICT SCORING based on input mode:
+        # Text-only: ONLY Content scored (overall = content)
+        # Audio: Content, Clarity, Fluency, Confidence scored
+        # Video+Audio: All 5 metrics including Expression
+        
+        # Determine interview mode from available data
         if has_speech_data:
+            # Has audio data (audio or video mode)
             speech_combined = (avg_clarity + avg_fluency) / 2
+            final_clarity = avg_clarity
+            final_fluency = avg_fluency
+            final_confidence = avg_confidence if has_confidence_data else speech_combined
         else:
-            # Text-only submissions should not be penalized for missing audio
-            # Use the same content score as speech estimate
-            speech_combined = content_combined
-            avg_clarity = content_combined
-            avg_fluency = content_combined
+            # Text-only mode - ONLY content is scored
+            speech_combined = None
+            final_clarity = None  # Not scored without audio
+            final_fluency = None  # Not scored without audio
+            final_confidence = None  # Not scored without audio/video
         
-        # Use content-based estimate for confidence if not available
-        if not has_confidence_data:
-            avg_confidence = content_combined  # No penalty for text-only
+        # Expression requires video (currently not tracked in responses, would need video analysis)
+        final_expression = None  # Set by emotion analyzer if video is available
         
-        # Overall score (weighted average)
-        overall = (
-            content_combined * 0.40 +  # 40% content
-            speech_combined * 0.30 +   # 30% speech quality
-            avg_confidence * 0.30      # 30% confidence/emotion
-        )
+        # Calculate overall based ONLY on available metrics
+        if has_speech_data and has_confidence_data:
+            # Full audio mode: 40% content, 30% speech, 30% confidence
+            raw_overall = (
+                content_combined * 0.40 +
+                speech_combined * 0.30 +
+                final_confidence * 0.30
+            )
+        elif has_speech_data:
+            # Audio without confidence: 50% content, 50% speech
+            raw_overall = (
+                content_combined * 0.50 +
+                speech_combined * 0.50
+            )
+        else:
+            # TEXT-ONLY: Overall = Content score directly
+            raw_overall = content_combined
+        
+        # NOTE: Completion ratio is applied in interview.py AFTER getting report
+        # This ensures both agent and generator reports are treated equally
+        # Raw scores are returned here without completion penalty
+        overall = raw_overall
+        
+        # Return raw scores - completion ratio applied in interview.py
+        final_content = content_combined
         
         return {
             "overall": round(overall, 2),
-            "content": round(content_combined, 2),
-            "clarity": round(avg_clarity, 2),
-            "fluency": round(avg_fluency, 2),
-            "confidence": round(avg_confidence, 2),
-            "emotion": round(avg_confidence, 2),  # Using confidence as emotion score
+            "content": round(final_content, 2),
+            "clarity": round(final_clarity, 2) if final_clarity is not None else None,
+            "fluency": round(final_fluency, 2) if final_fluency is not None else None,
+            "confidence": round(final_confidence, 2) if final_confidence is not None else None,
+            "emotion": round(final_expression, 2) if final_expression is not None else None,
+            "interview_mode": "video" if final_expression else ("audio" if has_speech_data else "text"),
             "detailed": {
                 "average_content": round(avg_content, 2),
                 "average_relevance": round(avg_relevance, 2),
-                "average_clarity": round(avg_clarity, 2),
-                "average_fluency": round(avg_fluency, 2),
-                "average_confidence": round(avg_confidence, 2)
+                "average_clarity": round(avg_clarity, 2) if clarity_scores else None,
+                "average_fluency": round(avg_fluency, 2) if fluency_scores else None,
+                "average_confidence": round(avg_confidence, 2) if confidence_scores else None,
+                "completion_ratio": round(completion_ratio, 2),
+                "has_speech_data": has_speech_data,
+                "has_confidence_data": has_confidence_data
             }
         }
     
@@ -402,54 +447,58 @@ class ReportGenerator:
                 category_scores[category] = []
             category_scores[category].append(score)
         
-        # Collect ALL areas with their scores, sorted lowest first
+        # Collect areas that need improvement (score < 75%)
         for category, scores in category_scores.items():
             avg_score = sum(scores) / len(scores)
-            severity = "high" if avg_score < 50 else ("medium" if avg_score < 75 else "low")
-            all_areas.append({
-                "area": category,
-                "score": round(avg_score, 2),
-                "responses_count": len(scores),
-                "severity": severity,
-                "suggestion": self._get_suggestion_for_area(category, avg_score)
-            })
+            if avg_score < 75:  # Only include areas that actually need improvement
+                severity = "high" if avg_score < 50 else "medium"
+                all_areas.append({
+                    "area": category,
+                    "score": round(avg_score, 2),
+                    "responses_count": len(scores),
+                    "severity": severity,
+                    "suggestion": self._get_suggestion_for_area(category, avg_score)
+                })
         
         # Check specific skills
-        # Speech clarity
+        # Speech clarity - only add if needs improvement
         clarity_scores = [r.clarity_score for r in responses if r.clarity_score is not None]
         if clarity_scores:
             avg_clarity = sum(clarity_scores) / len(clarity_scores)
-            all_areas.append({
-                "area": "Speech Clarity",
-                "score": round(avg_clarity, 2),
-                "responses_count": len(clarity_scores),
-                "severity": "high" if avg_clarity < 50 else ("medium" if avg_clarity < 75 else "low"),
-                "suggestion": self._get_suggestion_for_area("Speech Clarity", avg_clarity)
-            })
+            if avg_clarity < 75:
+                all_areas.append({
+                    "area": "Speech Clarity",
+                    "score": round(avg_clarity, 2),
+                    "responses_count": len(clarity_scores),
+                    "severity": "high" if avg_clarity < 50 else "medium",
+                    "suggestion": self._get_suggestion_for_area("Speech Clarity", avg_clarity)
+                })
         
-        # Speech fluency
+        # Speech fluency - only add if needs improvement
         fluency_scores = [r.fluency_score for r in responses if r.fluency_score is not None]
         if fluency_scores:
             avg_fluency = sum(fluency_scores) / len(fluency_scores)
-            all_areas.append({
-                "area": "Speech Fluency",
-                "score": round(avg_fluency, 2),
-                "responses_count": len(fluency_scores),
-                "severity": "high" if avg_fluency < 50 else ("medium" if avg_fluency < 75 else "low"),
-                "suggestion": self._get_suggestion_for_area("Speech Fluency", avg_fluency)
-            })
+            if avg_fluency < 75:
+                all_areas.append({
+                    "area": "Speech Fluency",
+                    "score": round(avg_fluency, 2),
+                    "responses_count": len(fluency_scores),
+                    "severity": "high" if avg_fluency < 50 else "medium",
+                    "suggestion": self._get_suggestion_for_area("Speech Fluency", avg_fluency)
+                })
         
-        # Confidence
+        # Confidence - only add if needs improvement
         confidence_scores = [r.confidence_score for r in responses if r.confidence_score is not None]
         if confidence_scores:
             avg_confidence = sum(confidence_scores) / len(confidence_scores)
-            all_areas.append({
-                "area": "Confidence",
-                "score": round(avg_confidence, 2),
-                "responses_count": len(confidence_scores),
-                "severity": "high" if avg_confidence < 50 else ("medium" if avg_confidence < 75 else "low"),
-                "suggestion": self._get_suggestion_for_area("Confidence", avg_confidence)
-            })
+            if avg_confidence < 75:
+                all_areas.append({
+                    "area": "Confidence",
+                    "score": round(avg_confidence, 2),
+                    "responses_count": len(confidence_scores),
+                    "severity": "high" if avg_confidence < 50 else "medium",
+                    "suggestion": self._get_suggestion_for_area("Confidence", avg_confidence)
+                })
         
         # Sort: lowest scores first (most room for improvement)
         all_areas.sort(key=lambda x: x["score"])
@@ -477,19 +526,17 @@ class ReportGenerator:
                 category_scores[category] = []
             category_scores[category].append(score)
         
-        # Collect ALL areas sorted by score (highest first)
+        # Collect truly STRONG areas (score >= 75%) - mutually exclusive with improvement areas
         for category, scores in category_scores.items():
             avg_score = sum(scores) / len(scores)
-            if avg_score >= 60:  # Lower threshold — show areas above average
+            if avg_score >= 75:  # Only truly strong areas
                 description = ""
                 if avg_score >= 90:
                     description = f"Exceptional performance! You demonstrated mastery in {category}."
                 elif avg_score >= 80:
                     description = f"Great job! Your {category} answers were well-structured and detailed."
-                elif avg_score >= 70:
+                else:  # 75-79
                     description = f"Good performance in {category}. You showed solid understanding."
-                elif avg_score >= 60:
-                    description = f"Decent showing in {category}. Keep building on this foundation."
                 
                 all_areas.append({
                     "area": category,
@@ -498,38 +545,38 @@ class ReportGenerator:
                     "description": description
                 })
         
-        # Check specific skills
+        # Check specific skills - only add as strong if >= 75%
         clarity_scores = [r.clarity_score for r in responses if r.clarity_score is not None]
         if clarity_scores:
             avg_clarity = sum(clarity_scores) / len(clarity_scores)
-            if avg_clarity >= 60:
+            if avg_clarity >= 75:
                 all_areas.append({
                     "area": "Speech Clarity",
                     "score": round(avg_clarity, 2),
                     "responses_count": len(clarity_scores),
-                    "description": "Your speech was clear and easy to understand." if avg_clarity >= 75 else "Your clarity was reasonable. Enunciate more for complex terms."
+                    "description": "Your speech was clear and easy to understand."
                 })
         
         fluency_scores = [r.fluency_score for r in responses if r.fluency_score is not None]
         if fluency_scores:
             avg_fluency = sum(fluency_scores) / len(fluency_scores)
-            if avg_fluency >= 60:
+            if avg_fluency >= 75:
                 all_areas.append({
                     "area": "Speech Fluency",
                     "score": round(avg_fluency, 2),
                     "responses_count": len(fluency_scores),
-                    "description": "You spoke fluently with minimal hesitation." if avg_fluency >= 75 else "Decent flow. Work on reducing pauses between thoughts."
+                    "description": "You spoke fluently with minimal hesitation."
                 })
         
         confidence_scores = [r.confidence_score for r in responses if r.confidence_score is not None]
         if confidence_scores:
             avg_confidence = sum(confidence_scores) / len(confidence_scores)
-            if avg_confidence >= 60:
+            if avg_confidence >= 75:
                 all_areas.append({
                     "area": "Confidence",
                     "score": round(avg_confidence, 2),
                     "responses_count": len(confidence_scores),
-                    "description": "You presented yourself confidently and assertively." if avg_confidence >= 75 else "You showed reasonable confidence. Practice will help you appear more self-assured."
+                    "description": "You presented yourself confidently and assertively."
                 })
         
         # Sort by score (highest first)
@@ -581,7 +628,7 @@ class ReportGenerator:
                 feedback_parts.append(f"Priority areas needing attention: {areas_text}. Start with these for the most impact.")
         
         # Specific skill feedback based on scores
-        content = scores["content"]
+        content = scores.get("content") or 0
         if content >= 80:
             feedback_parts.append("Your answer content was strong — detailed, relevant, and well-structured.")
         elif content >= 60:
@@ -589,21 +636,24 @@ class ReportGenerator:
         else:
             feedback_parts.append("Work on providing more detailed and relevant answers with concrete examples.")
         
-        clarity = scores["clarity"]
-        if clarity >= 80:
-            feedback_parts.append("Your speech clarity was excellent — you communicated ideas effectively.")
-        elif clarity >= 60:
-            feedback_parts.append("Your clarity was decent. Practice enunciating clearly, especially for technical terminology.")
-        else:
-            feedback_parts.append("Practice speaking more clearly and at a moderate pace.")
+        # Only provide clarity/confidence feedback if audio was used
+        clarity = scores.get("clarity")
+        if clarity is not None:
+            if clarity >= 80:
+                feedback_parts.append("Your speech clarity was excellent — you communicated ideas effectively.")
+            elif clarity >= 60:
+                feedback_parts.append("Your clarity was decent. Practice enunciating clearly, especially for technical terminology.")
+            else:
+                feedback_parts.append("Practice speaking more clearly and at a moderate pace.")
         
-        confidence = scores["confidence"]
-        if confidence >= 80:
-            feedback_parts.append("You projected strong confidence throughout the interview.")
-        elif confidence >= 60:
-            feedback_parts.append("Your confidence level was reasonable. Regular mock interviews will help you feel more self-assured.")
-        else:
-            feedback_parts.append("Build confidence through regular practice and thorough preparation.")
+        confidence = scores.get("confidence")
+        if confidence is not None:
+            if confidence >= 80:
+                feedback_parts.append("You projected strong confidence throughout the interview.")
+            elif confidence >= 60:
+                feedback_parts.append("Your confidence level was reasonable. Regular mock interviews will help you feel more self-assured.")
+            else:
+                feedback_parts.append("Build confidence through regular practice and thorough preparation.")
         
         return " ".join(feedback_parts)
     
@@ -616,6 +666,32 @@ class ReportGenerator:
         """Generate actionable recommendations"""
         
         recommendations = []
+        
+        # Check if audio/video was used - recommend using them if not
+        interview_mode = scores.get("interview_mode", "text")
+        detailed = scores.get("detailed", {})
+        has_audio = detailed.get("has_speech_data", False)
+        has_video = scores.get("emotion") is not None
+        
+        # Recommend using audio if not used
+        if not has_audio:
+            recommendations.append({
+                "type": "mode",
+                "priority": "high",
+                "text": "Enable microphone in your next interview to get feedback on speech clarity, fluency, and confidence. This provides a more realistic interview experience.",
+                "action": "enable_audio",
+                "icon": "mic"
+            })
+        
+        # Recommend using video if not used
+        if not has_video:
+            recommendations.append({
+                "type": "mode",
+                "priority": "medium",
+                "text": "Enable camera in your next interview to receive feedback on facial expressions, eye contact, and body language. Non-verbal communication is crucial in real interviews.",
+                "action": "enable_video",
+                "icon": "videocam"
+            })
         
         # Based on overall score — provide recommendations at ALL levels
         overall = scores["overall"]
