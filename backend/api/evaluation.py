@@ -390,32 +390,87 @@ async def submit_audio_response(
     # Calculate response time
     response_time = speech_analysis.get("duration", 0)
     
-    # Calculate confidence score from speech properties
-    # Confidence is derived from: volume consistency, speaking rate, and filler words
-    volume_consistency = speech_analysis.get("volume_consistency", 50)
-    speaking_rate = speech_analysis.get("speaking_rate_wpm", 120)
-    filler_count = len(speech_analysis.get("filler_words", []))
+    # Calculate confidence score using structured scoring bands
+    # SCORING BANDS:
+    # - 80-100: Excellent - Steady voice, optimal pace, minimal fillers, clear speech
+    # - 60-80: Good - Minor variations, slight hesitation
+    # - 40-60: Average - Noticeable nervousness, moderate fillers
+    # - 20-40: Poor - Inconsistent, many fillers, rushed/slow
+    # - 0-20: Very Poor - Major confidence issues
     
-    # Base confidence from volume consistency (steady voice = confident)
-    confidence_score = volume_consistency * 0.4
+    volume_consistency = speech_analysis.get("volume_consistency", 0)
+    speaking_rate = speech_analysis.get("speaking_rate_wpm", 0)
+    clarity_score = speech_analysis.get("clarity_score", 0)
+    fluency_score = speech_analysis.get("fluency_score", 0)
+    filler_data = speech_analysis.get("filler_words", {})
+    filler_count = filler_data.get("total_count", 0) if isinstance(filler_data, dict) else len(filler_data)
+    filler_percentage = filler_data.get("percentage", 0) if isinstance(filler_data, dict) else 0
     
-    # Adjust for speaking rate (100-160 wpm is ideal)
-    if 100 <= speaking_rate <= 160:
-        confidence_score += 30
-    elif 80 <= speaking_rate <= 180:
-        confidence_score += 20
+    # BAND 5: Excellent Confidence (80-100)
+    # Good volume consistency + reasonable pace + few fillers + decent clarity OR fluency
+    if (volume_consistency >= 60 and 
+        100 <= speaking_rate <= 180 and 
+        filler_percentage < 5 and
+        (clarity_score >= 50 or fluency_score >= 60)):
+        confidence_score = 80
+        # Bonuses for exceptional metrics
+        if volume_consistency >= 80:
+            confidence_score += 6
+        if 110 <= speaking_rate <= 170:
+            confidence_score += 5
+        if filler_percentage < 2:
+            confidence_score += 4
+        if clarity_score >= 70 or fluency_score >= 80:
+            confidence_score += 3
+        if clarity_score >= 60 and fluency_score >= 70:
+            confidence_score += 2
+        confidence_score = min(100, confidence_score)
+    
+    # BAND 4: Good Confidence (60-80)
+    elif (volume_consistency >= 40 and 
+          80 <= speaking_rate <= 200 and 
+          filler_percentage < 10 and
+          (clarity_score >= 35 or fluency_score >= 40)):
+        confidence_score = 60
+        confidence_score += min(10, (volume_consistency - 40) * 0.25)
+        if 90 <= speaking_rate <= 190:
+            confidence_score += 5
+        if filler_percentage < 5:
+            confidence_score += 4
+        confidence_score += min(4, max(clarity_score, fluency_score) * 0.05)
+        confidence_score = min(79, confidence_score)
+    
+    # BAND 3: Average Confidence (40-60)
+    elif (volume_consistency >= 25 and 
+          50 <= speaking_rate <= 230 and 
+          filler_percentage < 15):
+        confidence_score = 40
+        confidence_score += min(10, (volume_consistency - 25) * 0.3)
+        if 70 <= speaking_rate <= 210:
+            confidence_score += 5
+        if filler_percentage < 10:
+            confidence_score += 4
+        confidence_score += (clarity_score + fluency_score) * 0.04
+        confidence_score = min(59, confidence_score)
+    
+    # BAND 2: Poor Confidence (20-40)
+    elif volume_consistency >= 10 or speaking_rate >= 30:
+        confidence_score = 20
+        confidence_score += min(10, volume_consistency * 0.4)
+        if 40 <= speaking_rate <= 250:
+            confidence_score += 5
+        if filler_percentage < 20:
+            confidence_score += 4
+        confidence_score = min(39, confidence_score)
+    
+    # BAND 1: Very Poor (0-20)
     else:
-        confidence_score += 10
-    
-    # Penalty for filler words (um, uh, etc.)
-    filler_penalty = min(filler_count * 3, 20)
-    confidence_score = max(30, confidence_score - filler_penalty)
-    
-    # Boost from clarity and fluency
-    confidence_score += (speech_analysis.get("clarity_score", 50) * 0.15)
-    confidence_score += (speech_analysis.get("fluency_score", 50) * 0.15)
-    
-    confidence_score = min(100, max(30, confidence_score))
+        confidence_score = 10
+        if volume_consistency >= 10:
+            confidence_score += 3
+        if speaking_rate >= 30:
+            confidence_score += 3
+        confidence_score = min(19, confidence_score)
     
     # AUDIO MODE: Content, Clarity, Fluency, Confidence measured from audio
     # Expression estimated from text analysis
@@ -566,15 +621,19 @@ async def submit_video_response(
     db.commit()
     db.refresh(new_response)
     
+    print(f"[submit-video] Video mode: content={evaluation['content_score']}, clarity={speech_analysis['clarity_score']}, fluency={speech_analysis['fluency_score']}, expression={emotion_analysis.get('confidence_score', 0)}")
+    
     return {
         "response_id": new_response.id,
         "message": "Video response submitted and analyzed successfully",
+        "transcription": text_response,  # Return transcription for frontend
         "scores": {
             "content_score": new_response.content_score,
             "relevance_score": new_response.relevance_score,
             "clarity_score": new_response.clarity_score,
             "fluency_score": new_response.fluency_score,
-            "confidence_score": new_response.confidence_score
+            "confidence_score": new_response.confidence_score,
+            "expression_score": emotion_analysis.get("confidence_score", 0)
         }
     }
 

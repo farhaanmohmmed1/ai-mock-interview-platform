@@ -55,7 +55,9 @@ const Interview = () => {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const mediaRecorderRef = useRef(null);
+  const videoRecorderRef = useRef(null);  // For video recording when camera enabled
   const audioChunksRef = useRef([]);
+  const videoChunksRef = useRef([]);  // For video chunks
   const isRecordingRef = useRef(false);
   const accumulatedTranscriptRef = useRef('');
 
@@ -84,6 +86,7 @@ const Interview = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState(null);
+  const [videoBlob, setVideoBlob] = useState(null);  // For video blob when camera enabled
   const [transcribing, setTranscribing] = useState(false);
   const [liveTranscriptSupported, setLiveTranscriptSupported] = useState(true);
   
@@ -567,11 +570,47 @@ const Interview = () => {
         }
       };
 
+      // Start video recording if camera is enabled (for expression analysis)
+      if (cameraEnabled && streamRef.current) {
+        try {
+          videoChunksRef.current = [];
+          const videoStream = streamRef.current;
+          
+          // Check which mime types are supported
+          const videoMimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9') 
+            ? 'video/webm;codecs=vp9' 
+            : MediaRecorder.isTypeSupported('video/webm') 
+              ? 'video/webm' 
+              : 'video/mp4';
+          
+          videoRecorderRef.current = new MediaRecorder(videoStream, { mimeType: videoMimeType });
+          
+          videoRecorderRef.current.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              videoChunksRef.current.push(event.data);
+            }
+          };
+          
+          videoRecorderRef.current.onstop = () => {
+            const videoBlob = new Blob(videoChunksRef.current, { type: videoMimeType });
+            setVideoBlob(videoBlob);
+            console.log('Video recording stopped, blob size:', videoBlob.size);
+          };
+          
+          videoRecorderRef.current.start();
+          console.log('Video recording started for expression analysis');
+        } catch (videoErr) {
+          console.error('Failed to start video recording:', videoErr);
+          // Continue with audio-only if video fails
+        }
+      }
+
       mediaRecorderRef.current.start();
       setIsRecording(true);
       isRecordingRef.current = true;
       setRecordingTime(0);
       setAudioBlob(null);
+      setVideoBlob(null);  // Reset video blob
       setLiveTranscript('');
       accumulatedTranscriptRef.current = ''; // Reset accumulated transcript
 
@@ -660,6 +699,11 @@ const Interview = () => {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
+    // Stop video recording if active
+    if (videoRecorderRef.current && videoRecorderRef.current.state === 'recording') {
+      videoRecorderRef.current.stop();
+      console.log('Video recording stopped');
+    }
     if (recognitionRef.current) {
       recognitionRef.current.stop();
       recognitionRef.current = null;
@@ -735,6 +779,7 @@ const Interview = () => {
       }
       setCurrentAnswer('');
       setAudioBlob(null);
+      setVideoBlob(null);  // Reset video blob
       setRecordingTime(0);
       setLiveTranscript('');
     } else {
@@ -769,32 +814,39 @@ const Interview = () => {
       let answerText = currentAnswer.trim();
       let data;
 
-      // If user has edited text in the textarea, always use text submission
-      // This ensures any edits to the transcription are preserved
-      if (answerText) {
-        // Text submission (including edited transcriptions)
-        const response = await fetch(`${API_URL}/api/evaluation/submit-text`, {
+      // PRIORITY 1: If we have both video and audio, use submit-video for full expression analysis
+      if (audioBlob && videoBlob) {
+        console.log('Submitting with video for expression analysis');
+        const formData = new FormData();
+        formData.append('video_file', videoBlob, 'recording.webm');
+        formData.append('audio_file', audioBlob, 'recording.webm');
+        formData.append('thinking_time', thinkingTime.toString());
+
+        const response = await fetch(`${API_URL}/api/evaluation/submit-video/${currentQuestion.id}`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            question_id: currentQuestion.id,
-            text_response: answerText,
-            thinking_time_seconds: thinkingTime,
-          }),
+          body: formData,
         });
 
         data = await response.json();
 
         if (!response.ok) {
-          setError(data.detail || 'Failed to submit answer');
+          setError(data.detail || 'Failed to submit video answer');
           setSubmitting(false);
           return;
         }
-      } else if (audioBlob) {
-        // Audio-only submission (no text available)
+        
+        // Update answer text from transcription
+        if (data.transcription) {
+          answerText = data.transcription;
+          setCurrentAnswer(answerText);
+        }
+      }
+      // PRIORITY 2: If we have audio only, submit as audio to get speech metrics
+      else if (audioBlob) {
+        // Audio submission (includes transcription for text evaluation)
         const formData = new FormData();
         formData.append('audio_file', audioBlob, 'recording.webm');
         formData.append('thinking_time', thinkingTime.toString());
@@ -820,6 +872,28 @@ const Interview = () => {
           answerText = data.transcription;
           setCurrentAnswer(answerText);
         }
+      } else if (answerText) {
+        // Text-only submission (no audio recorded, typed answer)
+        const response = await fetch(`${API_URL}/api/evaluation/submit-text`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            question_id: currentQuestion.id,
+            text_response: answerText,
+            thinking_time_seconds: thinkingTime,
+          }),
+        });
+
+        data = await response.json();
+
+        if (!response.ok) {
+          setError(data.detail || 'Failed to submit answer');
+          setSubmitting(false);
+          return;
+        }
       }
 
       // Success - save answer locally
@@ -842,6 +916,7 @@ const Interview = () => {
         }
         setCurrentAnswer('');
         setAudioBlob(null);
+        setVideoBlob(null);  // Reset video blob for next question
         setRecordingTime(0);
         setLiveTranscript('');
       } else {
@@ -1317,6 +1392,7 @@ const Interview = () => {
                             startIcon={<Mic />}
                             onClick={() => {
                               setAudioBlob(null);
+                              setVideoBlob(null);
                               setRecordingTime(0);
                               setCurrentAnswer('');
                               setLiveTranscript('');
@@ -1400,6 +1476,7 @@ const Interview = () => {
                       const prevQuestion = questions[currentQuestionIndex - 1];
                       setCurrentAnswer(answers[prevQuestion?.id]?.answer || '');
                       setAudioBlob(null);
+                      setVideoBlob(null);
                       setRecordingTime(0);
                       setLiveTranscript('');
                     }}

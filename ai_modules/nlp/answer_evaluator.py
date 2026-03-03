@@ -2,10 +2,15 @@ import re
 from typing import Dict, List
 import nltk
 from collections import Counter
+import numpy as np
 
 
 class AnswerEvaluator:
-    """Evaluate interview answers using NLP"""
+    """Evaluate interview answers using NLP with semantic similarity"""
+    
+    # Class-level model to avoid reloading
+    _embedding_model = None
+    _model_load_attempted = False
     
     def __init__(self):
         # Download required NLTK data
@@ -25,6 +30,133 @@ class AnswerEvaluator:
         self.stopwords = set(stopwords.words('english'))
         self.word_tokenize = word_tokenize
         self.sent_tokenize = sent_tokenize
+        
+        # Load sentence-transformers model (singleton pattern)
+        self._load_embedding_model()
+    
+    @classmethod
+    def _load_embedding_model(cls):
+        """Load sentence-transformers model once (lazy loading with singleton)"""
+        if cls._model_load_attempted:
+            return
+        
+        cls._model_load_attempted = True
+        try:
+            from sentence_transformers import SentenceTransformer
+            # Use lightweight model (~90MB) - good balance of speed and quality
+            cls._embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+            print("[AnswerEvaluator] Loaded sentence-transformers model for semantic similarity")
+        except Exception as e:
+            print(f"[AnswerEvaluator] Could not load embedding model, using heuristics: {e}")
+            cls._embedding_model = None
+    
+    def _cosine_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
+        """Calculate cosine similarity between two vectors"""
+        norm1 = np.linalg.norm(vec1)
+        norm2 = np.linalg.norm(vec2)
+        if norm1 == 0 or norm2 == 0:
+            return 0.0
+        return float(np.dot(vec1, vec2) / (norm1 * norm2))
+    
+    def _calculate_semantic_similarity(self, question: str, answer: str, expected_keywords: List[str] = None) -> float:
+        """
+        Calculate semantic similarity using embeddings with structured scoring bands:
+        
+        SCORING BANDS:
+        0-20:  Lorem Ipsum / totally gibberish / nonsense text
+        20-40: Proper English but obviously off-topic / no relevance
+        40-60: Slightly off-topic / one or two keywords / little relevance
+        60-80: On topic / few keyword matches / moderate relevance / moderate length
+        80-100: Perfect alignment / keyword matching / high relevance / well-formed sentences
+        """
+        if self._embedding_model is None:
+            return None  # Fallback to heuristics
+        
+        try:
+            answer_lower = answer.lower()
+            
+            # BAND 0-20: Gibberish/Lorem Ipsum detection
+            lorem_indicators = ['lorem', 'ipsum', 'dolor sit', 'amet', 'consectetur', 'adipiscing', 
+                               'elit', 'sed do', 'eiusmod', 'tempor incididunt']
+            lorem_matches = sum(1 for indicator in lorem_indicators if indicator in answer_lower)
+            if lorem_matches >= 2:
+                return 10 + (min(lorem_matches, 5) * 2)  # 10-20 range
+            
+            # BAND 0-20: Test/meta responses
+            test_indicators = ['this is a test', 'gonna be a test', 'going to be a test', 'it is a test', 
+                             'just a test', 'testing the system', 'sample text', 'placeholder', 
+                             'non-relevant', 'non-vervent', 'off topic', 'off-topic', 'checking whether', 
+                             'check whether', 'evaluation system', 'scoring system', 'test so far']
+            test_matches = sum(1 for indicator in test_indicators if indicator in answer_lower)
+            if test_matches >= 1:
+                return 15  # Clearly a test response
+            
+            # Encode question and answer for semantic similarity
+            q_embedding = self._embedding_model.encode(question, convert_to_numpy=True)
+            a_embedding = self._embedding_model.encode(answer, convert_to_numpy=True)
+            
+            # Calculate cosine similarity (0.0 to 1.0)
+            similarity = self._cosine_similarity(q_embedding, a_embedding)
+            
+            # Count keyword matches
+            keyword_ratio = 0
+            keywords_found = 0
+            if expected_keywords:
+                keywords_found = sum(1 for kw in expected_keywords if kw.lower() in answer_lower)
+                keyword_ratio = keywords_found / len(expected_keywords)
+            
+            # Word count for length assessment
+            word_count = len(answer.split())
+            
+            # === DETERMINE SCORING BAND ===
+            
+            # BAND 80-100: High similarity + good keywords + decent length
+            if similarity >= 0.5 and keyword_ratio >= 0.5 and word_count >= 25:
+                base = 80
+                # Bonus for higher similarity (up to +10)
+                base += min((similarity - 0.5) * 20, 10)
+                # Bonus for more keywords (up to +5)
+                base += min(keyword_ratio * 5, 5)
+                # Bonus for longer, detailed answers (up to +5)
+                if word_count >= 50:
+                    base += 5
+                elif word_count >= 35:
+                    base += 3
+                return min(base, 100)
+            
+            # BAND 60-80: Moderate similarity OR good keywords
+            if (similarity >= 0.35 and keyword_ratio >= 0.3) or (similarity >= 0.45) or (keyword_ratio >= 0.6):
+                base = 60
+                # Add based on similarity
+                base += min((similarity - 0.35) * 30, 10)
+                # Add based on keywords
+                base += min(keyword_ratio * 10, 10)
+                return min(max(base, 60), 79)
+            
+            # BAND 40-60: Some relevance OR some keywords
+            if similarity >= 0.25 or keyword_ratio >= 0.2:
+                base = 40
+                # Add based on similarity
+                base += min((similarity - 0.1) * 40, 12)
+                # Add based on keywords
+                base += min(keyword_ratio * 8, 8)
+                return min(max(base, 40), 59)
+            
+            # BAND 20-40: Proper English but off-topic (low similarity, no keywords)
+            if similarity >= 0.1:
+                base = 20
+                base += min(similarity * 100, 15)
+                # Small bonus if answer is coherent English (length check)
+                if word_count >= 20:
+                    base += 5
+                return min(max(base, 20), 39)
+            
+            # BAND 0-20: Very low similarity (essentially random/gibberish)
+            return max(10, similarity * 100)
+            
+        except Exception as e:
+            print(f"[AnswerEvaluator] Semantic similarity error: {e}")
+            return None  # Fallback to heuristics
     
     def evaluate_answer(
         self,
@@ -70,19 +202,9 @@ class AnswerEvaluator:
             content_score, relevance_score, keyword_analysis, question_type
         )
         
-        # Estimate clarity, fluency, confidence, and expression from text analysis
-        clarity_score = self._estimate_clarity_from_text(answer, coherence_score, word_count, sentence_count)
-        fluency_score = self._estimate_fluency_from_text(answer, word_count, sentence_count)
-        confidence_score = self._estimate_confidence_from_text(answer)
-        expression_score = self._estimate_expression_from_text(answer, sentiment)
-        
         return {
             "content_score": round(content_score, 2),
             "relevance_score": round(relevance_score, 2),
-            "clarity_score": round(clarity_score, 2),
-            "fluency_score": round(fluency_score, 2),
-            "confidence_score": round(confidence_score, 2),
-            "expression_score": round(expression_score, 2),
             "nlp_analysis": {
                 "word_count": word_count,
                 "sentence_count": sentence_count,
@@ -96,286 +218,99 @@ class AnswerEvaluator:
             "suggestions": suggestions
         }
     
-    def _estimate_clarity_from_text(self, answer: str, coherence_score: float, word_count: int, sentence_count: int) -> float:
-        """Estimate clarity score from text analysis (how clear and understandable the answer is)"""
-        score = 60  # Base score
-        
-        # Coherence contributes to clarity
-        score += (coherence_score - 60) * 0.3
-        
-        # Average sentence length: 10-20 words is ideal for clarity
-        avg_len = word_count / sentence_count if sentence_count > 0 else word_count
-        if 10 <= avg_len <= 20:
-            score += 15
-        elif 7 <= avg_len <= 25:
-            score += 10
-        elif 5 <= avg_len <= 30:
-            score += 5
-        # Very long or very short sentences reduce clarity
-        
-        # Multiple sentences show structured thinking
-        if sentence_count >= 4:
-            score += 10
-        elif sentence_count >= 3:
-            score += 7
-        elif sentence_count >= 2:
-            score += 4
-        
-        # Check for clear structure indicators
-        structure_words = ['first', 'second', 'third', 'finally', 'in conclusion',
-                          'to begin', 'next', 'lastly', 'in summary', 'overall',
-                          'the reason', 'because', 'therefore', 'this means']
-        answer_lower = answer.lower()
-        structure_count = sum(1 for w in structure_words if w in answer_lower)
-        score += min(structure_count * 3, 10)
-        
-        # Penalize very short answers
-        if word_count < 15:
-            score -= 10
-        
-        return max(30, min(score, 100))
-    
-    def _estimate_fluency_from_text(self, answer: str, word_count: int, sentence_count: int) -> float:
-        """Estimate fluency score from text analysis (how smooth and well-flowing the writing is)"""
-        score = 60  # Base score
-        
-        # Vocabulary diversity (type-token ratio)
-        tokens = self.word_tokenize(answer.lower())
-        if tokens:
-            unique_words = set(tokens) - self.stopwords
-            all_content = [t for t in tokens if t not in self.stopwords and t.isalpha()]
-            if all_content:
-                ttr = len(unique_words) / len(all_content) if all_content else 0
-                if ttr >= 0.7:
-                    score += 15
-                elif ttr >= 0.5:
-                    score += 10
-                elif ttr >= 0.3:
-                    score += 5
-        
-        # Transition words indicate smooth flow
-        transitions = ['however', 'therefore', 'furthermore', 'moreover', 'additionally',
-                       'consequently', 'thus', 'also', 'because', 'since', 'so', 'then',
-                       'next', 'after', 'before', 'while', 'although', 'for example',
-                       'as a result', 'in addition', 'on the other hand', 'meanwhile']
-        answer_lower = answer.lower()
-        trans_count = sum(1 for t in transitions if t in answer_lower)
-        if trans_count >= 3:
-            score += 12
-        elif trans_count >= 2:
-            score += 8
-        elif trans_count >= 1:
-            score += 5
-        
-        # Sentence variety (different lengths = more fluent)
-        if sentence_count >= 3:
-            sentences = self.sent_tokenize(answer)
-            lengths = [len(s.split()) for s in sentences]
-            if lengths:
-                length_variety = max(lengths) - min(lengths)
-                if length_variety >= 5:
-                    score += 8
-                elif length_variety >= 3:
-                    score += 5
-        
-        # Word count contribution
-        if word_count >= 50:
-            score += 5
-        elif word_count >= 30:
-            score += 3
-        
-        # Penalize very short
-        if word_count < 15:
-            score -= 10
-        
-        return max(30, min(score, 100))
-    
-    def _estimate_confidence_from_text(self, answer: str) -> float:
-        """Estimate confidence score from text analysis (how assertive and confident the language is)"""
-        score = 60  # Base score
-        
-        answer_lower = answer.lower()
-        tokens = self.word_tokenize(answer_lower)
-        
-        # Confident/assertive language
-        confident_words = ['i believe', 'i am confident', 'my experience', 'i have successfully',
-                          'i achieved', 'i led', 'i managed', 'i implemented', 'i created',
-                          'i designed', 'i built', 'i delivered', 'i ensured', 'i established',
-                          'effectively', 'efficiently', 'successfully', 'strong', 'proven',
-                          'expertise', 'proficient', 'skilled', 'capable', 'accomplished',
-                          'definitely', 'certainly', 'clearly', 'absolutely', 'demonstrated']
-        confident_count = sum(1 for phrase in confident_words if phrase in answer_lower)
-        if confident_count >= 4:
-            score += 20
-        elif confident_count >= 2:
-            score += 14
-        elif confident_count >= 1:
-            score += 8
-        
-        # Hedging/uncertain language (reduces confidence)
-        hedging_words = ['maybe', 'perhaps', 'i think', 'i guess', 'probably', 'possibly',
-                        'sort of', 'kind of', 'might', 'not sure', 'i suppose', 'hopefully',
-                        'try to', 'attempted to', 'somewhat', 'fairly', 'quite']
-        hedge_count = sum(1 for phrase in hedging_words if phrase in answer_lower)
-        if hedge_count >= 3:
-            score -= 12
-        elif hedge_count >= 2:
-            score -= 8
-        elif hedge_count >= 1:
-            score -= 4
-        
-        # Specific/quantified statements show confidence
-        import re
-        numbers = re.findall(r'\d+', answer)
-        if len(numbers) >= 2:
-            score += 8
-        elif len(numbers) >= 1:
-            score += 4
-        
-        # Length indicates thoroughness/confidence
-        word_count = len(tokens)
-        if word_count >= 60:
-            score += 8
-        elif word_count >= 40:
-            score += 5
-        elif word_count >= 25:
-            score += 3
-        elif word_count < 15:
-            score -= 8
-        
-        return max(30, min(score, 100))
-    
-    def _estimate_expression_from_text(self, answer: str, sentiment: str) -> float:
-        """Estimate expression score from text analysis (emotional expressiveness, enthusiasm, engagement)"""
-        score = 58  # Base score
-        
-        answer_lower = answer.lower()
-        
-        # Positive/enthusiastic language shows good expression
-        expressive_words = ['passionate', 'excited', 'love', 'enjoy', 'thrilled', 'proud',
-                           'inspired', 'motivated', 'enthusiastic', 'eager', 'fascinated',
-                           'amazing', 'wonderful', 'incredible', 'outstanding', 'fantastic',
-                           'grateful', 'rewarding', 'fulfilling', 'satisfying', 'meaningful',
-                           'deeply', 'truly', 'really', 'strongly', 'firmly',
-                           'i am passionate', 'i love', 'i enjoy', 'it was rewarding',
-                           'i was thrilled', 'i am excited', 'great experience',
-                           'really enjoyed', 'very proud', 'great opportunity']
-        expressive_count = sum(1 for phrase in expressive_words if phrase in answer_lower)
-        if expressive_count >= 4:
-            score += 20
-        elif expressive_count >= 2:
-            score += 14
-        elif expressive_count >= 1:
-            score += 8
-        
-        # Sentiment contributes to expression
-        if sentiment == 'positive':
-            score += 10
-        elif sentiment == 'neutral':
-            score += 4
-        # Negative sentiment can still show expression (passion about problems)
-        elif sentiment == 'negative':
-            score += 5
-        
-        # Storytelling/narrative elements show expressiveness
-        narrative_words = ['when i', 'one time', 'i remember', 'there was', 'it happened',
-                          'the moment', 'i felt', 'it was interesting', 'surprisingly',
-                          'the challenge', 'the exciting part', 'what stood out',
-                          'i realized', 'it taught me', 'looking back']
-        narrative_count = sum(1 for phrase in narrative_words if phrase in answer_lower)
-        if narrative_count >= 3:
-            score += 10
-        elif narrative_count >= 2:
-            score += 7
-        elif narrative_count >= 1:
-            score += 4
-        
-        # Punctuation variety shows expressiveness (!, ?, emphasis)
-        if '!' in answer:
-            score += 3
-        
-        # Answer length - more elaborate = more expressive
-        word_count = len(answer.split())
-        if word_count >= 60:
-            score += 8
-        elif word_count >= 40:
-            score += 5
-        elif word_count >= 25:
-            score += 3
-        elif word_count < 15:
-            score -= 8
-        
-        # Personal pronouns show engagement
-        personal_words = ['i ', 'my ', 'me ', 'we ', 'our ']
-        personal_count = sum(answer_lower.count(p) for p in personal_words)
-        if personal_count >= 5:
-            score += 5
-        elif personal_count >= 3:
-            score += 3
-        
-        return max(30, min(score, 100))
-    
     def _calculate_content_score(self, answer: str, word_count: int, sentence_count: int) -> float:
-        """Calculate content quality score - GENEROUS VERSION"""
+        """
+        Calculate content quality score with structured scoring bands:
         
-        # Check for gibberish first (Lorem Ipsum, random chars, etc.)
+        SCORING BANDS:
+        0-20:  Lorem Ipsum / gibberish / test responses
+        20-40: Very short or poorly structured
+        40-60: Basic answer, minimal structure
+        60-80: Good length and structure, some quality indicators
+        80-100: Excellent length, structure, and quality indicators
+        """
         answer_lower = answer.lower()
-        lorem_indicators = ['lorem', 'ipsum', 'dolor sit', 'amet', 'consectetur', 'adipiscing', 'elit', 'sed do', 'eiusmod', 'tempor incididunt', 'labore et dolore', 'magna aliqua']
+        
+        # BAND 0-20: Gibberish detection
+        lorem_indicators = ['lorem', 'ipsum', 'dolor sit', 'amet', 'consectetur', 'adipiscing', 
+                           'elit', 'sed do', 'eiusmod', 'tempor incididunt']
         lorem_matches = sum(1 for indicator in lorem_indicators if indicator in answer_lower)
-        if lorem_matches >= 2:  # If 2+ Lorem Ipsum words found, it's gibberish
+        if lorem_matches >= 2:
             return 10
         
-        # Start with base score of 65 - any reasonable answer deserves this
-        score = 65
+        # BAND 0-20: Test/meta responses
+        test_indicators = ['this is a test', 'gonna be a test', 'going to be a test', 'it is a test', 
+                          'just a test', 'testing the system', 'sample text', 'placeholder', 
+                          'non-relevant', 'non-vervent', 'off topic', 'off-topic', 'checking whether',
+                          'check whether', 'evaluation system', 'scoring system', 'test so far']
+        test_matches = sum(1 for indicator in test_indicators if indicator in answer_lower)
+        if test_matches >= 1:
+            return 15
         
-        # Length bonus (up to +18 points)
-        if word_count >= 100:
-            score += 18
-        elif word_count >= 70:
-            score += 15
-        elif word_count >= 50:
-            score += 12
-        elif word_count >= 35:
-            score += 9
-        elif word_count >= 25:
-            score += 6
-        elif word_count >= 15:
-            score += 3
-        else:
-            score += 0
+        # Quality indicators
+        quality_indicators = ['for example', 'for instance', 'such as', 'specifically',
+                             'in my experience', 'i have', 'i worked', 'i used', 'we implemented',
+                             'the result', 'this led to', 'because', 'which means', 'therefore',
+                             'my approach', 'i believe', 'in particular', 'one example',
+                             'additionally', 'furthermore', 'moreover', 'first', 'second', 'finally',
+                             'this means', 'as a result', 'consequently', 'thus', 'however']
+        quality_matches = sum(1 for indicator in quality_indicators if indicator in answer_lower)
         
-        # Structure bonus (up to +10 points)
-        if sentence_count >= 5:
-            score += 10
-        elif sentence_count >= 4:
-            score += 8
-        elif sentence_count >= 3:
-            score += 6
-        elif sentence_count >= 2:
-            score += 4
-        else:
-            score += 2  # Single sentence still gets credit
+        # === DETERMINE SCORING BAND ===
         
-        # Quality indicators bonus (up to +7 points)
-        example_indicators = ['for example', 'for instance', 'such as', 'like', 'specifically',
-                              'in my experience', 'i have', 'i worked', 'i used', 'we implemented',
-                              'the result', 'this led to', 'because', 'which means', 'therefore',
-                              'my approach', 'i believe', 'in particular', 'one example', 'instance',
-                              'additionally', 'furthermore', 'moreover', 'first', 'second', 'finally',
-                              'this means', 'as a result', 'consequently', 'thus', 'however']
-        matches = sum(1 for indicator in example_indicators if indicator in answer.lower())
-        if matches >= 4:
-            score += 7
-        elif matches >= 3:
-            score += 5
-        elif matches >= 2:
-            score += 4
-        elif matches >= 1:
-            score += 3
-        # No penalty for no matches - base score is generous
+        # BAND 80-100: Excellent content
+        if word_count >= 50 and sentence_count >= 4 and quality_matches >= 3:
+            base = 80
+            if word_count >= 80:
+                base += 8
+            elif word_count >= 60:
+                base += 5
+            if quality_matches >= 5:
+                base += 7
+            elif quality_matches >= 4:
+                base += 5
+            if sentence_count >= 6:
+                base += 5
+            return min(base, 100)
         
-        # Total max: 65 (base) + 18 (length) + 10 (structure) + 7 (quality) = 100
-        return min(score, 100)
+        # BAND 60-80: Good content
+        if (word_count >= 30 and sentence_count >= 3) or (word_count >= 40 and quality_matches >= 2):
+            base = 60
+            if word_count >= 50:
+                base += 8
+            elif word_count >= 40:
+                base += 5
+            if quality_matches >= 3:
+                base += 6
+            elif quality_matches >= 2:
+                base += 4
+            if sentence_count >= 4:
+                base += 5
+            return min(max(base, 60), 79)
+        
+        # BAND 40-60: Basic content
+        if word_count >= 15 and sentence_count >= 2:
+            base = 40
+            if word_count >= 25:
+                base += 10
+            elif word_count >= 20:
+                base += 6
+            if quality_matches >= 1:
+                base += 5
+            if sentence_count >= 3:
+                base += 4
+            return min(max(base, 40), 59)
+        
+        # BAND 20-40: Minimal content
+        if word_count >= 8:
+            base = 20
+            base += min(word_count, 15)  # Up to +15 for word count
+            if sentence_count >= 2:
+                base += 4
+            return min(max(base, 20), 39)
+        
+        # BAND 0-20: Too short
+        return max(10, word_count * 2)
     
     def _check_english_content(self, answer: str) -> float:
         """
@@ -471,7 +406,7 @@ class AnswerEvaluator:
         answer: str,
         expected_keywords: List[str] = None
     ) -> float:
-        """Calculate answer relevance to question - GENEROUS VERSION"""
+        """Calculate answer relevance using semantic similarity (with heuristic fallback)"""
         
         # Check for gibberish/Lorem Ipsum text - return low score immediately
         answer_lower = answer.lower()
@@ -480,38 +415,89 @@ class AnswerEvaluator:
         if lorem_matches >= 2:  # If 2+ Lorem Ipsum words found, it's gibberish
             return 10
         
-        # Start with generous base score based on answer length
+        # Check for test/meta responses
+        test_indicators = ['this is a test', 'gonna be a test', 'going to be a test', 'it is a test', 
+                          'just a test', 'testing', 'sample text', 'placeholder', 'non-relevant', 
+                          'non-vervent', 'off topic', 'off-topic', 'checking whether', 'check whether',
+                          'evaluation system', 'scoring system', 'test so far', 'sample piece']
+        test_matches = sum(1 for indicator in test_indicators if indicator in answer_lower)
+        if test_matches >= 1:
+            return 20  # Very low score for test/meta responses
+        
+        # Try semantic similarity first (uses embeddings + cosine similarity)
+        semantic_score = self._calculate_semantic_similarity(question, answer, expected_keywords)
+        if semantic_score is not None:
+            return semantic_score
+        
+        # === HEURISTIC FALLBACK (when embeddings unavailable) ===
+        # Following the same scoring bands as semantic similarity
+        
         word_count = len(answer.split())
         
-        if word_count >= 80:
-            score = 88
-        elif word_count >= 50:
-            score = 85
-        elif word_count >= 35:
-            score = 80
-        elif word_count >= 25:
-            score = 75
-        elif word_count >= 15:
-            score = 70
-        else:
-            score = 65
-        
-        # Small bonus for question word overlap (up to +5)
+        # Question word overlap
         question_words = set(self.word_tokenize(question.lower())) - self.stopwords
         answer_words = set(self.word_tokenize(answer.lower())) - self.stopwords
         
+        overlap_ratio = 0
         if question_words:
-            overlap = len(question_words & answer_words) / len(question_words)
-            score += min(overlap * 5, 5)
+            overlap_ratio = len(question_words & answer_words) / len(question_words)
         
-        # Small bonus for keyword matches (up to +7)
+        # Keyword analysis with stem matching
+        keyword_ratio = 0
+        keywords_found = 0
         if expected_keywords:
-            answer_lower = answer.lower()
-            found = sum(1 for kw in expected_keywords if kw.lower() in answer_lower)
-            keyword_ratio = found / len(expected_keywords) if expected_keywords else 0
-            score += keyword_ratio * 7
+            for kw in expected_keywords:
+                kw_lower = kw.lower()
+                if kw_lower in answer_lower:
+                    keywords_found += 1
+                else:
+                    # Stem matching
+                    kw_stem = kw_lower[:4] if len(kw_lower) >= 4 else kw_lower
+                    for word in answer_words:
+                        if kw_stem in word or (len(word) >= 4 and word[:4] == kw_stem):
+                            keywords_found += 1
+                            break
+            keyword_ratio = keywords_found / len(expected_keywords)
         
-        return min(score, 100)
+        # Combined relevance score (overlap + keywords)
+        combined_relevance = (overlap_ratio * 0.4) + (keyword_ratio * 0.6)
+        
+        # === DETERMINE SCORING BAND ===
+        
+        # BAND 80-100: High relevance
+        if combined_relevance >= 0.5 and word_count >= 25:
+            base = 80
+            base += min(combined_relevance * 15, 12)
+            if word_count >= 50:
+                base += 5
+            return min(base, 100)
+        
+        # BAND 60-80: Moderate relevance
+        if combined_relevance >= 0.3 or (keyword_ratio >= 0.4 and word_count >= 20):
+            base = 60
+            base += min(combined_relevance * 20, 12)
+            if word_count >= 35:
+                base += 5
+            return min(max(base, 60), 79)
+        
+        # BAND 40-60: Some relevance
+        if combined_relevance >= 0.15 or keyword_ratio >= 0.2:
+            base = 40
+            base += min(combined_relevance * 30, 12)
+            if word_count >= 25:
+                base += 5
+            return min(max(base, 40), 59)
+        
+        # BAND 20-40: Low relevance (proper English but off-topic)
+        if word_count >= 15:
+            base = 25
+            base += min(overlap_ratio * 10, 8)
+            if word_count >= 30:
+                base += 5
+            return min(max(base, 20), 39)
+        
+        # BAND 0-20: Very low relevance
+        return max(15, 20 + (combined_relevance * 10))
     
     def _analyze_keywords(self, answer: str, expected_keywords: List[str] = None) -> Dict:
         """Analyze keyword presence"""
@@ -598,55 +584,57 @@ class AnswerEvaluator:
         word_count: int,
         keyword_analysis: Dict
     ) -> str:
-        """Generate warm, constructive, human-friendly per-question feedback"""
+        """
+        Generate feedback based on scoring bands:
+        0-20:  Gibberish/test response
+        20-40: Off-topic response
+        40-60: Slightly off-topic
+        60-80: Good, on-topic
+        80-100: Excellent
+        """
         feedback_parts = []
+        avg_score = (content_score + relevance_score) / 2
         
-        overall_score = (content_score + relevance_score + coherence_score) / 3
+        # BAND 0-20: Gibberish or test
+        if avg_score < 20:
+            feedback_parts.append("This response appears to be a test or placeholder text.")
+            feedback_parts.append("Please provide a genuine answer to the question.")
+            return " ".join(feedback_parts)
         
-        # --- Opening: warm and specific rather than generic ---
-        if overall_score >= 85:
-            feedback_parts.append("Excellent answer! You covered the key points really well and your response was well-organized.")
-        elif overall_score >= 75:
-            feedback_parts.append("Good job on this one! You touched on the important aspects and communicated clearly.")
-        elif overall_score >= 65:
-            feedback_parts.append("Solid answer with some good points. A few additions would make it even stronger.")
-        elif overall_score >= 55:
-            feedback_parts.append("You're on the right track here, but there's room to make this answer more complete.")
-        elif overall_score >= 45:
-            feedback_parts.append("This answer covers some basics, but could use more depth and structure to really stand out.")
-        else:
-            feedback_parts.append("This one needs more work — try to address the question more directly and include specific details.")
-        
-        # --- Content-specific feedback ---
-        if content_score < 50:
-            if word_count < 20:
-                feedback_parts.append("Your answer was quite short. Try to elaborate more — aim for at least 3-4 sentences to give a complete response.")
-            elif word_count < 40:
-                feedback_parts.append("Try to add more substance — include a specific example from your experience or explain your reasoning in more detail.")
-            else:
-                feedback_parts.append("While you wrote enough, the content could be more focused. Try structuring it with a clear point, supporting evidence, and a conclusion.")
-        elif content_score < 70:
-            feedback_parts.append("Good foundation — now try to strengthen it with a concrete example or quantifiable result (like \"reduced load time by 40%\").")
-        
-        # --- Relevance feedback ---
-        if relevance_score < 50:
-            feedback_parts.append("Make sure you're directly addressing what the question is asking before adding context.")
+        # BAND 20-40: Obviously off-topic
+        if relevance_score < 40 or avg_score < 40:
+            feedback_parts.append("Your answer does not address the question asked.")
+            feedback_parts.append("Focus on the specific topic and provide relevant information.")
             if keyword_analysis["missing"]:
-                missing = keyword_analysis["missing"][:3]
-                feedback_parts.append(f"Try to incorporate these key concepts: {', '.join(missing)}.")
-        elif relevance_score < 70 and keyword_analysis["missing"]:
-            missing = keyword_analysis["missing"][:2]
-            feedback_parts.append(f"Consider also mentioning: {', '.join(missing)} — these are important aspects the interviewer likely expects.")
+                feedback_parts.append(f"Key topics to cover: {', '.join(keyword_analysis['missing'][:3])}")
+            return " ".join(feedback_parts)
         
-        # --- Coherence feedback ---
-        if coherence_score < 55:
-            feedback_parts.append("Try connecting your ideas with transition phrases like \"for example,\" \"as a result,\" or \"building on this\" to create a smoother flow.")
-        elif coherence_score < 70:
-            feedback_parts.append("Your ideas are good — using clearer transitions between them would make the answer easier to follow.")
+        # BAND 40-60: Slightly off-topic
+        if relevance_score < 60 or avg_score < 60:
+            feedback_parts.append("Your answer is somewhat relevant but could be more focused.")
+            if keyword_analysis["missing"]:
+                feedback_parts.append(f"Consider discussing: {', '.join(keyword_analysis['missing'][:3])}")
+            if content_score < 50:
+                feedback_parts.append("Add more detail and specific examples.")
+            return " ".join(feedback_parts)
         
-        # --- Positive reinforcement for keywords found ---
-        if keyword_analysis.get("found") and len(keyword_analysis["found"]) >= 2 and overall_score >= 60:
-            feedback_parts.append(f"Nice use of relevant concepts like {', '.join(keyword_analysis['found'][:2])}!")
+        # BAND 60-80: Good, on-topic
+        if avg_score < 80:
+            feedback_parts.append("Good answer that addresses the question.")
+            if relevance_score < 70:
+                feedback_parts.append("Try to be more specific to the question asked.")
+            if content_score < 70:
+                feedback_parts.append("Adding more examples would strengthen your response.")
+            if keyword_analysis["missing"] and len(keyword_analysis["missing"]) > 0:
+                feedback_parts.append(f"You could also mention: {', '.join(keyword_analysis['missing'][:2])}")
+            return " ".join(feedback_parts)
+        
+        # BAND 80-100: Excellent
+        feedback_parts.append("Excellent answer! Well-structured and directly addresses the question.")
+        if content_score >= 85 and relevance_score >= 85:
+            feedback_parts.append("Your response demonstrates strong understanding of the topic.")
+        if keyword_analysis["found"]:
+            feedback_parts.append("Good use of relevant terminology.")
         
         return " ".join(feedback_parts)
     
@@ -657,41 +645,25 @@ class AnswerEvaluator:
         keyword_analysis: Dict,
         question_type: str
     ) -> List[str]:
-        """Generate specific, actionable improvement suggestions"""
+        """Generate improvement suggestions"""
         suggestions = []
         
-        # Content improvements
-        if content_score < 50:
-            suggestions.append("Add a concrete example from your personal experience — even a brief one makes your answer much more convincing")
-            suggestions.append("Try to explain your thought process step by step — this shows depth of understanding")
-        elif content_score < 70:
-            suggestions.append("Strengthen your answer by quantifying results (e.g., 'reduced errors by 25%' or 'served 1000+ users')")
-        elif content_score < 85:
-            suggestions.append("Consider adding a comparison or trade-off discussion to show advanced understanding")
+        if content_score < 70:
+            suggestions.append("Provide more specific examples from your experience")
+            suggestions.append("Elaborate on your thought process and reasoning")
         
-        # Relevance improvements
-        if relevance_score < 60:
-            suggestions.append("Start by directly answering the question in your first sentence, then expand with details")
+        if relevance_score < 70:
+            suggestions.append("Ensure you directly answer the question")
             if keyword_analysis.get("missing"):
-                missing = keyword_analysis["missing"][:2]
-                suggestions.append(f"Try to naturally include these concepts: {', '.join(missing)}")
-        elif relevance_score < 80 and keyword_analysis.get("missing"):
-            missing = keyword_analysis["missing"][:2]
-            suggestions.append(f"Mentioning {', '.join(missing)} would make your answer more complete")
+                suggestions.append(f"Include key concepts like: {', '.join(keyword_analysis['missing'][:2])}")
         
-        # Question-type specific guidance
         if question_type == "behavioral":
-            suggestions.append("Use the STAR method: set the Scene, describe your Task, explain your Actions, and share the Results")
-            if content_score < 70:
-                suggestions.append("End with what you learned from the experience — interviewers love seeing growth mindset")
+            suggestions.append("Use the STAR method: Situation, Task, Action, Result")
         elif question_type == "technical":
-            suggestions.append("Walk through your reasoning — explain why you'd choose one approach over alternatives")
-            if content_score >= 70:
-                suggestions.append("Discuss edge cases or limitations to show thorough understanding")
+            suggestions.append("Include technical details and explain your reasoning")
+            suggestions.append("Discuss trade-offs and alternative approaches")
         elif question_type == "situational":
-            suggestions.append("Paint a clear picture of the situation first, then describe how you'd handle it step by step")
-            suggestions.append("Connect your approach to a past experience if possible — it adds credibility")
-        elif question_type == "hr" or question_type == "general":
-            suggestions.append("Be specific rather than generic — replace 'I'm a hard worker' with a specific example that proves it")
+            suggestions.append("Describe the context clearly")
+            suggestions.append("Explain the impact of your actions")
         
-        return suggestions[:5]
+        return suggestions[:5]  # Return top 5 suggestions

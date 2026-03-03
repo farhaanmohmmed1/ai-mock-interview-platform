@@ -292,21 +292,26 @@ const Results = () => {
         doc.setFontSize(10);
         data.analysis.weak_areas.forEach(area => {
           checkPageBreak(14);
+          const areaScore = area.score ?? area.average_score ?? 0;
+          const areaName = area.area || 'Unknown';
+          const suggestion = area.suggestion || (areaScore < 50 
+            ? `Focus on improving ${areaName} through practice.`
+            : areaScore < 75 
+              ? `Good foundation in ${areaName}. Add more depth.`
+              : `Strong ${areaName}. Keep refining.`);
           doc.setTextColor(239, 68, 68);
           doc.text('•', margin, yPos);
           doc.setTextColor(0, 0, 0);
-          doc.text(`${area.area}: ${area.score?.toFixed(1) || 0}%`, margin + 6, yPos);
+          doc.text(`${areaName}: ${areaScore.toFixed(1)}%`, margin + 6, yPos);
           yPos += 6;
-          if (area.suggestion) {
-            doc.setTextColor(100, 100, 100);
-            const lines = doc.splitTextToSize(`Suggestion: ${area.suggestion}`, pageWidth - 2 * margin - 10);
-            lines.forEach(line => {
-              checkPageBreak(6);
-              doc.text(line, margin + 6, yPos);
-              yPos += 5;
-            });
-            doc.setTextColor(0, 0, 0);
-          }
+          doc.setTextColor(100, 100, 100);
+          const lines = doc.splitTextToSize(`Suggestion: ${suggestion}`, pageWidth - 2 * margin - 10);
+          lines.forEach(line => {
+            checkPageBreak(6);
+            doc.text(line, margin + 6, yPos);
+            yPos += 5;
+          });
+          doc.setTextColor(0, 0, 0);
         });
         yPos += 5;
       }
@@ -330,7 +335,7 @@ const Results = () => {
         doc.setFontSize(10);
         data.analysis.recommendations.forEach((rec, i) => {
           checkPageBreak(8);
-          const text = rec.text || rec;
+          const text = rec.text || rec.title || rec.description || (typeof rec === 'string' ? rec : 'See detailed feedback');
           const lines = doc.splitTextToSize(`${i + 1}. ${text}`, pageWidth - 2 * margin);
           lines.forEach(line => {
             checkPageBreak(6);
@@ -708,18 +713,25 @@ const Results = () => {
               <Divider sx={{ mb: 2, borderColor: '#262626' }} />
               <List dense>
                 {results?.weak_areas?.length > 0 ? (
-                  results.weak_areas.map((area, index) => (
-                    <ListItem key={index} sx={{ px: 0, alignItems: 'flex-start' }}>
-                      <ListItemIcon sx={{ minWidth: 36, mt: 0.5 }}>
-                        <Lightbulb sx={{ color: '#F59E0B' }} />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <span>{area.area || area}</span>
-                            {area.score != null && (
+                  results.weak_areas.map((area, index) => {
+                    const areaScore = area.score ?? area.average_score ?? 0;
+                    const areaName = area.area || area;
+                    const suggestion = area.suggestion || (areaScore < 50 
+                      ? `Focus on improving your ${areaName} skills through targeted practice.`
+                      : areaScore < 75 
+                        ? `Good foundation in ${areaName}. Work on adding more depth and examples.`
+                        : `Strong ${areaName} skills. Keep refining for excellence.`);
+                    return (
+                      <ListItem key={index} sx={{ px: 0, alignItems: 'flex-start' }}>
+                        <ListItemIcon sx={{ minWidth: 36, mt: 0.5 }}>
+                          <Lightbulb sx={{ color: '#F59E0B' }} />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <span>{areaName}</span>
                               <Chip 
-                                label={`${Math.round(area.score)}%`}
+                                label={`${Math.round(areaScore)}%`}
                                 size="small"
                                 sx={{ 
                                   height: 20, 
@@ -730,15 +742,15 @@ const Results = () => {
                                   border: `1px solid ${area.severity === 'high' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(245, 158, 11, 0.3)'}` 
                                 }} 
                               />
-                            )}
-                          </Box>
-                        }
-                        secondary={area.suggestion}
-                        primaryTypographyProps={{ sx: { color: '#FFFFFF', fontWeight: 500 } }}
-                        secondaryTypographyProps={{ sx: { color: '#999999', mt: 0.5, lineHeight: 1.6 } }}
-                      />
-                    </ListItem>
-                  ))
+                            </Box>
+                          }
+                          secondary={suggestion}
+                          primaryTypographyProps={{ sx: { color: '#FFFFFF', fontWeight: 500 } }}
+                          secondaryTypographyProps={{ sx: { color: '#999999', mt: 0.5, lineHeight: 1.6 } }}
+                        />
+                      </ListItem>
+                    );
+                  })
                 ) : (
                   <ListItem sx={{ px: 0 }}>
                     <ListItemText primary="No major areas identified for improvement!" primaryTypographyProps={{ sx: { color: '#888888' } }} />

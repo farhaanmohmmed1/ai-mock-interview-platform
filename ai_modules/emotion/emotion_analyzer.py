@@ -14,8 +14,9 @@ class EmotionAnalyzer:
     def _initialize_detector(self):
         """Initialize emotion detection model"""
         try:
-            from fer import FER
-            self.emotion_detector = FER(mtcnn=True)
+            from fer.fer import FER
+            # Use mtcnn=False for faster initialization and fewer dependencies
+            self.emotion_detector = FER(mtcnn=False)
             print("[EmotionAnalyzer] FER initialized successfully")
         except ImportError as e:
             print(f"Warning: FER not installed ({e}). Emotion detection will be limited.")
@@ -121,11 +122,20 @@ class EmotionAnalyzer:
         }
     
     def _aggregate_emotions(self, emotions_timeline: List[Dict], duration: float) -> Dict:
-        """Aggregate emotion data from timeline"""
+        """
+        Aggregate emotion data from timeline using structured scoring bands:
+        
+        EXPRESSION/CONFIDENCE SCORING BANDS:
+        - 80-100: Excellent - Confident, happy/neutral, stable emotions, high visibility
+        - 60-80: Good - Mostly positive, some variations, good visibility
+        - 40-60: Average - Mixed emotions, moderate stability
+        - 20-40: Poor - Stressed/nervous, unstable emotions
+        - 0-20: Very Poor - Face rarely visible, fear/anger dominant
+        """
         
         if not emotions_timeline:
             return {
-                "confidence_score": 0,
+                "confidence_score": 10,
                 "dominant_emotion": "unknown",
                 "emotion_distribution": {},
                 "emotional_stability": 0,
@@ -141,11 +151,12 @@ class EmotionAnalyzer:
         valid_frames = [e for e in emotions_timeline if e.get("face_detected", False) and "emotions" in e]
         
         if not valid_frames:
+            # BAND 1: Very Poor - No face data
             return {
-                "confidence_score": 50,
+                "confidence_score": 15,
                 "dominant_emotion": "neutral",
                 "emotion_distribution": {},
-                "emotional_stability": 50,
+                "emotional_stability": 30,
                 "face_visibility": face_visibility,
                 "feedback": "Limited emotion data available. Try to keep your face visible to the camera."
             }
@@ -167,24 +178,6 @@ class EmotionAnalyzer:
         # Find dominant emotion
         dominant_emotion = max(emotion_distribution.items(), key=lambda x: x[1])[0]
         
-        # Calculate confidence score based on positive emotions
-        confidence_emotions = ["happy", "neutral"]
-        stress_emotions = ["fear", "sad", "angry"]
-        
-        confidence_score = sum(
-            emotion_distribution.get(e, 0) for e in confidence_emotions
-        )
-        stress_score = sum(
-            emotion_distribution.get(e, 0) for e in stress_emotions
-        )
-        
-        # Normalize confidence score (0-100)
-        total_score = confidence_score + stress_score
-        if total_score > 0:
-            confidence_score = (confidence_score / total_score) * 100
-        else:
-            confidence_score = 50
-        
         # Calculate emotional stability (how much emotions fluctuate)
         emotion_changes = []
         for i in range(1, len(valid_frames)):
@@ -198,7 +191,64 @@ class EmotionAnalyzer:
         if emotion_changes:
             stability = (1 - (sum(emotion_changes) / len(emotion_changes))) * 100
         else:
-            stability = 80
+            stability = 75
+        
+        # Calculate positive and negative emotion scores
+        confidence_emotions = ["happy", "neutral"]
+        stress_emotions = ["fear", "sad", "angry"]
+        
+        positive_score = sum(emotion_distribution.get(e, 0) for e in confidence_emotions)
+        stress_score = sum(emotion_distribution.get(e, 0) for e in stress_emotions)
+        
+        # Apply scoring bands
+        # BAND 5: Excellent Expression (80-100)
+        # High positive emotions + stable + visible face
+        if positive_score >= 0.6 and stress_score < 0.15 and stability >= 70 and face_visibility >= 80:
+            confidence_score = 80
+            if positive_score >= 0.75:
+                confidence_score += 6
+            if stability >= 85:
+                confidence_score += 5
+            if face_visibility >= 95:
+                confidence_score += 4
+            if dominant_emotion in ["happy", "neutral"]:
+                confidence_score += 3
+            confidence_score = min(100, confidence_score)
+        
+        # BAND 4: Good Expression (60-80)
+        elif positive_score >= 0.45 and stress_score < 0.25 and stability >= 50 and face_visibility >= 60:
+            confidence_score = 60
+            confidence_score += min(8, (positive_score - 0.45) * 40)
+            confidence_score += min(5, (stability - 50) * 0.15)
+            confidence_score += min(4, (face_visibility - 60) * 0.1)
+            confidence_score = min(79, confidence_score)
+        
+        # BAND 3: Average Expression (40-60)
+        elif positive_score >= 0.3 and stress_score < 0.4 and stability >= 30 and face_visibility >= 40:
+            confidence_score = 40
+            confidence_score += min(8, (positive_score - 0.3) * 35)
+            confidence_score += min(6, (stability - 30) * 0.15)
+            confidence_score += min(4, (face_visibility - 40) * 0.1)
+            confidence_score = min(59, confidence_score)
+        
+        # BAND 2: Poor Expression (20-40)
+        elif face_visibility >= 20 and stress_score < 0.6:
+            confidence_score = 20
+            if positive_score >= 0.15:
+                confidence_score += 6
+            if stability >= 20:
+                confidence_score += 5
+            confidence_score += min(6, (face_visibility - 20) * 0.1)
+            confidence_score = min(39, confidence_score)
+        
+        # BAND 1: Very Poor (0-20)
+        else:
+            confidence_score = 10
+            if face_visibility >= 10:
+                confidence_score += 3
+            if positive_score >= 0.1:
+                confidence_score += 3
+            confidence_score = min(19, confidence_score)
         
         # Generate feedback
         feedback = self._generate_emotion_feedback(
@@ -223,32 +273,63 @@ class EmotionAnalyzer:
         stability: float,
         face_visibility: float
     ) -> str:
-        """Generate feedback based on emotion analysis"""
+        """
+        Generate feedback based on emotion analysis using scoring bands:
+        
+        FEEDBACK BANDS:
+        - 80-100: Excellent performance feedback
+        - 60-80: Good with minor suggestions
+        - 40-60: Average with improvement areas
+        - 20-40: Needs significant work
+        - 0-20: Critical issues to address
+        """
         feedback_parts = []
         
-        # Confidence feedback
-        if confidence_score >= 70:
-            feedback_parts.append("You demonstrated good confidence throughout the interview.")
-        elif confidence_score >= 50:
-            feedback_parts.append("Your confidence level was moderate. Try to appear more relaxed and positive.")
+        # BAND 5: Excellent (80-100)
+        if confidence_score >= 80:
+            feedback_parts.append("Excellent! You appeared highly confident and composed throughout the interview.")
+            if dominant_emotion == "happy":
+                feedback_parts.append("Your positive demeanor was very professional.")
+            elif dominant_emotion == "neutral":
+                feedback_parts.append("You maintained a professional, composed expression.")
+        
+        # BAND 4: Good (60-80)
+        elif confidence_score >= 60:
+            feedback_parts.append("Good confidence level. You appeared reasonably composed during the interview.")
+            if dominant_emotion in ["happy", "neutral"]:
+                feedback_parts.append("Your emotional state was appropriate.")
+            else:
+                feedback_parts.append("Try to maintain a more neutral or positive expression.")
+            if stability < 70:
+                feedback_parts.append("Work on keeping your emotions more consistent.")
+        
+        # BAND 3: Average (40-60)
+        elif confidence_score >= 40:
+            feedback_parts.append("Your confidence level was moderate. Practice appearing more relaxed and assured.")
+            if dominant_emotion in ["fear", "sad"]:
+                feedback_parts.append("You appeared somewhat nervous. Deep breathing exercises before interviews can help.")
+            elif dominant_emotion == "surprise":
+                feedback_parts.append("You showed surprise reactions - try to maintain composure even for unexpected questions.")
+            if stability < 50:
+                feedback_parts.append("Your emotions fluctuated noticeably. Practice maintaining emotional stability.")
+        
+        # BAND 2: Poor (20-40)
+        elif confidence_score >= 20:
+            feedback_parts.append("Work on appearing more confident. Your nervousness was noticeable.")
+            if dominant_emotion in ["fear", "sad", "angry"]:
+                feedback_parts.append("Stress management techniques and mock interview practice are recommended.")
+            feedback_parts.append("Consider practicing in front of a mirror to become aware of your expressions.")
+        
+        # BAND 1: Very Poor (0-20)
         else:
-            feedback_parts.append("Work on appearing more confident. Practice relaxation techniques before interviews.")
+            feedback_parts.append("Your confidence needs significant improvement. Consider extensive mock interview practice.")
+            feedback_parts.append("Relaxation techniques, preparation, and practice are essential before your next interview.")
         
-        # Emotion feedback
-        if dominant_emotion in ["happy", "neutral"]:
-            feedback_parts.append("Your emotional state was appropriate for an interview.")
-        elif dominant_emotion == "surprise":
-            feedback_parts.append("You showed surprise reactions. Try to maintain composure.")
-        elif dominant_emotion in ["fear", "sad", "angry"]:
-            feedback_parts.append("Try to manage stress better and maintain a positive demeanor.")
-        
-        # Stability feedback
-        if stability < 60:
-            feedback_parts.append("Your emotions fluctuated significantly. Practice maintaining emotional stability.")
-        
-        # Face visibility
-        if face_visibility < 80:
-            feedback_parts.append("Ensure your face is clearly visible to the camera throughout the interview.")
+        # Face visibility feedback (applicable to all bands)
+        if face_visibility < 50:
+            feedback_parts.append("IMPORTANT: Ensure your face is clearly visible to the camera throughout the interview.")
+        elif face_visibility < 80:
+            feedback_parts.append("Try to keep your face visible to the camera at all times.")
         
         return " ".join(feedback_parts)
     
@@ -265,18 +346,32 @@ class EmotionAnalyzer:
         result = self._analyze_frame(frame, 0)
         
         if result.get("face_detected", False):
-            confidence_score = result.get("emotions", {}).get("happy", 0) * 50 + \
-                             result.get("emotions", {}).get("neutral", 0) * 50
+            # Apply scoring bands for single image
+            emotions = result.get("emotions", {})
+            positive_score = emotions.get("happy", 0) + emotions.get("neutral", 0)
+            stress_score = emotions.get("fear", 0) + emotions.get("sad", 0) + emotions.get("angry", 0)
+            
+            # Simple band assignment for single image
+            if positive_score >= 0.7 and stress_score < 0.1:
+                confidence_score = 85
+            elif positive_score >= 0.5 and stress_score < 0.2:
+                confidence_score = 70
+            elif positive_score >= 0.35 and stress_score < 0.35:
+                confidence_score = 50
+            elif positive_score >= 0.2:
+                confidence_score = 35
+            else:
+                confidence_score = 15
             
             return {
                 "confidence_score": round(confidence_score, 2),
                 "dominant_emotion": result.get("dominant_emotion", "unknown"),
-                "emotion_distribution": result.get("emotions", {}),
+                "emotion_distribution": emotions,
                 "face_detected": True
             }
         else:
             return {
-                "confidence_score": 0,
+                "confidence_score": 10,
                 "face_detected": False,
                 "feedback": "No face detected in the image"
             }
