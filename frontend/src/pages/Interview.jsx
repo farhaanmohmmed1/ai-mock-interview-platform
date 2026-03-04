@@ -734,6 +734,11 @@ const Interview = () => {
         body: formData,
       });
 
+      if (response.status === 401) {
+        logout();
+        navigate('/login');
+        return;
+      }
       if (response.ok) {
         const data = await response.json();
         console.log('Transcription response:', data);

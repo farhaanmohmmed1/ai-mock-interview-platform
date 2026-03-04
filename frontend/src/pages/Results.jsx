@@ -41,6 +41,7 @@ import {
 } from '@mui/icons-material';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { useAuth } from '../App';
 import API_URL from '../config';
 
 const ScoreCircle = ({ score, label, color }) => (
@@ -86,6 +87,7 @@ const ScoreCircle = ({ score, label, color }) => (
 const Results = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [results, setResults] = useState(null);
@@ -115,6 +117,12 @@ const Results = () => {
       });
 
       console.log('Results response status:', response.status);
+      
+      if (response.status === 401) {
+        logout();
+        navigate('/login');
+        return;
+      }
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -916,14 +924,17 @@ const Results = () => {
                           <Button
                             variant="outlined"
                             size="small"
+                            component="a"
                             endIcon={<OpenInNew sx={{ fontSize: '16px !important' }} />}
-                            href={rec.course?.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            onClick={() => {
+                              const url = rec.course?.url;
+                              if (url) window.open(url, '_blank', 'noopener,noreferrer');
+                            }}
                             sx={{
                               borderColor: '#A855F7',
                               color: '#A855F7',
                               textTransform: 'none',
+                              cursor: 'pointer',
                               '&:hover': {
                                 borderColor: '#9333EA',
                                 bgcolor: 'rgba(168, 85, 247, 0.1)',

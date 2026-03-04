@@ -52,6 +52,11 @@ const Dashboard = () => {
           'Authorization': `Bearer ${token}`,
         },
       });
+      if (response.status === 401) {
+        logout();
+        navigate('/login');
+        return;
+      }
       if (response.ok) {
         const data = await response.json();
         setStats({
@@ -79,6 +84,11 @@ const Dashboard = () => {
           'Authorization': `Bearer ${token}`,
         },
       });
+      if (response.status === 401) {
+        logout();
+        navigate('/login');
+        return;
+      }
       if (response.ok) {
         const data = await response.json();
         setRecentInterviews(data);
