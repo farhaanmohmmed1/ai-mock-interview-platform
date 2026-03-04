@@ -7,7 +7,6 @@ import os
 import shutil
 import subprocess
 import tempfile
-import random
 from pathlib import Path
 
 from backend.core.database import get_db

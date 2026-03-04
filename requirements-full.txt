@@ -17,11 +17,11 @@ passlib[bcrypt]==1.7.4
 python-dotenv==1.0.0
 
 # NLP Libraries
-transformers==4.35.2
-torch
+transformers>=5.0.0
+torch>=2.4.0
 spacy==3.7.2
 nltk==3.8.1
-sentence-transformers==2.2.2
+sentence-transformers>=5.0.0
 pdfplumber==0.10.3
 python-docx==1.1.0
 pyresparser==1.0.6

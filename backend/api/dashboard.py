@@ -212,10 +212,10 @@ async def get_dashboard_stats(
                 progress=round(avg / 85.0 * 100, 2)
             ))
     
-    # Recent interviews
+    # Recent interviews (increased from 5 to 20 for better history view)
     recent_interviews = db.query(Interview).filter(
         Interview.user_id == current_user.id
-    ).order_by(desc(Interview.created_at)).limit(5).all()
+    ).order_by(desc(Interview.created_at)).limit(20).all()
     
     # Aggregate weak areas from recent interviews
     weak_areas_agg = {}

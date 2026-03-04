@@ -1,4 +1,5 @@
 import re
+import os
 from typing import Dict, List
 import nltk
 from collections import Counter
@@ -11,6 +12,9 @@ class AnswerEvaluator:
     # Class-level model to avoid reloading
     _embedding_model = None
     _model_load_attempted = False
+    
+    # Local model path (relative to project root)
+    LOCAL_MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'models', 'all-MiniLM-L6-v2')
     
     def __init__(self):
         # Download required NLTK data
@@ -43,9 +47,16 @@ class AnswerEvaluator:
         cls._model_load_attempted = True
         try:
             from sentence_transformers import SentenceTransformer
-            # Use lightweight model (~90MB) - good balance of speed and quality
-            cls._embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-            print("[AnswerEvaluator] Loaded sentence-transformers model for semantic similarity")
+            
+            # Try local model first (faster, no network needed)
+            local_path = os.path.abspath(cls.LOCAL_MODEL_PATH)
+            if os.path.exists(local_path) and os.path.isdir(local_path):
+                cls._embedding_model = SentenceTransformer(local_path)
+                print(f"[AnswerEvaluator] Loaded local sentence-transformers model from {local_path}")
+            else:
+                # Fallback to downloading from HuggingFace
+                cls._embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+                print("[AnswerEvaluator] Loaded sentence-transformers model from HuggingFace")
         except Exception as e:
             print(f"[AnswerEvaluator] Could not load embedding model, using heuristics: {e}")
             cls._embedding_model = None

@@ -652,25 +652,21 @@ async def complete_interview(
                 ]
             }
     
-    # IMPORTANT: Apply completion ratio to ALL scores from ANY source (agent or generator)
-    # Each question contributes equally - skipped questions count as 0
+    # IMPORTANT: Apply completion ratio to overall and content scores
+    # Speech metrics (clarity, fluency, confidence, emotion) stay as raw averages for answered questions
+    # This way user sees: "You spoke clearly, but only completed 20% of the interview"
     if answered_count > 0 and answered_count < total_questions:
         completion_ratio = answered_count / total_questions
         print(f"[Complete] Applying completion ratio: {answered_count}/{total_questions} = {completion_ratio}")
         
-        # Scale all scores by completion ratio
+        # Scale only overall and content by completion ratio
+        # Speech metrics remain as averages for answered questions (more informative)
         if report.get("overall_score"):
             report["overall_score"] = round(report["overall_score"] * completion_ratio, 1)
         if report.get("content_score"):
             report["content_score"] = round(report["content_score"] * completion_ratio, 1)
-        if report.get("clarity_score"):
-            report["clarity_score"] = round(report["clarity_score"] * completion_ratio, 1)
-        if report.get("fluency_score"):
-            report["fluency_score"] = round(report["fluency_score"] * completion_ratio, 1)
-        if report.get("confidence_score"):
-            report["confidence_score"] = round(report["confidence_score"] * completion_ratio, 1)
-        if report.get("emotion_score"):
-            report["emotion_score"] = round(report["emotion_score"] * completion_ratio, 1)
+        # Note: clarity, fluency, confidence, emotion stay as raw averages - they reflect
+        # performance on the questions you DID answer, which is useful feedback
         
         print(f"[Complete] Scaled scores: overall={report.get('overall_score')}, content={report.get('content_score')}")
     

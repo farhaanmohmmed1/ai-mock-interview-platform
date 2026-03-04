@@ -1584,8 +1584,10 @@ const Interview = () => {
         <DialogTitle sx={{ color: '#FFFFFF' }}>Complete Interview?</DialogTitle>
         <DialogContent>
           <Typography sx={{ color: '#E0E0E0' }}>
-            You have answered all {questions.length} questions. 
-            Click "Complete" to submit your interview and see your results.
+            {Object.keys(answers).length === questions.length 
+              ? `You have answered all ${questions.length} questions.`
+              : `You have answered ${Object.keys(answers).length} of ${questions.length} questions.`}
+            {' '}Click "Complete" to submit your interview and see your results.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ borderTop: '1px solid #262626' }}>
