@@ -6,156 +6,359 @@ import numpy as np
 
 # Course recommendations database - maps topics/skills to learning resources
 COURSE_DATABASE = {
+
     # Programming Languages
     "java": [
-        {"title": "Java Programming Masterclass", "platform": "Udemy", "url": "https://www.udemy.com/course/java-the-complete-java-developer-course/", "level": "Beginner to Advanced"},
-        {"title": "Java Fundamentals", "platform": "Pluralsight", "url": "https://www.pluralsight.com/courses/java-fundamentals-language", "level": "Beginner"},
-        {"title": "Java Programming", "platform": "Coursera", "url": "https://www.coursera.org/specializations/java-programming", "level": "Beginner"},
+        {
+            "title": "Java Programming Masterclass",
+            "platform": "Udemy",
+            "url": "https://www.udemy.com/course/java-the-complete-java-developer-course/",
+            "level": "Beginner to Advanced"
+        },
+        {
+            "title": "Java Fundamentals",
+            "platform": "Pluralsight",
+            "url": "https://www.pluralsight.com/courses/java-fundamentals-language",
+            "level": "Beginner"
+        },
+        {
+            "title": "Java Programming and Software Engineering Fundamentals",
+            "platform": "Coursera",
+            "url": "https://www.coursera.org/specializations/java-programming",
+            "level": "Beginner"
+        },
     ],
+
     "python": [
-        {"title": "Complete Python Bootcamp", "platform": "Udemy", "url": "https://www.udemy.com/course/complete-python-bootcamp/", "level": "Beginner to Advanced"},
-        {"title": "Python for Everybody", "platform": "Coursera", "url": "https://www.coursera.org/specializations/python", "level": "Beginner"},
-        {"title": "Python Documentation", "platform": "Official", "url": "https://docs.python.org/3/tutorial/", "level": "All Levels"},
+        {
+            "title": "Complete Python Bootcamp",
+            "platform": "Udemy",
+            "url": "https://www.udemy.com/course/complete-python-bootcamp/",
+            "level": "Beginner to Advanced"
+        },
+        {
+            "title": "Python for Everybody",
+            "platform": "Coursera",
+            "url": "https://www.coursera.org/specializations/python",
+            "level": "Beginner"
+        },
+        {
+            "title": "Python Official Tutorial",
+            "platform": "Official",
+            "url": "https://docs.python.org/3/tutorial/",
+            "level": "All Levels"
+        },
     ],
+
     "javascript": [
-        {"title": "The Complete JavaScript Course", "platform": "Udemy", "url": "https://www.udemy.com/course/the-complete-javascript-course/", "level": "Beginner to Advanced"},
-        {"title": "JavaScript: Understanding the Weird Parts", "platform": "Udemy", "url": "https://www.udemy.com/course/understand-javascript/", "level": "Intermediate"},
-        {"title": "freeCodeCamp JavaScript", "platform": "freeCodeCamp", "url": "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures/", "level": "Beginner"},
+        {
+            "title": "The Complete JavaScript Course",
+            "platform": "Udemy",
+            "url": "https://www.udemy.com/course/the-complete-javascript-course/",
+            "level": "Beginner to Advanced"
+        },
+        {
+            "title": "JavaScript Algorithms and Data Structures",
+            "platform": "freeCodeCamp",
+            "url": "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures/",
+            "level": "Beginner"
+        },
+        {
+            "title": "MDN JavaScript Guide",
+            "platform": "MDN",
+            "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide",
+            "level": "Beginner to Intermediate"
+        },
     ],
+
     "typescript": [
-        {"title": "Understanding TypeScript", "platform": "Udemy", "url": "https://www.udemy.com/course/understanding-typescript/", "level": "Beginner to Intermediate"},
-        {"title": "TypeScript Documentation", "platform": "Official", "url": "https://www.typescriptlang.org/docs/", "level": "All Levels"},
+        {
+            "title": "Understanding TypeScript",
+            "platform": "Udemy",
+            "url": "https://www.udemy.com/course/understanding-typescript/",
+            "level": "Beginner to Intermediate"
+        },
+        {
+            "title": "TypeScript Official Documentation",
+            "platform": "Official",
+            "url": "https://www.typescriptlang.org/docs/",
+            "level": "All Levels"
+        },
     ],
+
     "c++": [
-        {"title": "Beginning C++ Programming", "platform": "Udemy", "url": "https://www.udemy.com/course/beginning-c-plus-plus-programming/", "level": "Beginner"},
-        {"title": "C++ Tutorial", "platform": "W3Schools", "url": "https://www.w3schools.com/cpp/", "level": "Beginner"},
+        {
+            "title": "Beginning C++ Programming",
+            "platform": "Udemy",
+            "url": "https://www.udemy.com/course/beginning-c-plus-plus-programming/",
+            "level": "Beginner"
+        },
+        {
+            "title": "C++ Tutorial",
+            "platform": "W3Schools",
+            "url": "https://www.w3schools.com/cpp/",
+            "level": "Beginner"
+        },
     ],
+
     "c#": [
-        {"title": "C# Fundamentals", "platform": "Pluralsight", "url": "https://www.pluralsight.com/courses/csharp-fundamentals-dev", "level": "Beginner"},
-        {"title": "C# Tutorial", "platform": "Microsoft Learn", "url": "https://learn.microsoft.com/en-us/dotnet/csharp/", "level": "Beginner"},
+        {
+            "title": "C# Fundamentals",
+            "platform": "Microsoft Learn",
+            "url": "https://learn.microsoft.com/en-us/training/paths/csharp-first-steps/",
+            "level": "Beginner"
+        },
+        {
+            "title": "C# Documentation",
+            "platform": "Microsoft",
+            "url": "https://learn.microsoft.com/en-us/dotnet/csharp/",
+            "level": "Beginner"
+        },
     ],
+
     "go": [
-        {"title": "Go: The Complete Developer's Guide", "platform": "Udemy", "url": "https://www.udemy.com/course/go-the-complete-developers-guide/", "level": "Beginner"},
-        {"title": "Go Documentation", "platform": "Official", "url": "https://go.dev/doc/", "level": "All Levels"},
+        {
+            "title": "Go: The Complete Developer's Guide",
+            "platform": "Udemy",
+            "url": "https://www.udemy.com/course/go-the-complete-developers-guide/",
+            "level": "Beginner"
+        },
+        {
+            "title": "Go Documentation",
+            "platform": "Official",
+            "url": "https://go.dev/doc/",
+            "level": "All Levels"
+        },
     ],
+
     "rust": [
-        {"title": "The Rust Programming Language", "platform": "Official", "url": "https://doc.rust-lang.org/book/", "level": "Beginner"},
-        {"title": "Rust by Example", "platform": "Official", "url": "https://doc.rust-lang.org/rust-by-example/", "level": "Beginner"},
+        {
+            "title": "The Rust Programming Language",
+            "platform": "Official",
+            "url": "https://doc.rust-lang.org/book/",
+            "level": "Beginner"
+        },
+        {
+            "title": "Rust by Example",
+            "platform": "Official",
+            "url": "https://doc.rust-lang.org/rust-by-example/",
+            "level": "Beginner"
+        },
     ],
-    
+
     # Data Structures & Algorithms
     "data structures": [
-        {"title": "Data Structures and Algorithms", "platform": "Coursera", "url": "https://www.coursera.org/specializations/data-structures-algorithms", "level": "Intermediate"},
-        {"title": "Mastering Data Structures & Algorithms", "platform": "Udemy", "url": "https://www.udemy.com/course/datastructurescncpp/", "level": "Beginner to Advanced"},
-        {"title": "LeetCode", "platform": "LeetCode", "url": "https://leetcode.com/", "level": "All Levels"},
+        {
+            "title": "Data Structures and Algorithms Specialization",
+            "platform": "Coursera",
+            "url": "https://www.coursera.org/specializations/data-structures-algorithms",
+            "level": "Intermediate"
+        },
+        {
+            "title": "MIT Data Structures and Algorithms",
+            "platform": "MIT OCW",
+            "url": "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/",
+            "level": "Intermediate"
+        },
+        {
+            "title": "LeetCode Practice",
+            "platform": "LeetCode",
+            "url": "https://leetcode.com/problemset/",
+            "level": "All Levels"
+        },
     ],
+
     "algorithms": [
-        {"title": "Algorithms Specialization", "platform": "Coursera", "url": "https://www.coursera.org/specializations/algorithms", "level": "Intermediate"},
-        {"title": "Introduction to Algorithms (MIT)", "platform": "MIT OCW", "url": "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/", "level": "Intermediate"},
-        {"title": "HackerRank Algorithms", "platform": "HackerRank", "url": "https://www.hackerrank.com/domains/algorithms", "level": "All Levels"},
+        {
+            "title": "Algorithms Specialization",
+            "platform": "Coursera",
+            "url": "https://www.coursera.org/specializations/algorithms",
+            "level": "Intermediate"
+        },
+        {
+            "title": "Introduction to Algorithms",
+            "platform": "MIT OCW",
+            "url": "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/",
+            "level": "Intermediate"
+        },
+        {
+            "title": "HackerRank Algorithms Practice",
+            "platform": "HackerRank",
+            "url": "https://www.hackerrank.com/domains/algorithms",
+            "level": "All Levels"
+        },
     ],
-    
+
     # Databases
     "sql": [
-        {"title": "The Complete SQL Bootcamp", "platform": "Udemy", "url": "https://www.udemy.com/course/the-complete-sql-bootcamp/", "level": "Beginner"},
-        {"title": "SQL Tutorial", "platform": "W3Schools", "url": "https://www.w3schools.com/sql/", "level": "Beginner"},
-        {"title": "SQLZoo", "platform": "SQLZoo", "url": "https://sqlzoo.net/", "level": "Beginner to Intermediate"},
+        {
+            "title": "SQL for Data Science",
+            "platform": "Coursera",
+            "url": "https://www.coursera.org/learn/sql-for-data-science",
+            "level": "Beginner"
+        },
+        {
+            "title": "SQL Tutorial",
+            "platform": "W3Schools",
+            "url": "https://www.w3schools.com/sql/",
+            "level": "Beginner"
+        },
+        {
+            "title": "SQLZoo Interactive Tutorials",
+            "platform": "SQLZoo",
+            "url": "https://sqlzoo.net/wiki/SQL_Tutorial",
+            "level": "Beginner to Intermediate"
+        },
     ],
-    "database": [
-        {"title": "Database Management Essentials", "platform": "Coursera", "url": "https://www.coursera.org/learn/database-management", "level": "Beginner"},
-        {"title": "MongoDB University", "platform": "MongoDB", "url": "https://university.mongodb.com/", "level": "All Levels"},
-    ],
+
     "mongodb": [
-        {"title": "MongoDB - The Complete Developer's Guide", "platform": "Udemy", "url": "https://www.udemy.com/course/mongodb-the-complete-developers-guide/", "level": "Beginner to Advanced"},
-        {"title": "MongoDB University", "platform": "MongoDB", "url": "https://university.mongodb.com/", "level": "All Levels"},
+        {
+            "title": "MongoDB Basics",
+            "platform": "MongoDB University",
+            "url": "https://learn.mongodb.com/",
+            "level": "Beginner"
+        },
+        {
+            "title": "MongoDB Official Documentation",
+            "platform": "Official",
+            "url": "https://www.mongodb.com/docs/",
+            "level": "All Levels"
+        },
     ],
-    
+
     # Web Development
     "react": [
-        {"title": "React - The Complete Guide", "platform": "Udemy", "url": "https://www.udemy.com/course/react-the-complete-guide-incl-redux/", "level": "Beginner to Advanced"},
-        {"title": "React Documentation", "platform": "Official", "url": "https://react.dev/learn", "level": "All Levels"},
-        {"title": "freeCodeCamp React", "platform": "freeCodeCamp", "url": "https://www.freecodecamp.org/learn/front-end-development-libraries/", "level": "Beginner"},
+        {
+            "title": "React - The Complete Guide",
+            "platform": "Udemy",
+            "url": "https://www.udemy.com/course/react-the-complete-guide-incl-redux/",
+            "level": "Beginner to Advanced"
+        },
+        {
+            "title": "React Official Docs",
+            "platform": "Official",
+            "url": "https://react.dev/learn",
+            "level": "All Levels"
+        },
+        {
+            "title": "freeCodeCamp React Course",
+            "platform": "freeCodeCamp",
+            "url": "https://www.freecodecamp.org/learn/front-end-development-libraries/",
+            "level": "Beginner"
+        },
     ],
-    "angular": [
-        {"title": "Angular - The Complete Guide", "platform": "Udemy", "url": "https://www.udemy.com/course/the-complete-guide-to-angular-2/", "level": "Beginner to Advanced"},
-        {"title": "Angular Documentation", "platform": "Official", "url": "https://angular.io/docs", "level": "All Levels"},
-    ],
-    "vue": [
-        {"title": "Vue - The Complete Guide", "platform": "Udemy", "url": "https://www.udemy.com/course/vuejs-2-the-complete-guide/", "level": "Beginner to Advanced"},
-        {"title": "Vue.js Documentation", "platform": "Official", "url": "https://vuejs.org/guide/introduction.html", "level": "All Levels"},
-    ],
+
     "node": [
-        {"title": "The Complete Node.js Developer Course", "platform": "Udemy", "url": "https://www.udemy.com/course/the-complete-nodejs-developer-course-2/", "level": "Beginner to Advanced"},
-        {"title": "Node.js Documentation", "platform": "Official", "url": "https://nodejs.org/en/docs/", "level": "All Levels"},
+        {
+            "title": "Node.js Developer Course",
+            "platform": "Udemy",
+            "url": "https://www.udemy.com/course/the-complete-nodejs-developer-course-2/",
+            "level": "Beginner to Advanced"
+        },
+        {
+            "title": "Node.js Official Documentation",
+            "platform": "Official",
+            "url": "https://nodejs.org/en/docs/",
+            "level": "All Levels"
+        },
     ],
+
     "html": [
-        {"title": "HTML & CSS Course", "platform": "freeCodeCamp", "url": "https://www.freecodecamp.org/learn/2022/responsive-web-design/", "level": "Beginner"},
-        {"title": "HTML Tutorial", "platform": "W3Schools", "url": "https://www.w3schools.com/html/", "level": "Beginner"},
+        {
+            "title": "Responsive Web Design",
+            "platform": "freeCodeCamp",
+            "url": "https://www.freecodecamp.org/learn/2022/responsive-web-design/",
+            "level": "Beginner"
+        },
+        {
+            "title": "HTML Tutorial",
+            "platform": "MDN",
+            "url": "https://developer.mozilla.org/en-US/docs/Learn/HTML",
+            "level": "Beginner"
+        },
     ],
+
     "css": [
-        {"title": "Advanced CSS and Sass", "platform": "Udemy", "url": "https://www.udemy.com/course/advanced-css-and-sass/", "level": "Intermediate"},
-        {"title": "CSS Tutorial", "platform": "W3Schools", "url": "https://www.w3schools.com/css/", "level": "Beginner"},
+        {
+            "title": "Advanced CSS and Sass",
+            "platform": "Udemy",
+            "url": "https://www.udemy.com/course/advanced-css-and-sass/",
+            "level": "Intermediate"
+        },
+        {
+            "title": "CSS Documentation",
+            "platform": "MDN",
+            "url": "https://developer.mozilla.org/en-US/docs/Web/CSS",
+            "level": "Beginner"
+        },
     ],
-    
-    # Cloud & DevOps
+
+    # Cloud
     "aws": [
-        {"title": "AWS Certified Solutions Architect", "platform": "Udemy", "url": "https://www.udemy.com/course/aws-certified-solutions-architect-associate-saa-c03/", "level": "Intermediate"},
-        {"title": "AWS Training", "platform": "AWS", "url": "https://aws.amazon.com/training/", "level": "All Levels"},
+        {
+            "title": "AWS Cloud Practitioner Essentials",
+            "platform": "AWS",
+            "url": "https://explore.skillbuilder.aws/learn/course/134/aws-cloud-practitioner-essentials",
+            "level": "Beginner"
+        },
+        {
+            "title": "AWS Training and Certification",
+            "platform": "AWS",
+            "url": "https://aws.amazon.com/training/",
+            "level": "All Levels"
+        },
     ],
+
     "azure": [
-        {"title": "Microsoft Azure Fundamentals", "platform": "Microsoft Learn", "url": "https://learn.microsoft.com/en-us/training/paths/az-900-describe-cloud-concepts/", "level": "Beginner"},
+        {
+            "title": "Microsoft Azure Fundamentals",
+            "platform": "Microsoft Learn",
+            "url": "https://learn.microsoft.com/en-us/training/paths/az-900-describe-cloud-concepts/",
+            "level": "Beginner"
+        },
     ],
-    "docker": [
-        {"title": "Docker & Kubernetes: The Practical Guide", "platform": "Udemy", "url": "https://www.udemy.com/course/docker-kubernetes-the-practical-guide/", "level": "Beginner to Advanced"},
-        {"title": "Docker Documentation", "platform": "Official", "url": "https://docs.docker.com/get-started/", "level": "Beginner"},
-    ],
-    "kubernetes": [
-        {"title": "Kubernetes for Developers", "platform": "Udemy", "url": "https://www.udemy.com/course/kubernetes-for-developers/", "level": "Intermediate"},
-        {"title": "Kubernetes Documentation", "platform": "Official", "url": "https://kubernetes.io/docs/tutorials/", "level": "Beginner"},
-    ],
-    "devops": [
-        {"title": "DevOps Beginners to Advanced", "platform": "Udemy", "url": "https://www.udemy.com/course/decodingdevops/", "level": "Beginner to Advanced"},
-        {"title": "DevOps Culture and Mindset", "platform": "Coursera", "url": "https://www.coursera.org/learn/devops-culture-and-mindset", "level": "Beginner"},
-    ],
-    
-    # Machine Learning & AI
+
+    # AI / ML
     "machine learning": [
-        {"title": "Machine Learning by Andrew Ng", "platform": "Coursera", "url": "https://www.coursera.org/learn/machine-learning", "level": "Beginner to Intermediate"},
-        {"title": "Machine Learning A-Z", "platform": "Udemy", "url": "https://www.udemy.com/course/machinelearning/", "level": "Beginner"},
+        {
+            "title": "Machine Learning by Andrew Ng",
+            "platform": "Coursera",
+            "url": "https://www.coursera.org/learn/machine-learning",
+            "level": "Beginner to Intermediate"
+        },
+        {
+            "title": "Machine Learning Crash Course",
+            "platform": "Google",
+            "url": "https://developers.google.com/machine-learning/crash-course",
+            "level": "Beginner"
+        },
     ],
+
     "deep learning": [
-        {"title": "Deep Learning Specialization", "platform": "Coursera", "url": "https://www.coursera.org/specializations/deep-learning", "level": "Intermediate"},
-        {"title": "PyTorch for Deep Learning", "platform": "Udemy", "url": "https://www.udemy.com/course/pytorch-for-deep-learning-with-python-bootcamp/", "level": "Intermediate"},
+        {
+            "title": "Deep Learning Specialization",
+            "platform": "Coursera",
+            "url": "https://www.coursera.org/specializations/deep-learning",
+            "level": "Intermediate"
+        },
     ],
-    "data science": [
-        {"title": "Data Science Professional Certificate", "platform": "Coursera", "url": "https://www.coursera.org/professional-certificates/ibm-data-science", "level": "Beginner"},
-        {"title": "Data Science Bootcamp", "platform": "Udemy", "url": "https://www.udemy.com/course/the-data-science-course-complete-data-science-bootcamp/", "level": "Beginner to Advanced"},
-    ],
-    
-    # System Design
-    "system design": [
-        {"title": "Grokking the System Design Interview", "platform": "Educative", "url": "https://www.educative.io/courses/grokking-the-system-design-interview", "level": "Intermediate to Advanced"},
-        {"title": "System Design Primer", "platform": "GitHub", "url": "https://github.com/donnemartin/system-design-primer", "level": "Intermediate"},
-    ],
-    
+
     # Soft Skills
-    "speech clarity": [
-        {"title": "Improve Your Communication Skills", "platform": "Coursera", "url": "https://www.coursera.org/learn/wharton-communication-skills", "level": "All Levels"},
-        {"title": "Public Speaking Mastery", "platform": "Udemy", "url": "https://www.udemy.com/course/the-complete-public-speaking-certification-program/", "level": "Beginner"},
-    ],
-    "speech fluency": [
-        {"title": "Speak English Fluently", "platform": "Udemy", "url": "https://www.udemy.com/course/speak-english-fluently/", "level": "Beginner to Intermediate"},
-        {"title": "Communication Skills for Engineers", "platform": "Coursera", "url": "https://www.coursera.org/learn/communication-skills-engineers", "level": "Intermediate"},
-    ],
-    "confidence": [
-        {"title": "Building Confidence and Self-Esteem", "platform": "Udemy", "url": "https://www.udemy.com/course/building-confidence-and-self-esteem/", "level": "All Levels"},
-        {"title": "Developing Executive Presence", "platform": "LinkedIn Learning", "url": "https://www.linkedin.com/learning/developing-executive-presence", "level": "Intermediate"},
-    ],
     "communication": [
-        {"title": "Effective Communication Skills", "platform": "Coursera", "url": "https://www.coursera.org/learn/wharton-communication-skills", "level": "All Levels"},
-        {"title": "Business Communication", "platform": "Udemy", "url": "https://www.udemy.com/course/business-communication-skills/", "level": "Beginner"},
+        {
+            "title": "Improving Communication Skills",
+            "platform": "Coursera",
+            "url": "https://www.coursera.org/learn/wharton-communication-skills",
+            "level": "All Levels"
+        },
+        {
+            "title": "Business Communication Skills",
+            "platform": "Udemy",
+            "url": "https://www.udemy.com/course/business-communication-skills/",
+            "level": "Beginner"
+        },
     ],
-    
+
     # General Interview Prep
     "behavioral": [
         {"title": "Successful Interviewing", "platform": "Coursera", "url": "https://www.coursera.org/learn/successful-interviewing", "level": "All Levels"},

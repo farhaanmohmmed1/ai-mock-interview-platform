@@ -65,6 +65,12 @@ class TabSwitchRequest(BaseModel):
     event_type: str  # 'switch' or 'blur'
 
 
+class ClientViolationRequest(BaseModel):
+    session_id: str
+    violation_type: str  # 'copy_attempt' or 'paste_attempt'
+    details: Optional[str] = None
+
+
 class ProctorStatusResponse(BaseModel):
     available: bool
     features: dict
@@ -84,6 +90,7 @@ async def get_proctoring_status() -> ProctorStatusResponse:
             "head_pose": MEDIAPIPE_AVAILABLE if PROCTORING_AVAILABLE else False,
             "person_verification": DEEPFACE_AVAILABLE if PROCTORING_AVAILABLE else False,
             "tab_switch_detection": True,
+            "copy_paste_detection": True,
             "multiple_face_detection": MEDIAPIPE_AVAILABLE if PROCTORING_AVAILABLE else False
         },
         "accuracy": {
@@ -133,7 +140,8 @@ async def start_proctoring_session(
             "face_detection": MEDIAPIPE_AVAILABLE,
             "gaze_tracking": MEDIAPIPE_AVAILABLE,
             "person_verification": DEEPFACE_AVAILABLE,
-            "tab_switch_detection": True
+            "tab_switch_detection": True,
+            "copy_paste_detection": True
         }
     }
 
@@ -251,6 +259,42 @@ async def record_tab_switch(
         raise HTTPException(status_code=404, detail=str(e))
 
 
+@router.post("/client-violation")
+async def record_client_violation(
+    request: ClientViolationRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Record a client-side proctoring violation.
+
+    Called from frontend for browser events like copy/paste attempts.
+    """
+    if not PROCTORING_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Proctoring not available")
+
+    monitor = get_monitor()
+
+    try:
+        violation = monitor.process_client_violation(
+            session_id=request.session_id,
+            violation_type=request.violation_type,
+            details=request.details
+        )
+        return {
+            "status": "recorded",
+            "violation": {
+                "type": violation.type.value,
+                "severity": violation.severity.value,
+                "timestamp": violation.timestamp.isoformat()
+            }
+        }
+    except ValueError as e:
+        detail = str(e)
+        if "Unsupported client violation type" in detail:
+            raise HTTPException(status_code=400, detail=detail)
+        raise HTTPException(status_code=404, detail=detail)
+
+
 @router.get("/session/{session_id}/report")
 async def get_session_report(
     session_id: str,
@@ -353,6 +397,13 @@ async def get_capabilities():
                 "technology": "Browser Visibility API",
                 "accuracy": "100%",
                 "available": True
+            },
+            {
+                "name": "Copy/Paste Blocking",
+                "description": "Blocks and records clipboard copy/paste attempts",
+                "technology": "Browser Clipboard Event Interception",
+                "accuracy": "100%",
+                "available": True
             }
         ],
         "violation_types": [
@@ -361,7 +412,9 @@ async def get_capabilities():
             {"type": "looking_away", "description": "User looking away from screen", "severity": "low"},
             {"type": "different_person", "description": "Different person detected", "severity": "critical"},
             {"type": "tab_switch", "description": "User switched tabs", "severity": "medium"},
-            {"type": "window_blur", "description": "Browser window lost focus", "severity": "medium"}
+            {"type": "window_blur", "description": "Browser window lost focus", "severity": "medium"},
+            {"type": "copy_attempt", "description": "User attempted to copy content", "severity": "medium"},
+            {"type": "paste_attempt", "description": "User attempted to paste content", "severity": "medium"}
         ],
         "requirements": {
             "mediapipe": "Face detection, gaze tracking, head pose",

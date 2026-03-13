@@ -247,8 +247,8 @@ class ProctoringClient {
         }
         
         if (this.config.enableCopyPasteDetection) {
-            document.addEventListener('copy', this._handleCopy);
-            document.addEventListener('paste', this._handlePaste);
+            document.addEventListener('copy', this._handleCopy, true);
+            document.addEventListener('paste', this._handlePaste, true);
         }
         
         if (this.config.enableRightClickPrevention) {
@@ -256,7 +256,7 @@ class ProctoringClient {
         }
         
         // Detect suspicious keyboard shortcuts (Ctrl+C, Ctrl+V, Alt+Tab, etc.)
-        document.addEventListener('keydown', this._handleKeyDown);
+        document.addEventListener('keydown', this._handleKeyDown, true);
         
         console.log('Client-side monitoring started');
     }
@@ -268,10 +268,10 @@ class ProctoringClient {
         document.removeEventListener('visibilitychange', this._handleVisibilityChange);
         window.removeEventListener('blur', this._handleWindowBlur);
         window.removeEventListener('focus', this._handleWindowFocus);
-        document.removeEventListener('copy', this._handleCopy);
-        document.removeEventListener('paste', this._handlePaste);
+        document.removeEventListener('copy', this._handleCopy, true);
+        document.removeEventListener('paste', this._handlePaste, true);
         document.removeEventListener('contextmenu', this._handleContextMenu);
-        document.removeEventListener('keydown', this._handleKeyDown);
+        document.removeEventListener('keydown', this._handleKeyDown, true);
     }
     
     /**
@@ -303,16 +303,18 @@ class ProctoringClient {
      * Handle copy event
      */
     _handleCopy(event) {
+        event.preventDefault();
         console.log('Copy detected');
-        this._recordClientViolation('copy_attempt', 'User attempted to copy text');
+        this._reportClientViolation('copy_attempt', 'User attempted to copy text');
     }
     
     /**
      * Handle paste event
      */
     _handlePaste(event) {
+        event.preventDefault();
         console.log('Paste detected');
-        this._recordClientViolation('paste_attempt', 'User attempted to paste text');
+        this._reportClientViolation('paste_attempt', 'User attempted to paste text');
     }
     
     /**
@@ -327,14 +329,36 @@ class ProctoringClient {
      * Handle keyboard shortcuts
      */
     _handleKeyDown(event) {
-        // Detect suspicious shortcuts
-        const suspiciousShortcuts = [
-            { keys: ['Control', 'c'], name: 'Copy' },
-            { keys: ['Control', 'v'], name: 'Paste' },
-            { keys: ['Control', 'Shift', 'i'], name: 'DevTools' },
-            { keys: ['F12'], name: 'DevTools' },
-            { keys: ['Alt', 'Tab'], name: 'Alt+Tab' }
-        ];
+        // Explicitly block keyboard copy/paste shortcuts even when clipboard events are missed
+        const key = event.key ? event.key.toLowerCase() : '';
+        if (event.ctrlKey && key === 'c') {
+            event.preventDefault();
+            console.log('Copy shortcut blocked');
+            this._reportClientViolation('copy_attempt', 'User attempted to copy using keyboard shortcut');
+            return;
+        }
+
+        if (event.ctrlKey && key === 'v') {
+            event.preventDefault();
+            console.log('Paste shortcut blocked');
+            this._reportClientViolation('paste_attempt', 'User attempted to paste using keyboard shortcut');
+            return;
+        }
+
+        // Support common Windows clipboard alternatives
+        if (event.ctrlKey && key === 'insert') {
+            event.preventDefault();
+            console.log('Copy shortcut blocked (Ctrl+Insert)');
+            this._reportClientViolation('copy_attempt', 'User attempted to copy using Ctrl+Insert');
+            return;
+        }
+
+        if (event.shiftKey && key === 'insert') {
+            event.preventDefault();
+            console.log('Paste shortcut blocked (Shift+Insert)');
+            this._reportClientViolation('paste_attempt', 'User attempted to paste using Shift+Insert');
+            return;
+        }
         
         // Check for DevTools
         if ((event.ctrlKey && event.shiftKey && event.key === 'I') ||
@@ -342,6 +366,41 @@ class ProctoringClient {
             (event.key === 'F12')) {
             console.log('DevTools shortcut detected');
             this._recordClientViolation('devtools_attempt', 'User attempted to open DevTools');
+        }
+    }
+
+    /**
+     * Report a client-side violation to server with local fallback.
+     */
+    async _reportClientViolation(type, details) {
+        if (!this.sessionId) {
+            this._recordClientViolation(type, details);
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBase}/client-violation`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
+                body: JSON.stringify({
+                    session_id: this.sessionId,
+                    violation_type: type,
+                    details: details
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                this._handleViolations([result.violation]);
+            } else {
+                this._recordClientViolation(type, details);
+            }
+        } catch (error) {
+            console.error('Failed to report client violation:', error);
+            this._recordClientViolation(type, details);
         }
     }
     

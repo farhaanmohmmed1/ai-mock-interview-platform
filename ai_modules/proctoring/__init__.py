@@ -52,6 +52,8 @@ class ViolationType(Enum):
     FACE_OBSCURED = "face_obscured"
     TAB_SWITCH = "tab_switch"
     WINDOW_BLUR = "window_blur"
+    COPY_ATTEMPT = "copy_attempt"
+    PASTE_ATTEMPT = "paste_attempt"
     SUSPICIOUS_AUDIO = "suspicious_audio"
 
 
@@ -627,6 +629,44 @@ class AntiCheatMonitor:
             frame_number=session.frame_count
         )
         
+        session.violations.append(violation)
+        return violation
+
+    def process_client_violation(
+        self,
+        session_id: str,
+        violation_type: str,
+        details: Optional[str] = None
+    ) -> Violation:
+        """
+        Record a client-side violation from frontend monitoring.
+
+        Supported violation types:
+        - copy_attempt
+        - paste_attempt
+        """
+        session = self.sessions.get(session_id)
+        if not session:
+            raise ValueError(f"Session {session_id} not found")
+
+        violation_map = {
+            "copy_attempt": (ViolationType.COPY_ATTEMPT, SeverityLevel.MEDIUM),
+            "paste_attempt": (ViolationType.PASTE_ATTEMPT, SeverityLevel.MEDIUM),
+        }
+
+        if violation_type not in violation_map:
+            raise ValueError(f"Unsupported client violation type: {violation_type}")
+
+        enum_type, severity = violation_map[violation_type]
+
+        violation = self._create_violation(
+            enum_type,
+            severity,
+            details or f"Client-side {violation_type} detected",
+            confidence=1.0,
+            frame_number=session.frame_count
+        )
+
         session.violations.append(violation)
         return violation
     

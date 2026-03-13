@@ -128,6 +128,79 @@ const Interview = () => {
   // Timer state
   const [elapsedTime, setElapsedTime] = useState(0);
 
+  // Always block clipboard actions during interview, even if proctoring backend is unavailable
+  useEffect(() => {
+    const shouldLogLocally = () => {
+      return !(
+        proctoringClientRef.current &&
+        typeof proctoringClientRef.current.isProctoring === 'function' &&
+        proctoringClientRef.current.isProctoring()
+      );
+    };
+
+    const handleClipboardCopy = (event) => {
+      event.preventDefault();
+      setProctoringAlert('⚠️ Copy is disabled during interview.');
+      if (!shouldLogLocally()) return;
+      setTabSwitchCount(prev => prev + 1);
+      setProctoringViolations(prev => [...prev, {
+        type: 'copy_attempt',
+        timestamp: new Date().toISOString(),
+        message: 'User attempted to copy text (interview-level block)'
+      }]);
+    };
+
+    const handleClipboardPaste = (event) => {
+      event.preventDefault();
+      setProctoringAlert('⚠️ Paste is disabled during interview.');
+      if (!shouldLogLocally()) return;
+      setTabSwitchCount(prev => prev + 1);
+      setProctoringViolations(prev => [...prev, {
+        type: 'paste_attempt',
+        timestamp: new Date().toISOString(),
+        message: 'User attempted to paste text (interview-level block)'
+      }]);
+    };
+
+    const handleClipboardShortcuts = (event) => {
+      const key = event.key ? event.key.toLowerCase() : '';
+      const isCopy = (event.ctrlKey && key === 'c') || (event.ctrlKey && key === 'insert');
+      const isPaste = (event.ctrlKey && key === 'v') || (event.shiftKey && key === 'insert');
+
+      if (!isCopy && !isPaste) return;
+
+      event.preventDefault();
+      if (!shouldLogLocally()) return;
+      if (isCopy) {
+        setProctoringAlert('⚠️ Copy is disabled during interview.');
+        setTabSwitchCount(prev => prev + 1);
+        setProctoringViolations(prev => [...prev, {
+          type: 'copy_attempt',
+          timestamp: new Date().toISOString(),
+          message: 'User attempted copy keyboard shortcut (interview-level block)'
+        }]);
+      } else {
+        setProctoringAlert('⚠️ Paste is disabled during interview.');
+        setTabSwitchCount(prev => prev + 1);
+        setProctoringViolations(prev => [...prev, {
+          type: 'paste_attempt',
+          timestamp: new Date().toISOString(),
+          message: 'User attempted paste keyboard shortcut (interview-level block)'
+        }]);
+      }
+    };
+
+    document.addEventListener('copy', handleClipboardCopy, true);
+    document.addEventListener('paste', handleClipboardPaste, true);
+    document.addEventListener('keydown', handleClipboardShortcuts, true);
+
+    return () => {
+      document.removeEventListener('copy', handleClipboardCopy, true);
+      document.removeEventListener('paste', handleClipboardPaste, true);
+      document.removeEventListener('keydown', handleClipboardShortcuts, true);
+    };
+  }, []);
+
   useEffect(() => {
     // If no setup data, redirect to setup page
     if (!setupData.interviewId) {
@@ -258,6 +331,7 @@ const Interview = () => {
     } else if (violation.type === 'different_person') {
       setProctoringAlert('🚨 ALERT: Face does not match registered user!');
     } else if (violation.type === 'copy_attempt' || violation.type === 'paste_attempt') {
+      setTabSwitchCount(prev => prev + 1);
       setProctoringAlert('⚠️ Copy/paste detected during interview.');
     } else if (violation.type === 'devtools_attempt') {
       setProctoringAlert('⚠️ DevTools access detected.');
@@ -1113,7 +1187,7 @@ const Interview = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   {tabSwitchCount > 0 && (
                     <Chip 
-                      label={`${tabSwitchCount} tab switch${tabSwitchCount > 1 ? 'es' : ''}`}
+                      label={`${tabSwitchCount} proctoring event${tabSwitchCount > 1 ? 's' : ''}`}
                       size="small"
                       sx={{ bgcolor: 'rgba(234, 179, 8, 0.2)', color: '#EAB308', border: '1px solid rgba(234, 179, 8, 0.3)' }}
                     />
